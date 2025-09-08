@@ -66,7 +66,7 @@ async def parse():
         await page.wait_for_load_state()
         logger.info('Ждем окончания проверки браузера')
         try:
-            await page.screenshot('screenshots/marathonbet_check_browser.png')
+            await page.screenshot(path='screenshots/marathonbet_check_browser.png', full_page=True)
             while 'Just' in await page.title():
                 await asyncio.sleep(1)
         except Error as exc:
