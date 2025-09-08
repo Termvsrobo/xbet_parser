@@ -196,29 +196,33 @@ def parse(page_content, page_link):
     # Голы
     goals_dict = defaultdict(lambda: None)
     if goals:
-        ALL_win = goals.find(lambda tag: tag.text == 'Обе команды забьют').parent
-        if ALL_win:
-            ALL_win_yes_no = ALL_win.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                    ['price', 'height-column-with-price']
+        _all_win = goals.find(lambda tag: tag.text == 'Обе команды забьют')
+        if _all_win:
+            ALL_win = _all_win.parent
+            if ALL_win:
+                ALL_win_yes_no = ALL_win.parent.find_all(
+                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
+                        ['price', 'height-column-with-price']
+                    )
                 )
-            )
-            goals_dict['ALL_win_yes'], goals_dict['ALL_win_no'] = [
-                all_win_yes_no.span.text
-                for all_win_yes_no in ALL_win_yes_no
-            ]
+                goals_dict['ALL_win_yes'], goals_dict['ALL_win_no'] = [
+                    all_win_yes_no.span.text
+                    for all_win_yes_no in ALL_win_yes_no
+                ]
 
-        ALL_times = goals.find(lambda tag: tag.text == 'Голы в обоих таймах').parent
-        if ALL_times:
-            ALL_times_yes_no = ALL_times.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                    ['price', 'height-column-with-price']
+        _all_times = goals.find(lambda tag: tag.text == 'Голы в обоих таймах')
+        if _all_times:
+            ALL_times = _all_times.parent
+            if ALL_times:
+                ALL_times_yes_no = ALL_times.parent.find_all(
+                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
+                        ['price', 'height-column-with-price']
+                    )
                 )
-            )
-            goals_dict['ALL_times_yes'], goals_dict['ALL_times_no'] = [
-                all_times_yes_no.span.text
-                for all_times_yes_no in ALL_times_yes_no
-            ]
+                goals_dict['ALL_times_yes'], goals_dict['ALL_times_no'] = [
+                    all_times_yes_no.span.text
+                    for all_times_yes_no in ALL_times_yes_no
+                ]
 
     # Таймы
     times_dict = defaultdict(lambda: None)

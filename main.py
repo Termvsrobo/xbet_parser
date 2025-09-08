@@ -17,7 +17,6 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
 from beta_baza import parse_bet_baza
-from config import URL
 from parsers.marathonbet import get_players_links
 from parsers.marathonbet import parse as marathonbet_parse
 
@@ -43,9 +42,44 @@ def save_url(url):
             yaml.dump(data, f)
 
 
+class MarathonbetURL:
+    def __init__(self):
+        self._value = None
+
+    @property
+    def value(self):
+        _value = None
+        if self._value:
+            _value = self._value
+        else:
+            _value = get_saved_url()
+        if not _value.endswith('/'):
+            if _value:
+                _value += '/'
+        self._value = _value
+        return self._value
+
+    @value.setter
+    def value_new_url(self, new_url):
+        if new_url:
+            self._value = new_url
+            save_url(new_url)
+
+    def new_url(self, new_url):
+        if new_url:
+            self._value = new_url
+            save_url(new_url)
+
+
+marathonbet_url = MarathonbetURL()
+
+
 @app.get('/parse')
 async def parse():
     result = None
+    singleton_lock_file = Path('browser/SingletonLock')
+    if singleton_lock_file.exists():
+        singleton_lock_file.unlink()
     async with Stealth().use_async(async_playwright()) as p:
         browser = await p.chromium.launch_persistent_context(
             user_data_dir='browser/',
@@ -55,9 +89,9 @@ async def parse():
                 '--start-maximized',
                 '--disable-blink-features=AutomationControlled'
             ],
-            base_url=URL,
+            base_url=marathonbet_url.value,
         )
-        logger.info(f'Открываем {URL}')
+        logger.info(f'Открываем {marathonbet_url.value}')
         page = await browser.new_page()
         page.set_default_timeout(180000)
         await page.goto('/')
@@ -66,7 +100,7 @@ async def parse():
         await page.wait_for_load_state()
         logger.info('Ждем окончания проверки браузера')
         try:
-            await page.screenshot(path='screenshots/marathonbet_check_browser.png', full_page=True)
+            # await page.screenshot(path='screenshots/marathonbet_check_browser.png', full_page=True)
             while 'Just' in await page.title():
                 await asyncio.sleep(1)
         except Error as exc:
@@ -115,7 +149,10 @@ async def parse():
                         '//div[@class="block-market-wrapper"]',
                         timeout=180000
                     )
-                    df_data_dict = marathonbet_parse(await player_page.content(), URL + player_link[1:])
+                    df_data_dict = marathonbet_parse(
+                        await player_page.content(),
+                        marathonbet_url.value + player_link[1:]
+                    )
                     await player_page.close()
                     df_data.append(
                         df_data_dict
@@ -181,16 +218,21 @@ async def parse():
                     df = df.reindex(columns=columns)
                     value_columns_start = columns.index('1')
                     df.iloc[:, value_columns_start:] = df.iloc[:, value_columns_start:].astype(np.float64).round(2)
-                    older_data = Path('older.json')
+                    df['Дата'] = df['Дата'].dt.tz_localize(None)
+                    df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
+                    older_data = Path('storage') / Path('older.json')
                     if older_data.exists():
-                        older_df = pd.read_json(older_data)
+                        older_df = pd.read_json(older_data, date_unit='s')
+                        older_df['Дата'] = older_df['Дата'].astype('datetime64[s]')
+                        older_df['Дата слепка, МСК'] = older_df['Дата слепка, МСК'].astype('datetime64[s]')
                     else:
                         older_df = pd.DataFrame(columns=columns)
-                    path = f'marathonbet_{now_msk.isoformat()}.xlsx'
+                    path = f'files/marathonbet_{now_msk.isoformat()}.xlsx'
                     if older_df.empty:
                         full_df = df
                     else:
                         full_df = pd.concat((df, older_df))
+                    full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
                     full_df = full_df.sort_values(
                         [
                             'Дата',
@@ -205,8 +247,6 @@ async def parse():
                     subArrays = np.split(data, np.where(ddiff != 1)[0]+1)
 
                     with pd.ExcelWriter(path, datetime_format='%d.%m.%y %H:%M') as writer:
-                        full_df['Дата'] = full_df['Дата'].dt.tz_localize(None)
-                        full_df['Дата слепка, МСК'] = full_df['Дата слепка, МСК'].dt.tz_localize(None)
                         full_df.to_excel(writer, index=False, startrow=1, columns=columns)
                         workbook = writer.book
 
@@ -270,7 +310,7 @@ async def parse():
                                 sheet.row_dimensions.group(subArray[0] + 3, subArray[-1] + 3, hidden=True)
 
                         workbook.save(path)
-                    full_df.to_json(older_data)
+                    full_df.to_json(older_data, date_unit='s')
                     result = FileResponse(
                         path=path,
                         filename=path
@@ -282,7 +322,7 @@ async def parse():
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.page_title('Parser bet')
-    ui.input('Ссылка:', value=get_saved_url(), on_change=lambda elem: save_url(elem.value))
+    ui.input('Ссылка:', value=marathonbet_url.value, on_change=lambda elem: marathonbet_url.new_url(elem.value))
     ui.link('Получить excel', '/parse', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)
     ui.run(

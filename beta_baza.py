@@ -148,11 +148,11 @@ async def parse_bet_baza():
         df['Дата'] = df['Дата'].astype('datetime64[ns, Europe/Moscow]')
         df = df[df['Дата'] > now_msk]
         df = df.sort_values(['Дата'])
-        with pd.ExcelWriter(f'bet_baza_{now_msk.isoformat()}.xlsx', datetime_format='%d.%m.%y %H:%M') as writer:
+        with pd.ExcelWriter(f'files/bet_baza_{now_msk.isoformat()}.xlsx', datetime_format='%d.%m.%y %H:%M') as writer:
             df['Дата'] = df['Дата'].dt.tz_localize(None)
             df.to_excel(writer, index=False)
         result = FileResponse(
-            f'bet_baza_{now_msk.isoformat()}.xlsx',
+            f'files/bet_baza_{now_msk.isoformat()}.xlsx',
             filename=f'bet_baza_{now_msk.isoformat()}.xlsx',
         )
     else:

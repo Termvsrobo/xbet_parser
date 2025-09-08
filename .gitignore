@@ -186,3 +186,5 @@ browser/
 **.xlsx
 **.mkv
 screenshots/
+saved_url.yaml
+older.json
