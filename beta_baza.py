@@ -47,7 +47,7 @@ async def parse_bet_baza():
         browser = await p.chromium.launch_persistent_context(
             user_data_dir='browser/',
             channel='chrome',
-            # headless=False,
+            headless=False,
             args=[
                 '--start-maximized',
                 '--disable-blink-features=AutomationControlled'

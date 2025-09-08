@@ -50,7 +50,7 @@ async def parse():
         browser = await p.chromium.launch_persistent_context(
             user_data_dir='browser/',
             channel='chrome',
-            # headless=False,
+            headless=False,
             args=[
                 '--start-maximized',
                 '--disable-blink-features=AutomationControlled'
@@ -83,7 +83,7 @@ async def parse():
                 )
             except TimeoutError as exc:
                 logger.exception(exc.message)
-                return PlainTextResponse(f'Вышло время ожидания страницы. Попробуйте позже.')
+                return PlainTextResponse('Вышло время ожидания страницы. Попробуйте позже.')
             else:
                 logger.info('Собираем информацию по футболу за 24 часа')
                 await page.get_by_text('Футбол').first.click()

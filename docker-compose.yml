@@ -4,7 +4,9 @@ services:
     build: .
     ports:
       - 8080:8080
-    command: sh -c "python main.py"
+    environment:
+      - DISPLAY=:0
+    # command: sh -c "python main.py"
     healthcheck:
       test: curl --fail http://localhost:8080/ || exit 1
       interval: 30s
@@ -14,7 +16,7 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./screenshots:/app/screenshots
-      - browser:/app/browser
+      # - browser:/app/browser
 
 volumes:
   browser:
