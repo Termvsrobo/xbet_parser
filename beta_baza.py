@@ -15,7 +15,7 @@ from playwright_stealth import Stealth
 URL = 'https://bet-baza.pro/main'
 
 
-logger.add('app.log')
+logger.add('logs/bet-baza.log')
 
 _login = 'omsk-forex'
 _password = '123456'
@@ -41,13 +41,13 @@ def save_url(url):
 
 
 @app.get('/parse_bet_baza')
-async def parce_bet_baza():
+async def parse_bet_baza():
     result = None
     async with Stealth().use_async(async_playwright()) as p:
         browser = await p.chromium.launch_persistent_context(
             user_data_dir='browser/',
             channel='chrome',
-            headless=False,
+            # headless=False,
             args=[
                 '--start-maximized',
                 '--disable-blink-features=AutomationControlled'
@@ -162,7 +162,7 @@ async def parce_bet_baza():
 if __name__ in {"__main__", "__mp_main__"}:
     ui.page_title('Аналитика')
     ui.label('Нажмите "Начать" для запуска парсера')
-    ui.button('Начать', on_click=parce_bet_baza)
+    ui.button('Начать', on_click=parse_bet_baza)
     ui.run(
         show=False
     )

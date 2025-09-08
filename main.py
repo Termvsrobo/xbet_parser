@@ -1,19 +1,27 @@
+import asyncio
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
+import numpy as np
 import pandas as pd
+import pytz
 import tqdm
 import yaml
-from bs4 import BeautifulSoup
+from fastapi.responses import FileResponse
 from loguru import logger
-from nicegui import ui
+from nicegui import app, ui
+from openpyxl.styles import Alignment, Border, Side
+from playwright._impl._errors import Error
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
-from beta_baza import parce_bet_baza
+from beta_baza import parse_bet_baza
 from config import URL
+from parsers.marathonbet import get_players_links
+from parsers.marathonbet import parse as marathonbet_parse
 
-logger.add('app.log')
+logger.add('logs/marathonbet.log')
 
 
 def get_saved_url():
@@ -35,13 +43,14 @@ def save_url(url):
             yaml.dump(data, f)
 
 
-@ui.page('/parse')
-async def parce():
+@app.get('/parse')
+async def parse():
+    result = None
     async with Stealth().use_async(async_playwright()) as p:
         browser = await p.chromium.launch_persistent_context(
             user_data_dir='browser/',
             channel='chrome',
-            headless=False,
+            # headless=False,
             args=[
                 '--start-maximized',
                 '--disable-blink-features=AutomationControlled'
@@ -54,7 +63,13 @@ async def parce():
         await page.wait_for_load_state()
         await page.goto('su')
         await page.wait_for_load_state()
-        if page.url != URL + 'su':
+        try:
+            while 'Just' in await page.title():
+                await asyncio.sleep(1)
+        except Error as exc:
+            logger.exception(exc.message)
+            page = browser.pages[-1]
+        if urlparse(page.url).path != '/su/':
             await page.goto('su')
             await page.wait_for_load_state()
         await page.wait_for_selector(
@@ -67,7 +82,7 @@ async def parce():
         attempts = 5
         content = ''
         while need_scroll:
-            await page.mouse.wheel(0, 1700)
+            await page.mouse.wheel(0, 3000)
             await page.wait_for_load_state()
             await page.wait_for_timeout(2000)
             if content == await page.content():
@@ -77,399 +92,187 @@ async def parce():
                     need_scroll = False
             else:
                 content = await page.content()
-        soup = BeautifulSoup(await page.content(), 'html.parser')
-        tables = soup.find_all(
-            lambda tag: tag.name == 'table' and tag.get('class') == ['coupon-row-item']
-        )
         df_data = []
-        players_links = set()
-        for table in tables:
-            name_column = table.find('td', attrs={'class': 'first'})
-            players = name_column.find_all('a', attrs={'class': 'member-link'})
-            for i, player in enumerate(players, 1):
-                players_links.add(player.attrs.get('href'))
-        print(f'Количество ссылок: {len(players_links)}')
+        players_links = get_players_links(await page.content())
+        logger.info(f'Количество ссылок: {len(players_links)}')
         for player_link in tqdm.tqdm(players_links):
             df_data_dict = dict()
-            await page.goto(player_link)
-            await page.wait_for_load_state()
-            await page.wait_for_selector(
+            player_page = await browser.new_page()
+            await player_page.goto(player_link)
+            await player_page.wait_for_load_state()
+            await player_page.wait_for_selector(
                 '//div[@class="block-market-wrapper"]',
                 timeout=180000
             )
-            soup = BeautifulSoup(await page.content(), 'html.parser')
-
-            tables = soup.find_all(lambda tag: tag.name == 'table' and tag.get('class') == ['coupon-row-item'])
-            for table in tables:
-                name_column = table.find('td', attrs={'class': 'first'})
-                players = name_column.find_all('a', attrs={'class': 'member-link'})
-                players_names = []
-                for i, player in enumerate(players, 1):
-                    players_names.append(f'{i}. {player.text.replace("\n", "")}')
-            name = '\n'.join(players_names)
-            if table.find('div', attrs={'class': 'date-wrapper'}):
-                date_game = table.find('div', attrs={'class': 'date-wrapper'}).text
-            else:
-                date_game = None
-            div_elements = soup.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
-            )
-            if len(div_elements) < 5:
-                continue
-            results, head_starts, totals, goals, times = div_elements
-
-            # Результаты
-            results_visible_div = results.find(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper']
-            )
-            results_table = results_visible_div.find('table', class_='td-border')
-            results_values = [tr.text for tr in results_table.find_all(
-                lambda tag: tag.name == 'span' and sorted(tag.get('class')) == sorted(['selection-link', 'active-selection'])
-            )]
-            if len(results_values) < 6:
-                continue
-
-            P1, X, P2, _1X, _12, _2X = results_values
-
-            # Форы
-            head_starts_visible_div = head_starts.find(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper']
-            )
-            head_starts_table = head_starts_visible_div.find('table', class_='td-border')
-            head_starts_0 = head_starts_table.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0)' in tag.text
-            )
-            if len(head_starts_0) < 2:
-                continue
-
-            head_starts_0_parents = [head_start_0.parent for head_start_0 in head_starts_0]
-            head_starts_0_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in head_starts_0_parents
-            ]
-            F1_0, F2_0 = head_starts_0_values
-
-            # Тотал голов
-            totals_visible_div = totals.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper']
-            )
-            totals_table = totals_visible_div[0].find('table', class_='td-border')
-            totals_0 = totals_table.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(2.5)' in tag.text
-            )
-            if len(totals_0) < 2:
-                continue
-
-            totals_0_parents = [head_start_0.parent for head_start_0 in totals_0]
-            totals_0_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in totals_0_parents
-            ]
-            TM_25, TB_25 = totals_0_values
-
-            it_1_totals_table = totals_visible_div[1].find('table', class_='td-border')
-            it_1_totals_0 = it_1_totals_table.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
-            )
-            if len(it_1_totals_0) < 2:
-                continue
-
-            it_1_totals_0_parents = [it_1_head_start_0.parent for it_1_head_start_0 in it_1_totals_0]
-            it_1_totals_0_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in it_1_totals_0_parents
-            ]
-            IT1_men_15, IT1_bol_15 = it_1_totals_0_values
-
-            it_2_totals_table = totals_visible_div[2].find('table', class_='td-border')
-            it_2_totals_0 = it_2_totals_table.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
-            )
-            if len(it_2_totals_0) < 2:
-                continue
-
-            it_2_totals_0_parents = [it_2_head_start_0.parent for it_2_head_start_0 in it_2_totals_0]
-            it_2_totals_0_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in it_2_totals_0_parents
-            ]
-            IT2_men_15, IT2_bol_15 = it_2_totals_0_values
-
-            # Голы
-            name_players = name.split('\n')
-            name_players = [name_players[0].replace('1. ', ''), name_players[1].replace('2. ', '')]
-
-            if not goals.find(lambda tag: tag.text == f'{name_players[0]} забьет'):
-                continue
-            K1_win = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет').parent
-            K1_win_yes_no = K1_win.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            K1_win_yes, K1_win_no = [k1_win_yes_no.span.text for k1_win_yes_no in K1_win_yes_no]
-
-            K2_win = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет').parent
-            K2_win_yes_no = K2_win.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            K2_win_yes, K2_win_no = [k2_win_yes_no.span.text for k2_win_yes_no in K2_win_yes_no]
-
-            ALL_win = goals.find(lambda tag: tag.text == 'Обе команды забьют').parent
-            ALL_win_yes_no = ALL_win.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            ALL_win_yes, ALL_win_no = [all_win_yes_no.span.text for all_win_yes_no in ALL_win_yes_no]
-
-            ALL_tiems = goals.find(lambda tag: tag.text == 'Голы в обоих таймах').parent
-            ALL_tiems_yes_no = ALL_tiems.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            ALL_tiems_yes, ALL_tiems_no = [all_tiems_yes_no.span.text for all_tiems_yes_no in ALL_tiems_yes_no]
-
-            K1_win_1_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 1-й тайм').parent
-            K1_win_1_time_yes_no = K1_win_1_time.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            K1_win_1_time_yes, K1_win_1_time_no = [_K1_win_1_time_yes_no.span.text for _K1_win_1_time_yes_no in K1_win_1_time_yes_no]
-
-            K1_win_2_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 2-й тайм').parent
-            K1_win_2_time_yes_no = K1_win_2_time.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            K1_win_2_time_yes, K1_win_2_time_no = [_K1_win_2_time_yes_no.span.text for _K1_win_2_time_yes_no in K1_win_2_time_yes_no]
-
-            K2_win_1_time = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет, 1-й тайм').parent
-            K2_win_1_time_yes_no = K2_win_1_time.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            K2_win_1_time_yes, K2_win_1_time_no = [_K2_win_1_time_yes_no.span.text for _K2_win_1_time_yes_no in K2_win_1_time_yes_no]
-
-            K2_win_2_time = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет, 2-й тайм').parent
-            K2_win_2_time_yes_no = K2_win_2_time.parent.find_all(
-                lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(['price', 'height-column-with-price'])
-            )
-            K2_win_2_time_yes, K2_win_2_time_no = [_K2_win_2_time_yes_no.span.text for _K2_win_2_time_yes_no in K2_win_2_time_yes_no]
-
-            # Таймы
-            times_elements = times.find_all(lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper'])
-            if len(times_elements) < 10:
-                continue
-            results_1_time, win_head_start_1_time, goals_1_time, goals_it1_1_time, goals_it2_1_time, results_2_time, win_head_start_2_time, goals_2_time, goals_it1_2_time, goals_it2_2_time = times_elements
-
-            results_table_1_time = results_1_time.find('table', class_='td-border')
-            results_values_1_time = [tr.text for tr in results_table_1_time.find_all(
-                lambda tag: tag.name == 'span' and sorted(tag.get('class')) == sorted(['selection-link', 'active-selection'])
-            )]
-            if len(results_values_1_time) < 6:
-                continue
-
-            goal_1_time_P1, goal_1_time_X, goal_1_time_P2, goal_1_time_1X, goal_1_time_12, goal_1_time_2X = results_values_1_time
-
-            # --
-            head_starts_table_1_time = win_head_start_1_time.find('table', class_='td-border')
-            head_starts_0_1_time = head_starts_table_1_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0)' in tag.text
-            )
-            if len(head_starts_0_1_time) < 2:
-                continue
-
-            head_starts_0_1_time_parents = [head_start_0.parent for head_start_0 in head_starts_0_1_time]
-            head_starts_0_1_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in head_starts_0_1_time_parents
-            ]
-            F1_0_1_time, F2_0_1_time = head_starts_0_1_time_values
-
-            # --
-            totals_table_1_time = goals_1_time.find('table', class_='td-border')
-            totals_0_1_time = totals_table_1_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(2.5)' in tag.text
-            )
-            if len(totals_0_1_time) < 2:
-                continue
-
-            totals_0_1_time_parents = [head_start_0.parent for head_start_0 in totals_0_1_time]
-            totals_0_1_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in totals_0_1_time_parents
-            ]
-            TM_25_1_time, TB_25_1_time = totals_0_1_time_values
-
-            it_1_totals_table_1_time = goals_it1_1_time.find('table', class_='td-border')
-            it_1_totals_0_1_time = it_1_totals_table_1_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
-            )
-            if len(it_1_totals_0_1_time) < 2:
-                continue
-
-            it_1_totals_0_1_time_parents = [it_1_head_start_0.parent for it_1_head_start_0 in it_1_totals_0_1_time]
-            it_1_totals_0_1_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in it_1_totals_0_1_time_parents
-            ]
-            IT1_men_15_1_time, IT1_bol_15_1_time = it_1_totals_0_1_time_values
-
-            it_2_totals_table_1_time = goals_it2_1_time.find('table', class_='td-border')
-            it_2_totals_0_1_time = it_2_totals_table_1_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
-            )
-            if len(it_2_totals_0_1_time) < 2:
-                continue
-
-            it_2_totals_0_1_time_parents = [it_2_head_start_0.parent for it_2_head_start_0 in it_2_totals_0_1_time]
-            it_2_totals_0_1_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in it_2_totals_0_1_time_parents
-            ]
-            IT2_men_15_1_time, IT2_bol_15_1_time = it_2_totals_0_1_time_values
-
-            # 2 тайм
-            results_table_2_time = results_2_time.find('table', class_='td-border')
-            results_values_2_time = [tr.text for tr in results_table_2_time.find_all(
-                lambda tag: tag.name == 'span' and sorted(tag.get('class')) == sorted(['selection-link', 'active-selection'])
-            )]
-            if len(results_values_2_time) < 6:
-                continue
-
-            goal_2_time_P1, goal_2_time_X, goal_2_time_P2, goal_2_time_1X, goal_2_time_12, goal_2_time_2X = results_values_2_time
-
-            # --
-            head_starts_table_2_time = win_head_start_2_time.find('table', class_='td-border')
-            head_starts_0_2_time = head_starts_table_2_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0)' in tag.text
-            )
-            if len(head_starts_0_2_time) < 2:
-                continue
-
-            head_starts_0_2_time_parents = [head_start_0.parent for head_start_0 in head_starts_0_2_time]
-            head_starts_0_2_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in head_starts_0_2_time_parents
-            ]
-            F1_0_2_time, F2_0_2_time = head_starts_0_2_time_values
-
-            # --
-            totals_table_2_time = goals_2_time.find('table', class_='td-border')
-            totals_0_2_time = totals_table_2_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(2.5)' in tag.text
-            )
-            if len(totals_0_2_time) < 2:
-                continue
-
-            totals_0_2_time_parents = [head_start_0.parent for head_start_0 in totals_0_2_time]
-            totals_0_2_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in totals_0_2_time_parents
-            ]
-            TM_25_2_time, TB_25_2_time = totals_0_2_time_values
-
-            it_1_totals_table_2_time = goals_it1_2_time.find('table', class_='td-border')
-            it_1_totals_0_2_time = it_1_totals_table_2_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
-            )
-            if len(it_1_totals_0_2_time) < 2:
-                continue
-
-            it_1_totals_0_2_time_parents = [it_1_head_start_0.parent for it_1_head_start_0 in it_1_totals_0_2_time]
-            it_1_totals_0_2_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in it_1_totals_0_2_time_parents
-            ]
-            IT1_men_15_2_time, IT1_bol_15_2_time = it_1_totals_0_2_time_values
-
-            it_2_totals_table_2_time = goals_it2_2_time.find('table', class_='td-border')
-            it_2_totals_0_2_time = it_2_totals_table_2_time.find_all(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
-            )
-            if len(it_2_totals_0_2_time) < 2:
-                continue
-
-            it_2_totals_0_2_time_parents = [it_2_head_start_0.parent for it_2_head_start_0 in it_2_totals_0_2_time]
-            it_2_totals_0_2_time_values = [
-                head_start_0_parent.find('div', class_='coeff-price').span.text
-                for head_start_0_parent in it_2_totals_0_2_time_parents
-            ]
-            IT2_men_15_2_time, IT2_bol_15_2_time = it_2_totals_0_2_time_values
-
-            df_data_dict['Ссылка'] = URL + player_link[1:]
-            df_data_dict['Название'] = name
-            df_data_dict['Дата'] = date_game
-            df_data_dict['П1'] = P1
-            df_data_dict['Ничья'] = X
-            df_data_dict['П2'] = P2
-            df_data_dict['П1 или ничья'] = _1X
-            df_data_dict['П1 или П2'] = _12
-            df_data_dict['П2 или ничья'] = _2X
-            df_data_dict['Ф1 (0)'] = F1_0
-            df_data_dict['Ф2 (0)'] = F2_0
-            df_data_dict['ТМ (2.5)'] = TM_25
-            df_data_dict['ТБ (2.5)'] = TB_25
-            df_data_dict['ИТ1 меньше (1.5)'] = IT1_men_15
-            df_data_dict['ИТ1 больше (1.5)'] = IT1_bol_15
-            df_data_dict['ИТ2 меньше (1.5)'] = IT2_men_15
-            df_data_dict['ИТ2 больше (1.5)'] = IT2_bol_15
-            df_data_dict['К1 забьет Да'] = K1_win_yes
-            df_data_dict['К1 забьет Нет'] = K1_win_no
-            df_data_dict['К2 забьет Да'] = K2_win_yes
-            df_data_dict['К2 забьет Нет'] = K2_win_no
-            df_data_dict['Обе команды забьют Да'] = ALL_win_yes
-            df_data_dict['Обе команды забьют Нет'] = ALL_win_no
-            df_data_dict['Голы в обоих таймах Да'] = ALL_tiems_yes
-            df_data_dict['Голы в обоих таймах Нет'] = ALL_tiems_no
-            df_data_dict['К1 забьет, 1-й тайм Да'] = K1_win_1_time_yes
-            df_data_dict['К1 забьет, 1-й тайм Нет'] = K1_win_1_time_no
-            df_data_dict['К1 забьет, 2-й тайм Да'] = K1_win_2_time_yes
-            df_data_dict['К1 забьет, 2-й тайм Нет'] = K1_win_2_time_no
-            df_data_dict['К2 забьет, 1-й тайм Да'] = K2_win_1_time_yes
-            df_data_dict['К2 забьет, 1-й тайм Нет'] = K2_win_1_time_no
-            df_data_dict['К2 забьет, 2-й тайм Да'] = K2_win_2_time_yes
-            df_data_dict['К2 забьет, 2-й тайм Нет'] = K2_win_2_time_no
-
-            df_data_dict['П1, 1-й тайм'] = goal_1_time_P1
-            df_data_dict['Ничья, 1-й тайм'] = goal_1_time_X
-            df_data_dict['П2, 1-й тайм'] = goal_1_time_P2
-            df_data_dict['П1 или ничья, 1-й тайм'] = goal_1_time_1X
-            df_data_dict['П1 или П2, 1-й тайм'] = goal_1_time_12
-            df_data_dict['П2 или ничья, 1-й тайм'] = goal_1_time_2X
-            df_data_dict['Ф1 (0), 1-й тайм'] = F1_0_1_time
-            df_data_dict['Ф2 (0), 1-й тайм'] = F2_0_1_time
-            df_data_dict['ТМ (2.5), 1-й тайм'] = TM_25_1_time
-            df_data_dict['ТБ (2.5), 1-й тайм'] = TB_25_1_time
-            df_data_dict['ИТ1 меньше (1.5), 1-й тайм'] = IT1_men_15_1_time
-            df_data_dict['ИТ1 больше (1.5), 1-й тайм'] = IT1_bol_15_1_time
-            df_data_dict['ИТ2 меньше (1.5), 1-й тайм'] = IT2_men_15_1_time
-            df_data_dict['ИТ2 больше (1.5), 1-й тайм'] = IT2_bol_15_1_time
-
-            df_data_dict['П1, 2-й тайм'] = goal_2_time_P1
-            df_data_dict['Ничья, 2-й тайм'] = goal_2_time_X
-            df_data_dict['П2, 2-й тайм'] = goal_2_time_P2
-            df_data_dict['П1 или ничья, 2-й тайм'] = goal_2_time_1X
-            df_data_dict['П1 или П2, 2-й тайм'] = goal_2_time_12
-            df_data_dict['П2 или ничья, 2-й тайм'] = goal_2_time_2X
-            df_data_dict['Ф1 (0), 2-й тайм'] = F1_0_2_time
-            df_data_dict['Ф2 (0), 2-й тайм'] = F2_0_2_time
-            df_data_dict['ТМ (2.5), 2-й тайм'] = TM_25_2_time
-            df_data_dict['ТБ (2.5), 2-й тайм'] = TB_25_2_time
-            df_data_dict['ИТ1 меньше (1.5), 2-й тайм'] = IT1_men_15_2_time
-            df_data_dict['ИТ1 больше (1.5), 2-й тайм'] = IT1_bol_15_2_time
-            df_data_dict['ИТ2 меньше (1.5), 2-й тайм'] = IT2_men_15_2_time
-            df_data_dict['ИТ2 больше (1.5), 2-й тайм'] = IT2_bol_15_2_time
+            df_data_dict = marathonbet_parse(await player_page.content(), URL + player_link[1:])
+            await player_page.close()
             df_data.append(
                 df_data_dict
             )
+        await browser.close()
         if df_data:
-            print(f'Собрано данных: {len(df_data)}')
+            logger.info(f'Собрано данных: {len(df_data)}')
             df = pd.DataFrame.from_records(df_data)
-            df.to_excel(f'{datetime.now().isoformat()}.xlsx', index=False)
+            now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
+            df['Дата слепка, МСК'] = now_msk
+            columns = [
+                'Ссылка',
+                'Название',
+                'Дата',
+                'Дата слепка, МСК',
+                '1',
+                'Х',
+                '2',
+                '1Х',
+                '12',
+                'Х2',
+                'Ф1(0)',
+                'Ф2(0)',
+                'ТМ(2.5)',
+                'ТБ(2.5)',
+                'ИТМ1(1.5)',
+                'ИТБ1(1.5)',
+                'ИТМ2(1.5)',
+                'ИТБ2(1.5)',
+                'ОЗ Да',
+                'ОЗ Нет',
+                'Гол оба тайма Да',
+                'Гол оба тайма Нет',
+                '_1_1',
+                '_1_Х',
+                '_1_2',
+                '_1_1Х',
+                '_1_12',
+                '_1_Х2',
+                '_1_Ф1(0)',
+                '_1_Ф2(0)',
+                '_1_ТМ(1.5)',
+                '_1_ТБ(1.5)',
+                '_1_ИТМ1(0.5)',
+                '_1_ИТБ1(0.5)',
+                '_1_ИТМ2(0.5)',
+                '_1_ИТБ2(0.5)',
+                '_2_1',
+                '_2_Х',
+                '_2_2',
+                '_2_1Х',
+                '_2_12',
+                '_2_Х2',
+                '_2_Ф1(0)',
+                '_2_Ф2(0)',
+                '_2_ТМ(1.5)',
+                '_2_ТБ(1.5)',
+                '_2_ИТМ1(0.5)',
+                '_2_ИТБ1(0.5)',
+                '_2_ИТМ2(0.5)',
+                '_2_ИТБ2(0.5)',
+            ]
+            df = df.reindex(columns=columns)
+            value_columns_start = columns.index('1')
+            df.iloc[:, value_columns_start:] = df.iloc[:, value_columns_start:].astype(np.float64).round(2)
+            older_data = Path('older.json')
+            if older_data.exists():
+                older_df = pd.read_json(older_data)
+            else:
+                older_df = pd.DataFrame(columns=columns)
+            path = f'marathonbet_{now_msk.isoformat()}.xlsx'
+            if older_df.empty:
+                full_df = df
+            else:
+                full_df = pd.concat((df, older_df))
+            full_df = full_df.sort_values(
+                [
+                    'Дата',
+                    'Название',
+                ],
+                ascending=[False, True]
+            )
+            full_df['Double'] = full_df['Название'].duplicated()
+            full_df = full_df.reset_index(drop=True)
+            data = np.array(full_df[full_df['Double']].index.values)
+            ddiff = np.diff(data)
+            subArrays = np.split(data, np.where(ddiff != 1)[0]+1)
+
+            with pd.ExcelWriter(path, datetime_format='%d.%m.%y %H:%M') as writer:
+                full_df['Дата'] = full_df['Дата'].dt.tz_localize(None)
+                full_df['Дата слепка, МСК'] = full_df['Дата слепка, МСК'].dt.tz_localize(None)
+                full_df.to_excel(writer, index=False, startrow=1, columns=columns)
+                workbook = writer.book
+
+                sheet = workbook.active
+                for i in range(1, sheet.max_column + 1):
+                    sheet.cell(2, i).alignment = Alignment(text_rotation=90)
+
+                match_index_start = columns.index('1') + 1
+                first_time_index_start = columns.index('_1_1') + 1
+                second_time_index_start = columns.index('_2_1') + 1
+
+                match_index_end = first_time_index_start - 1
+                first_time_index_end = second_time_index_start - 1
+                second_time_index_end = len(columns)
+
+                thin_border = Border(
+                    left=Side(style='thin'),
+                    right=Side(style='thin'),
+                    top=Side(style='thin'),
+                    bottom=Side(style='thin')
+                )
+
+                sheet.merge_cells(
+                    start_row=1,
+                    end_row=1,
+                    start_column=match_index_start,
+                    end_column=match_index_end
+                )
+                sheet.cell(1, match_index_start).value = 'Матч'
+                sheet.cell(1, match_index_start).alignment = Alignment(horizontal='center')
+                sheet.cell(1, match_index_start).border = thin_border
+
+                sheet.merge_cells(
+                    start_row=1,
+                    end_row=1,
+                    start_column=first_time_index_start,
+                    end_column=first_time_index_end
+                )
+                sheet.cell(1, first_time_index_start).value = '1 тайм'
+                sheet.cell(1, first_time_index_start).alignment = Alignment(horizontal='center')
+                sheet.cell(1, first_time_index_start).border = thin_border
+
+                sheet.merge_cells(
+                    start_row=1,
+                    end_row=1,
+                    start_column=second_time_index_start,
+                    end_column=second_time_index_end
+                )
+                sheet.cell(1, second_time_index_start).value = '2 тайм'
+                sheet.cell(1, second_time_index_start).alignment = Alignment(horizontal='center')
+                sheet.cell(1, second_time_index_start).border = thin_border
+
+                for i in range(first_time_index_start, first_time_index_end + 2):
+                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_1_', '')
+
+                for i in range(second_time_index_start, second_time_index_end + 2):
+                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_2_', '')
+
+                for subArray in subArrays:
+                    if subArray.size > 0:
+                        sheet.row_dimensions.group(subArray[0] + 3, subArray[-1] + 3, hidden=True)
+
+                workbook.save(path)
+            full_df.to_json(older_data)
+            result = FileResponse(
+                path=path,
+                filename=path
+            )
         else:
             print('Не собрали данных')
-        await browser.close()
+    return result
 
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.page_title('Parser bet')
     ui.input('Ссылка:', value=get_saved_url(), on_change=lambda elem: save_url(elem.value))
-    ui.label('Нажмите "Начать" для запуска парсера')
-    ui.link('Получить excel', parce)
+    ui.link('Получить excel', '/parse', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)
     ui.run(
         show=False
