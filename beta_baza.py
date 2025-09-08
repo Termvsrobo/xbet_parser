@@ -75,6 +75,7 @@ async def parse_bet_baza():
             next_page = page.get_by_text('Следующая')
             await clear_filter_btn.click()
         await page.wait_for_selector('//div[@class="dataTables_info" and text()!="Записи с 0 до 0 из 0 записей"]')
+        await page.screenshot(path='screenshots/bet_baza.png')
         df_list = []
         process_next_page = True
         page_number = 1

@@ -5,7 +5,7 @@ from loguru import logger
 
 from utils import parse_date_str
 
-logger.add('marathonbet.log')
+logger.add('logs/marathonbet.log')
 
 
 def get_players_links(page_content):
