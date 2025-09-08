@@ -16,7 +16,6 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./screenshots:/app/screenshots
-      # - browser:/app/browser
 
 volumes:
   browser:
