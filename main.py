@@ -217,7 +217,10 @@ async def parse():
                     ]
                     df = df.reindex(columns=columns)
                     value_columns_start = columns.index('1')
-                    df.iloc[:, value_columns_start:] = df.iloc[:, value_columns_start:].astype(np.float64).round(2)
+                    # решаем проблему округления числа 1.285 в 1.29, а не 1.28 путем прибавления 0.0001
+                    df.iloc[:, value_columns_start:] = (
+                        df.iloc[:, value_columns_start:].astype(np.float64) + pow(10, -4)
+                    ).round(2)
                     df['Дата'] = df['Дата'].dt.tz_localize(None)
                     df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
                     older_data = Path('storage') / Path('older.json')
@@ -310,7 +313,7 @@ async def parse():
                                 sheet.row_dimensions.group(subArray[0] + 3, subArray[-1] + 3, hidden=True)
 
                         workbook.save(path)
-                    full_df.to_json(older_data, date_unit='s')
+                    full_df.to_json(older_data, date_unit='s', date_format='iso')
                     result = FileResponse(
                         path=path,
                         filename=path
