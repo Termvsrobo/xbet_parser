@@ -1,6 +1,8 @@
 import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from threading import Event
 from urllib.parse import urlparse
 
 import numpy as np
@@ -72,10 +74,10 @@ class MarathonbetURL:
 
 
 marathonbet_url = MarathonbetURL()
+is_running = Event()
 
 
-@app.get('/parse')
-async def parse():
+async def _parse():
     result = None
     singleton_lock_file = Path('browser/SingletonLock')
     if singleton_lock_file.exists():
@@ -100,7 +102,6 @@ async def parse():
         await page.wait_for_load_state()
         logger.info('Ждем окончания проверки браузера')
         try:
-            # await page.screenshot(path='screenshots/marathonbet_check_browser.png', full_page=True)
             while 'Just' in await page.title():
                 await asyncio.sleep(1)
         except Error as exc:
@@ -321,6 +322,26 @@ async def parse():
                 else:
                     return PlainTextResponse('Не собрали данных')
         return result
+
+
+@asynccontextmanager
+async def parse_manager():
+    try:
+        if not is_running.is_set():
+            is_running.set()
+            response = await _parse()
+        else:
+            response = PlainTextResponse('В настоящий момент уже парсится сайт.')
+        yield response
+    finally:
+        if is_running.is_set():
+            is_running.clear()
+
+
+@app.get('/parse')
+async def parse():
+    async with parse_manager() as response:
+        return response
 
 
 if __name__ in {"__main__", "__mp_main__"}:

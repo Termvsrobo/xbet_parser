@@ -224,6 +224,62 @@ def parse(page_content, page_link):
                     for all_times_yes_no in ALL_times_yes_no
                 ]
 
+        _goals_it1_1_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 1-й тайм')
+        if _goals_it1_1_time:
+            _it1_1_time = _goals_it1_1_time.parent
+            if _it1_1_time:
+                _it1_1_time_data = _it1_1_time.parent.find_all(
+                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
+                        ['price', 'height-column-with-price']
+                    )
+                )
+                goals_dict['IT1_bol_05_1_time'], goals_dict['IT1_men_05_1_time'] = [
+                    _t.span.text
+                    for _t in _it1_1_time_data
+                ]
+
+        _goals_it1_2_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 2-й тайм')
+        if _goals_it1_2_time:
+            _it1_2_time = _goals_it1_2_time.parent
+            if _it1_2_time:
+                _it1_2_time_data = _it1_2_time.parent.find_all(
+                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
+                        ['price', 'height-column-with-price']
+                    )
+                )
+                goals_dict['IT1_bol_05_2_time'], goals_dict['IT1_men_05_2_time'] = [
+                    _t.span.text
+                    for _t in _it1_2_time_data
+                ]
+
+        _goals_it2_1_time = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет, 1-й тайм')
+        if _goals_it2_1_time:
+            _it2_1_time = _goals_it2_1_time.parent
+            if _it2_1_time:
+                _it2_1_time_data = _it2_1_time.parent.find_all(
+                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
+                        ['price', 'height-column-with-price']
+                    )
+                )
+                goals_dict['IT2_bol_05_1_time'], goals_dict['IT2_men_05_1_time'] = [
+                    _t.span.text
+                    for _t in _it2_1_time_data
+                ]
+
+        _goals_it2_2_time = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет, 2-й тайм')
+        if _goals_it2_2_time:
+            _it2_2_time = _goals_it2_2_time.parent
+            if _it2_2_time:
+                _it2_2_time_data = _it2_2_time.parent.find_all(
+                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
+                        ['price', 'height-column-with-price']
+                    )
+                )
+                goals_dict['IT2_bol_05_2_time'], goals_dict['IT2_men_05_2_time'] = [
+                    _t.span.text
+                    for _t in _it2_2_time_data
+                ]
+
     # Таймы
     times_dict = defaultdict(lambda: None)
     if times:
@@ -449,6 +505,19 @@ def parse(page_content, page_link):
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
                         break
+
+    for k in (
+        'IT1_men_05_1_time',
+        'IT1_bol_05_1_time',
+        'IT1_men_05_2_time',
+        'IT1_bol_05_2_time',
+        'IT2_men_05_1_time',
+        'IT2_bol_05_1_time',
+        'IT2_men_05_2_time',
+        'IT2_bol_05_2_time',
+    ):
+        if not times_dict[k] and goals_dict[k]:
+            times_dict[k] = goals_dict[k]
 
     df_data_dict['Ссылка'] = page_link
     df_data_dict['Название'] = name
