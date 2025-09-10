@@ -45,6 +45,7 @@ def save_url(url):
 class MarathonbetURL:
     def __init__(self):
         self._value = None
+        self.radio_period = '24 часа'
 
     @property
     def value(self):
@@ -120,9 +121,9 @@ async def parse():
                 logger.exception(exc.message)
                 return PlainTextResponse('Вышло время ожидания страницы. Попробуйте позже.')
             else:
-                logger.info('Собираем информацию по футболу за 24 часа')
+                logger.info(f'Собираем информацию по футболу за {marathonbet_url.radio_period}')
                 await page.get_by_text('Футбол').first.click()
-                await page.get_by_text('24 часа').first.click()
+                await page.get_by_text(marathonbet_url.radio_period).first.click()
                 need_scroll = True
                 attempts = 5
                 content = ''
@@ -326,6 +327,11 @@ async def parse():
 if __name__ in {"__main__", "__mp_main__"}:
     ui.page_title('Parser bet')
     ui.input('Ссылка:', value=marathonbet_url.value, on_change=lambda elem: marathonbet_url.new_url(elem.value))
+    ui.label('Выберите период')
+    ui.radio(
+        ['Всё время', '24 часа', 'Сегодня', '12 часов', '6 часов', '2 часа', '1 час'],
+        value='24 часа'
+    ).props('inline').bind_value(marathonbet_url, 'radio_period')
     ui.link('Получить excel', '/parse', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)
     ui.run(
