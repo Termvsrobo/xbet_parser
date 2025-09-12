@@ -1,14 +1,14 @@
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Event
+from time import time
 from urllib.parse import urlparse
 
 import numpy as np
 import pandas as pd
 import pytz
-import tqdm
 import yaml
 from fastapi.responses import FileResponse, PlainTextResponse
 from loguru import logger
@@ -44,10 +44,105 @@ def save_url(url):
             yaml.dump(data, f)
 
 
+is_running = Event()
+
+
 class MarathonbetURL:
     def __init__(self):
         self._value = None
         self.radio_period = '24 часа'
+        self._count_links = None
+        self._count_processed_links = None
+        self._elapsed_time = None
+        self._eta = None
+
+    def start(self):
+        self._elapsed_time = time()
+
+    def stop(self):
+        self._count_links = None
+        self._count_processed_links = None
+        self._elapsed_time = None
+        self._eta = None
+
+    @property
+    def elapsed_time(self):
+        if self._elapsed_time:
+            result = []
+            td = timedelta(seconds=time() - self._elapsed_time)
+            hours, remainder = divmod(td.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            if hours:
+                result.append(f'{hours} ч.')
+            if minutes:
+                result.append(f'{minutes} мин.')
+            if seconds:
+                result.append(f'{seconds} сек.')
+            return f'Прошло {", ".join(result)}'
+        else:
+            return 'Прошло -- сек.'
+
+    @property
+    def count_links(self):
+        if self._count_links:
+            return f'Количество ссылок: {str(self._count_links)}'
+        else:
+            if is_running.is_set():
+                return 'Количество ссылок: Вычисляем'
+            else:
+                return 'Количество ссылок: -'
+
+    @count_links.setter
+    def count_links(self, value: int):
+        if value:
+            self._count_links = value
+        else:
+            self._count_links = None
+
+    @property
+    def count_processed_links(self):
+        if self._count_processed_links:
+            percent = round(self._count_processed_links / self._count_links * 100, 2)
+            return f'Обработано ссылок: {str(self._count_processed_links)} ({percent} %)'
+        else:
+            if is_running.is_set():
+                return 'Обработано ссылок: Вычисляем'
+            else:
+                return 'Обработано ссылок: -'
+
+    @count_processed_links.setter
+    def count_processed_links(self, value: int):
+        if value:
+            self._count_processed_links = value
+        else:
+            self._count_processed_links = None
+
+    def tqdm(self, links):
+        start = time()
+        for i, link in enumerate(links):
+            yield link
+            self.count_processed_links = i
+            end = time()
+            delta = end - start
+            self._eta = (len(links) - (i + 1)) * delta
+            start = end
+
+    @property
+    def eta(self):
+        if self._eta:
+            result = []
+            td = timedelta(seconds=self._eta)
+            hours, remainder = divmod(td.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            if hours:
+                result.append(f'{hours} ч.')
+            if minutes:
+                result.append(f'{minutes} мин.')
+            if seconds:
+                result.append(f'{seconds} сек.')
+            return f'Осталось примерно {", ".join(result)}'
+        else:
+            return 'Осталось -- сек.'
 
     @property
     def value(self):
@@ -75,7 +170,6 @@ class MarathonbetURL:
 
 
 marathonbet_url = MarathonbetURL()
-is_running = Event()
 
 
 async def _parse():
@@ -142,23 +236,32 @@ async def _parse():
                 df_data = []
                 players_links = get_players_links(await page.content())
                 logger.info(f'Количество ссылок: {len(players_links)}')
-                for player_link in tqdm.tqdm(players_links):
+                marathonbet_url.count_links = len(players_links)
+                for player_link in marathonbet_url.tqdm(players_links):
                     df_data_dict = dict()
-                    player_page = await browser.new_page()
-                    await player_page.goto(player_link)
-                    await player_page.wait_for_load_state()
-                    await player_page.wait_for_selector(
-                        '//div[@class="block-market-wrapper"]',
-                        timeout=180000
-                    )
-                    df_data_dict = marathonbet_parse(
-                        await player_page.content(),
-                        marathonbet_url.value + player_link[1:]
-                    )
-                    await player_page.close()
-                    df_data.append(
-                        df_data_dict
-                    )
+                    attempt = 1
+                    while attempt < 3:
+                        try:
+                            player_page = await browser.new_page()
+                            await player_page.goto(player_link)
+                            await player_page.wait_for_load_state()
+                            await player_page.wait_for_selector(
+                                '//div[@class="block-market-wrapper"]',
+                                timeout=180000
+                            )
+                            df_data_dict = marathonbet_parse(
+                                await player_page.content(),
+                                marathonbet_url.value + player_link[1:]
+                            )
+                            await player_page.close()
+                            df_data.append(
+                                df_data_dict
+                            )
+                        except Exception:
+                            attempt += 1
+                            await asyncio.sleep(5)
+                        else:
+                            break
                 await browser.close()
                 if df_data:
                     logger.info(f'Собрано данных: {len(df_data)}')
@@ -167,7 +270,10 @@ async def _parse():
                     df['Дата слепка, МСК'] = now_msk
                     columns = [
                         'Ссылка',
-                        'Название',
+                        'Страна',
+                        'Лига',
+                        'Команда 1',
+                        'Команда 2',
                         'Дата',
                         'Дата слепка, МСК',
                         '1',
@@ -241,11 +347,12 @@ async def _parse():
                     full_df = full_df.sort_values(
                         [
                             'Дата',
-                            'Название',
+                            'Команда 1',
+                            'Команда 2',
                         ],
-                        ascending=[False, True]
+                        ascending=[False, True, True]
                     )
-                    full_df['Double'] = full_df['Название'].duplicated()
+                    full_df['Double'] = full_df[['Команда 1', 'Команда 2']].duplicated()
                     full_df = full_df.reset_index(drop=True)
                     data = np.array(full_df[full_df['Double']].index.values)
                     ddiff = np.diff(data)
@@ -330,6 +437,7 @@ async def parse_manager():
     try:
         if not is_running.is_set():
             is_running.set()
+            marathonbet_url.start()
             response = await _parse()
         else:
             response = PlainTextResponse('В настоящий момент уже парсится сайт.')
@@ -337,6 +445,7 @@ async def parse_manager():
     finally:
         if is_running.is_set():
             is_running.clear()
+        marathonbet_url.stop()
 
 
 @app.get('/parse')
@@ -345,15 +454,32 @@ async def parse():
         return response
 
 
-if __name__ in {"__main__", "__mp_main__"}:
-    ui.page_title('Parser bet')
+async def download():
+    if not is_running.is_set():
+        ui.download.from_url('/parse')
+    else:
+        ui.notify('В данный момент уже запущен процесс парсинга. Дождитесь его окончания, чтобы запустить новый')
+
+
+@ui.page('/parse_page')
+async def parse_page():
+    ui.page_title('Парсер марафонбет')
     ui.input('Ссылка:', value=marathonbet_url.value, on_change=lambda elem: marathonbet_url.new_url(elem.value))
     ui.label('Выберите период')
     ui.radio(
         ['Всё время', '24 часа', 'Сегодня', '12 часов', '6 часов', '2 часа', '1 час'],
         value='24 часа'
     ).props('inline').bind_value(marathonbet_url, 'radio_period')
-    ui.link('Получить excel', '/parse', new_tab=True)
+    ui.label('Количество ссылок: Вычисляем').bind_text(marathonbet_url, 'count_links')
+    ui.label('Обработано ссылок: Вычисляем').bind_text(marathonbet_url, 'count_processed_links')
+    ui.label('Прошло секунд: Вычисляем').bind_text_from(marathonbet_url, 'elapsed_time')
+    ui.label('Осталось секунд: Вычисляем').bind_text_from(marathonbet_url, 'eta')
+    ui.button('Скачать excel', on_click=download)
+
+
+if __name__ in {"__main__", "__mp_main__"}:
+    ui.page_title('Parser bet')
+    ui.link('Получить excel', '/parse_page', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)
     ui.run(
         show=False

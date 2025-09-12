@@ -25,6 +25,22 @@ def get_players_links(page_content):
 def parse(page_content, page_link):
     df_data_dict = dict()
     soup = BeautifulSoup(page_content, 'html.parser')
+    country_name = None
+    league_name = None
+    league_header = soup.find(lambda tag: tag.name == 'h2' and tag.get('class') == ['category-label'])
+    if league_header:
+        league_header_data = [
+            child.text
+            for child in league_header.find_all(
+                lambda tag: tag.name == 'span' and tag.get('class') == ['nowrap']
+            )
+        ]
+        if len(league_header_data) == 2:
+            country_name = league_header_data[0]
+            league_name = league_header_data[1]
+        elif len(league_header_data) > 2:
+            country_name = league_header_data[0]
+            league_name = ' '.join(league_header_data[1:])
     tables = soup.find_all(lambda tag: tag.name == 'table' and tag.get('class') == ['coupon-row-item'])
     for table in tables:
         name_column = table.find('td', attrs={'class': 'first'})
@@ -196,6 +212,12 @@ def parse(page_content, page_link):
     # Голы
     goals_dict = defaultdict(lambda: None)
     if goals:
+        yes_column_exist = bool(goals.find(
+            lambda tag: tag.name == 'th' and tag.get('class') == ['width25'] and tag.span.text == 'Да'
+        ))
+        no_column_exist = bool(goals.find(
+            lambda tag: tag.name == 'th' and tag.get('class') == ['width25'] and tag.span.text == 'Нет'
+        ))
         _all_win = goals.find(lambda tag: tag.text == 'Обе команды забьют')
         if _all_win:
             ALL_win = _all_win.parent
@@ -205,10 +227,15 @@ def parse(page_content, page_link):
                         ['price', 'height-column-with-price']
                     )
                 )
-                goals_dict['ALL_win_yes'], goals_dict['ALL_win_no'] = [
-                    all_win_yes_no.span.text
-                    for all_win_yes_no in ALL_win_yes_no
-                ]
+                if yes_column_exist and no_column_exist:
+                    goals_dict['ALL_win_yes'], goals_dict['ALL_win_no'] = [
+                        all_win_yes_no.span.text
+                        for all_win_yes_no in ALL_win_yes_no
+                    ]
+                elif yes_column_exist:
+                    goals_dict['ALL_win_yes'] = ALL_win_yes_no[0].span.text
+                elif no_column_exist:
+                    goals_dict['ALL_win_no'] = ALL_win_yes_no[0].span.text
 
         _all_times = goals.find(lambda tag: tag.text == 'Голы в обоих таймах')
         if _all_times:
@@ -219,10 +246,15 @@ def parse(page_content, page_link):
                         ['price', 'height-column-with-price']
                     )
                 )
-                goals_dict['ALL_times_yes'], goals_dict['ALL_times_no'] = [
-                    all_times_yes_no.span.text
-                    for all_times_yes_no in ALL_times_yes_no
-                ]
+                if yes_column_exist and no_column_exist:
+                    goals_dict['ALL_times_yes'], goals_dict['ALL_times_no'] = [
+                        all_times_yes_no.span.text
+                        for all_times_yes_no in ALL_times_yes_no
+                    ]
+                elif yes_column_exist:
+                    goals_dict['ALL_times_yes'] = ALL_win_yes_no[0].span.text
+                elif no_column_exist:
+                    goals_dict['ALL_times_no'] = ALL_win_yes_no[0].span.text
 
         _goals_it1_1_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 1-й тайм')
         if _goals_it1_1_time:
@@ -520,7 +552,10 @@ def parse(page_content, page_link):
             times_dict[k] = goals_dict[k]
 
     df_data_dict['Ссылка'] = page_link
-    df_data_dict['Название'] = name
+    df_data_dict['Страна'] = country_name
+    df_data_dict['Лига'] = league_name
+    df_data_dict['Команда 1'] = name_players[0]
+    df_data_dict['Команда 2'] = name_players[1]
     df_data_dict['Дата'] = parse_date_str(date_game) if date_game else None
     df_data_dict['1'] = result_dict['P1']
     df_data_dict['Х'] = result_dict['X']
