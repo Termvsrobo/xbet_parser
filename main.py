@@ -24,6 +24,8 @@ from parsers.marathonbet import parse as marathonbet_parse
 
 logger.add('logs/main.log')
 
+DEBUG = True
+
 
 def get_saved_url():
     url = None
@@ -55,15 +57,31 @@ class MarathonbetURL:
         self._count_processed_links = None
         self._elapsed_time = None
         self._eta = None
+        self._status = None
 
     def start(self):
         self._elapsed_time = time()
 
     def stop(self):
-        self._count_links = None
         self._count_processed_links = None
+        self._count_links = None
         self._elapsed_time = None
         self._eta = None
+        self._status = None
+
+    @property
+    def status(self):
+        if self._status:
+            return f'Статус: {self._status}'
+        else:
+            return 'Статус: --'
+
+    @status.setter
+    def status(self, value: str):
+        if value:
+            self._status = value
+        else:
+            self._status = None
 
     @property
     def elapsed_time(self):
@@ -101,7 +119,7 @@ class MarathonbetURL:
 
     @property
     def count_processed_links(self):
-        if self._count_processed_links:
+        if self._count_processed_links and self._count_links:
             percent = round(self._count_processed_links / self._count_links * 100, 2)
             return f'Обработано ссылок: {str(self._count_processed_links)} ({percent} %)'
         else:
@@ -188,14 +206,18 @@ async def _parse():
             ],
             base_url=marathonbet_url.value,
         )
-        logger.info(f'Открываем {marathonbet_url.value}')
+        msg = f'Открываем {marathonbet_url.value}'
+        logger.info(msg)
+        marathonbet_url.status = msg
         page = await browser.new_page()
         page.set_default_timeout(180000)
         await page.goto('/')
         await page.wait_for_load_state()
         await page.goto('su')
         await page.wait_for_load_state()
-        logger.info('Ждем окончания проверки браузера')
+        msg = 'Ждем окончания проверки браузера'
+        logger.info(msg)
+        marathonbet_url.status = msg
         try:
             while 'Just' in await page.title():
                 await asyncio.sleep(1)
@@ -216,7 +238,9 @@ async def _parse():
                 logger.exception(exc.message)
                 return PlainTextResponse('Вышло время ожидания страницы. Попробуйте позже.')
             else:
-                logger.info(f'Собираем информацию по футболу за {marathonbet_url.radio_period}')
+                msg = f'Собираем список матчей по футболу за {marathonbet_url.radio_period}'
+                logger.info(msg)
+                marathonbet_url.status = msg
                 await page.get_by_text('Футбол').first.click()
                 await page.get_by_text(marathonbet_url.radio_period).first.click()
                 need_scroll = True
@@ -237,6 +261,7 @@ async def _parse():
                 players_links = get_players_links(await page.content())
                 logger.info(f'Количество ссылок: {len(players_links)}')
                 marathonbet_url.count_links = len(players_links)
+                marathonbet_url.status = 'Собираем данные по каждому матчу'
                 for player_link in marathonbet_url.tqdm(players_links):
                     df_data_dict = dict()
                     attempt = 1
@@ -264,7 +289,9 @@ async def _parse():
                             break
                 await browser.close()
                 if df_data:
-                    logger.info(f'Собрано данных: {len(df_data)}')
+                    msg = f'Собрано данных: {len(df_data)}'
+                    logger.info(msg)
+                    marathonbet_url.status = msg
                     df = pd.DataFrame.from_records(df_data)
                     now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
                     df['Дата слепка, МСК'] = now_msk
@@ -332,12 +359,11 @@ async def _parse():
                     df['Дата'] = df['Дата'].dt.tz_localize(None)
                     df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
                     older_data = Path('storage') / Path('older.json')
-                    if older_data.exists():
+                    older_df = pd.DataFrame(columns=columns)
+                    if older_data.exists() and not DEBUG:
                         older_df = pd.read_json(older_data, date_unit='s')
                         older_df['Дата'] = older_df['Дата'].astype('datetime64[s]')
                         older_df['Дата слепка, МСК'] = older_df['Дата слепка, МСК'].astype('datetime64[s]')
-                    else:
-                        older_df = pd.DataFrame(columns=columns)
                     path = f'files/marathonbet_{now_msk.isoformat()}.xlsx'
                     if older_df.empty:
                         full_df = df
@@ -474,6 +500,7 @@ async def parse_page():
     ui.label('Обработано ссылок: Вычисляем').bind_text(marathonbet_url, 'count_processed_links')
     ui.label('Прошло секунд: Вычисляем').bind_text_from(marathonbet_url, 'elapsed_time')
     ui.label('Осталось секунд: Вычисляем').bind_text_from(marathonbet_url, 'eta')
+    ui.label('Статус: Вычисляем').bind_text_from(marathonbet_url, 'status')
     ui.button('Скачать excel', on_click=download)
 
 
