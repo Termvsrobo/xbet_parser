@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse, urlunparse
 
 import httpx
@@ -13,7 +14,6 @@ from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, PlainTextResponse
 from loguru import logger
 from openpyxl.styles import Alignment, Border, Side
-from playwright._impl._errors import TimeoutError as PWTimeoutError
 
 from base import Parser
 
@@ -34,7 +34,97 @@ class XLiteParser(Parser):
             players_links.add(player.attrs.get('href'))
         return players_links
 
-    async def _parse(self, page_link):
+    async def get_all_ids(self, min_offset: Optional[int] = None):
+        result = []
+        params = {
+            'sports': 1,
+            'country': 1,
+            'virtualSports': True,
+            'gr': 285,
+            'groupChamps': True
+        }
+        if min_offset:
+            params['minOffset'] = min_offset
+        async with httpx.AsyncClient(
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
+            }
+        ) as client:
+            scheme, domain, _, _, _, _ = urlparse(self.url)
+            url = urlunparse((
+                scheme,
+                domain,
+                '/service-api/LineFeed/GetSportsShortZip',
+                None,
+                None,
+                None
+            ))
+            response = await client.get(url, params=params)
+            data = response.json()
+            if 'Value' in data:
+                data_value = data['Value']
+                football_data = next(filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, data_value), None)
+                list_champs = list(map(lambda x: x.get('LI'), filter(lambda x: 'SC' not in x, football_data['L'])))
+                added_list_champs = [
+                    sc.get('LI')
+                    for i in filter(lambda x: 'SC' in x, football_data['L'])
+                    for sc in i.get('SC', [])
+                ]
+                params = {
+                    'sports': 1,
+                    'champs': ','.join(map(str, sorted(list_champs))),
+                    'country': 1,
+                    'virtualSports': True,
+                    'gr': 285,
+                    'groupChamps': True
+                }
+                if min_offset:
+                    params['minOffset'] = min_offset
+                list_champs_response = await client.get(
+                    url,
+                    params=params
+                )
+                if list_champs_response.status_code == 200:
+                    list_champs_data = list_champs_response.json()
+                    if 'Value' in list_champs_data:
+                        list_champs_data = list_champs_data['Value']
+                        _list_champs_data = next(
+                            filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, list_champs_data),
+                            None
+                        )
+                        for l_list in _list_champs_data.get('L', []):
+                            for g_list in l_list.get('G', []):
+                                ci = g_list.get('CI')
+                                if ci:
+                                    result.append(ci)
+                for li in sorted(added_list_champs):
+                    params = {
+                        'sports': 1,
+                        'champs': li,
+                        'country': 1,
+                    }
+                    if min_offset:
+                        params['minOffset'] = min_offset
+                    champ_response = await client.get(
+                        url,
+                        params=params
+                    )
+                    if champ_response.status_code == 200:
+                        champ_data = champ_response.json()
+                        if 'Value' in champ_data:
+                            champ_value = champ_data['Value']
+                            _champ_data = next(
+                                filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, champ_value),
+                                None
+                            )
+                            for l_list in _champ_data.get('L', []):
+                                for g_list in l_list.get('G', []):
+                                    ci = g_list.get('CI')
+                                    if ci:
+                                        result.append(ci)
+        return sorted(result)
+
+    async def _parse(self, page_id):
         result_dict = defaultdict(lambda: None)
         country_name = None
         league_name = None
@@ -93,19 +183,31 @@ class XLiteParser(Parser):
             },
         }
         df_data_dict = dict()
-        page_id = self.get_page_id(page_link)
         async with httpx.AsyncClient() as client:
             if page_id:
-                scheme, domain, _, _, _, _ = urlparse(page_link)
+                scheme, domain, _, _, _, _ = urlparse(self.url)
                 url = urlunparse((
                     scheme,
                     domain,
                     '/service-api/LineFeed/GetGameZip',
                     None,
-                    f'id={page_id}&isSubGames=true&GroupEvents=true&countevents=750&grMode=4&topGroups=&country=1&marketType=1&isNewBuilder=true',  # noqa:E501
+                    None,
                     None
                 ))
-                response = await client.get(url)
+                response = await client.get(
+                    url,
+                    params={
+                        'id': page_id,
+                        'isSubGames': True,
+                        'GroupEvents': True,
+                        'countevents': 750,
+                        'grMode': 4,
+                        'topGroups': '',
+                        'country': 1,
+                        'marketType': 1,
+                        'isNewBuilder': True
+                    }
+                )
                 data = response.json()
                 data_value = data['Value']
                 if data_value:
@@ -136,15 +238,20 @@ class XLiteParser(Parser):
                     )
                     if first_time_page_id:
                         first_time_page_id = first_time_page_id['CI']
-                        first_time_url = urlunparse((
-                            scheme,
-                            domain,
-                            '/service-api/LineFeed/GetGameZip',
-                            None,
-                            f'id={first_time_page_id}&isSubGames=true&GroupEvents=true&countevents=750&grMode=4&topGroups=&country=1&marketType=1&isNewBuilder=true',  # noqa:E501
-                            None
-                        ))
-                        first_time_response = await client.get(first_time_url)
+                        first_time_response = await client.get(
+                            url,
+                            params={
+                                'id': first_time_page_id,
+                                'isSubGames': True,
+                                'GroupEvents': True,
+                                'countevents': 1750,
+                                'grMode': 4,
+                                'topGroups': '',
+                                'country': 1,
+                                'marketType': 1,
+                                'isNewBuilder': True
+                            }
+                        )
                         first_time_data = first_time_response.json()
                         first_time_data_value = first_time_data['Value']
                         if first_time_data_value:
@@ -166,15 +273,20 @@ class XLiteParser(Parser):
                     )
                     if second_time_page_id:
                         second_time_page_id = second_time_page_id['CI']
-                        second_time_url = urlunparse((
-                            scheme,
-                            domain,
-                            '/service-api/LineFeed/GetGameZip',
-                            None,
-                            f'id={second_time_page_id}&isSubGames=true&GroupEvents=true&countevents=1750&grMode=4&topGroups=&country=1&marketType=1&isNewBuilder=true',  # noqa:E501
-                            None
-                        ))
-                        second_time_response = await client.get(second_time_url)
+                        second_time_response = await client.get(
+                            url,
+                            params={
+                                'id': second_time_page_id,
+                                'isSubGames': True,
+                                'GroupEvents': True,
+                                'countevents': 750,
+                                'grMode': 4,
+                                'topGroups': '',
+                                'country': 1,
+                                'marketType': 1,
+                                'isNewBuilder': True
+                            }
+                        )
                         second_time_data = second_time_response.json()
                         second_time_data_value = second_time_data['Value']
                         if second_time_data_value:
@@ -190,7 +302,7 @@ class XLiteParser(Parser):
                                             if row.get('P', 0) == _p:
                                                 result_dict['2_time_' + _k] = row['C']
 
-            df_data_dict['Ссылка'] = page_link
+            df_data_dict['Ссылка'] = f'ID матча: {page_id}'
             df_data_dict['Страна'] = country_name
             df_data_dict['Лига'] = league_name
             df_data_dict['Команда 1'] = name_players[0]
@@ -262,94 +374,27 @@ class XLiteParser(Parser):
         msg = f'Открываем {self.url}'
         logger.info(msg)
         self.status = msg
-        page = await browser.new_page()
-        await page.goto('/ru/line')
-        await page.wait_for_load_state()
-        await page.wait_for_selector(
-            '//div[@class="sports-menu sports-menu-main-full--theme-gray-30 sports-menu-main-full sports-menu-main"]',
-        )
-        await page.wait_for_selector(
-            '//span[@class="ui-nav-link-caption__label" and text()=" Топ Игры "]',
-        )
-        await page.wait_for_selector(
-            '//span[@class="ui-caption--size-m ui-caption" and text()="За всё время"]',
-        )
-        football_locators = await page.get_by_text('Футбол').all()
-        for football_locator in football_locators:
-            if await football_locator.get_attribute('class') == 'ui-nav-link-caption__label':
-                await football_locator.scroll_into_view_if_needed()
-                await football_locator.first.click()
-                await page.wait_for_load_state()
-                await page.wait_for_timeout(2500)
-                break
-        period_locator = page.locator(
-            '//span[@class="ui-caption--size-m ui-caption" and text()="За всё время"]',
-        )
-        if self.radio_period != 'За всё время':
-            await period_locator.scroll_into_view_if_needed()
-            await period_locator.first.click()
-            hourly_locator = page.locator(
-                '//span[@class="ui-caption--size-m ui-caption" and text()="По часам"]',
-            )
-            await hourly_locator.scroll_into_view_if_needed()
-            await hourly_locator.first.click()
-            option_locator = page.locator(
-                f'//span[@class="ui-caption--size-m ui-caption ui-option__caption" and text()="{self.radio_period}"]',
-            )
-            await option_locator.scroll_into_view_if_needed()
-            await option_locator.first.click()
-        for li_classes in (
-            'ui-nav-item sports-menu-app-champ-group sports-menu-group-by-champ',
-            'ui-nav-item sports-menu-app-champ-with-sub-champs-group sports-menu-group-by-champ',
-            'ui-nav-item sports-menu-app-champ-group sports-menu-app-champ-with-sub-champs-group__item'
-        ):
-            try:
-                await page.wait_for_selector(
-                    f'//li[@class="{li_classes}"]',
-                    timeout=2500
-                )
-            except PWTimeoutError:
-                continue
-            else:
-                li_locator = page.locator(
-                    f'//li[@class="{li_classes}"]',
-                )
-                li_elements = await li_locator.all()
-                for li_element in li_elements:
-                    try:
-                        if await li_element.get_attribute('class') == li_classes:
-                            await li_element.scroll_into_view_if_needed()
-                            await li_element.click()
-                            await page.wait_for_timeout(2500)
-                            await page.wait_for_load_state()
-                    except PWTimeoutError:
-                        continue
-        need_scroll = True
-        attempts = 5
-        content = ''
-        while need_scroll:
-            await page.mouse.wheel(0, 1080)
-            await page.wait_for_load_state()
-            await page.wait_for_timeout(2000)
-            if content == await page.content():
-                if attempts:
-                    attempts -= 1
-                else:
-                    need_scroll = False
-            else:
-                content = await page.content()
+        min_offset_values = {
+            'За всё время': None,
+            'Ближайшие 24 часа': 24 * 60,
+            'Ближайшие 12 часов': 12 * 60,
+            'Ближайшие 6 часов': 6 * 60,
+            'Ближайшие 2 часа': 2 * 60,
+            'Ближайший час': 60,
+        }
+        min_offset = min_offset_values.get(self.radio_period)
+        ids = await self.get_all_ids(min_offset)
         df_data = []
-        players_links = self.get_players_links(await page.content())
-        logger.info(f'Количество ссылок: {len(players_links)}')
-        self.count_links = len(players_links)
+        logger.info(f'Количество ссылок: {len(ids)}')
+        self.count_links = len(ids)
         self.status = 'Собираем данные по каждому матчу'
-        for player_link in self.tqdm(players_links):
+        for page_id in self.tqdm(ids):
             df_data_dict = dict()
             attempt = 1
             while attempt < 3:
                 try:
                     df_data_dict = await self._parse(
-                        self.url + player_link[1:]
+                        page_id
                     )
                     df_data.append(
                         df_data_dict
