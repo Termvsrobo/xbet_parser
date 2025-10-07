@@ -3,7 +3,7 @@ from threading import Event
 from nicegui import app, ui
 
 from base import BrowserManager
-from beta_baza import parse_bet_baza
+from beta_baza import parse_bet_baza  # noqa:F401
 from parsers.marathonbet import MarathonbetParser
 from parsers.xlite import XLiteParser
 

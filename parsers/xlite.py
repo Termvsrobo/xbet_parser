@@ -2,37 +2,17 @@ import asyncio
 import re
 from collections import defaultdict
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
-import numpy as np
-import pandas as pd
-import pytz
-from bs4 import BeautifulSoup
-from fastapi.responses import FileResponse, PlainTextResponse
-from loguru import logger
-from openpyxl.styles import Alignment, Border, Side
 
 from base import Parser
 
-logger.add('logs/xlite.log')
-
-DEBUG = True
-
 
 class XLiteParser(Parser):
-    def get_players_links(self, page_content):
-        soup = BeautifulSoup(page_content, 'html.parser')
-        players_links = set()
-        players = soup.find_all(
-            lambda tag: tag.name == 'a'
-            and tag.get('class') == ['ui-sports-event__link']
-        )
-        for player in players:
-            players_links.add(player.attrs.get('href'))
-        return players_links
+    def parser_log_filter(self, record):
+        return __name__ == record['name']
 
     async def get_all_ids(self, min_offset: Optional[int] = None):
         result = []
@@ -140,8 +120,8 @@ class XLiteParser(Parser):
             },
             2: {
                 3: {
-                    7: ('F1_0', {'default': 0, 'times': 0}),
-                    8: ('F2_0', {'default': 0, 'times': 0}),
+                    7: {'F1': {'default': [-1.5, -1.0, 0, +1.0, +1.5], 'times': [-1.0, 0, +1.0]}},
+                    8: {'F2': {'default': [-1.5, -1.0, 0, +1.0, +1.5], 'times': [-1.0, 0, +1.0]}},
                 }
             },
             8: {
@@ -153,14 +133,14 @@ class XLiteParser(Parser):
             },
             15: {
                 5: {
-                    11: ('IT1_bol', {'default': 1.5, 'times': 0.5}),
-                    12: ('IT1_men', {'default': 1.5, 'times': 0.5}),
+                    11: {'IT1_bol': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
+                    12: {'IT1_men': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
                 }
             },
             17: {
                 4: {
-                    9: ('TB', {'default': 2.5, 'times': 1.5}),
-                    10: ('TM', {'default': 2.5, 'times': 1.5}),
+                    9: {'TB': {'default': [1.5, 2.0, 2.5, 3.0, 3.5], 'times': [0.5, 1.0, 1.5, 2.0, 2.5]}},
+                    10: {'TM': {'default': [1.5, 2.0, 2.5, 3.0, 3.5], 'times': [0.5, 1.0, 1.5, 2.0, 2.5]}},
                 }
             },
             19: {
@@ -177,8 +157,8 @@ class XLiteParser(Parser):
             },
             62: {
                 6: {
-                    13: ('IT2_bol', {'default': 1.5, 'times': 0.5}),
-                    14: ('IT2_men', {'default': 1.5, 'times': 0.5}),
+                    13: {'IT2_bol': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
+                    14: {'IT2_men': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
                 }
             },
         }
@@ -220,17 +200,25 @@ class XLiteParser(Parser):
                         league_name = ' '.join(league_header_data[1:])
                     name_players = [data_value['O1'], data_value['O2']]
                     date_game = datetime.fromtimestamp(data_value['S'])
+                    page_link_parent = ' '.join([str(data_value['LI']), data_value['LE']])
+                    page_link_parent = page_link_parent.replace('.', '').replace(' ', '-').lower()
+                    page_link_match = ' '.join([str(page_id), data_value['O1E'], data_value['O2E']])
+                    page_link_match = page_link_match.replace('.', '').replace(' ', '-').lower()
+                    page_link = urljoin(
+                        urlunparse((scheme, domain, 'ru/line/football/', None, None, None)),
+                        urljoin(page_link_parent+'/', page_link_match)
+                    )
                     for ge in data_value['GE']:
                         for e in ge['E']:
                             for row in e:
                                 key = keys.get(row['G'], {}).get(row['GS'], {}).get(row['T'])
                                 if isinstance(key, str):
                                     result_dict[key] = row['C']
-                                elif isinstance(key, tuple):
-                                    _k, _p = key
-                                    _p = _p['default']
-                                    if row.get('P', 0) == _p:
-                                        result_dict[_k] = row['C']
+                                elif isinstance(key, dict):
+                                    for _k, _v in key.items():
+                                        for _p in _v['default']:
+                                            if row.get('P', 0) == _p:
+                                                result_dict[f'{_k}_{str(_p).replace('.', '')}'] = row['C']
 
                     first_time_page_id = next(
                         filter(lambda x: x['PN'] == '1-й тайм' and not x['TG'], data_value.get('SG', [])),
@@ -261,11 +249,12 @@ class XLiteParser(Parser):
                                         key = keys.get(row['G'], {}).get(row['GS'], {}).get(row['T'])
                                         if isinstance(key, str):
                                             result_dict['1_time_' + key] = row['C']
-                                        elif isinstance(key, tuple):
-                                            _k, _p = key
-                                            _p = _p['times']
-                                            if row.get('P', 0) == _p:
-                                                result_dict['1_time_' + _k] = row['C']
+                                        elif isinstance(key, dict):
+                                            for _k, _v in key.items():
+                                                for _p in _v['times']:
+                                                    if row.get('P', 0) == _p:
+                                                        sub_key = f'1_time_{_k}_{str(_p).replace('.', '')}'
+                                                        result_dict[sub_key] = row['C']
 
                     second_time_page_id = next(
                         filter(lambda x: x['PN'] == '2-й тайм' and not x['TG'], data_value.get('SG', [])),
@@ -296,13 +285,14 @@ class XLiteParser(Parser):
                                         key = keys.get(row['G'], {}).get(row['GS'], {}).get(row['T'])
                                         if isinstance(key, str):
                                             result_dict['2_time_' + key] = row['C']
-                                        elif isinstance(key, tuple):
-                                            _k, _p = key
-                                            _p = _p['times']
-                                            if row.get('P', 0) == _p:
-                                                result_dict['2_time_' + _k] = row['C']
+                                        elif isinstance(key, dict):
+                                            for _k, _v in key.items():
+                                                for _p in _v['times']:
+                                                    if row.get('P', 0) == _p:
+                                                        sub_key = f'2_time_{_k}_{str(_p).replace('.', '')}'
+                                                        result_dict[sub_key] = row['C']
 
-            df_data_dict['Ссылка'] = f'ID матча: {page_id}'
+            df_data_dict['Ссылка'] = page_link
             df_data_dict['Страна'] = country_name
             df_data_dict['Лига'] = league_name
             df_data_dict['Команда 1'] = name_players[0]
@@ -314,14 +304,38 @@ class XLiteParser(Parser):
             df_data_dict['1Х'] = result_dict['_1X']
             df_data_dict['12'] = result_dict['_12']
             df_data_dict['Х2'] = result_dict['_2X']
+            df_data_dict['Ф1(-1.5)'] = result_dict['F1_-15']
+            df_data_dict['Ф1(-1.0)'] = result_dict['F1_-10']
             df_data_dict['Ф1(0)'] = result_dict['F1_0']
+            df_data_dict['Ф1(+1.0)'] = result_dict['F1_10']
+            df_data_dict['Ф1(+1.5)'] = result_dict['F1_15']
+            df_data_dict['Ф2(-1.5)'] = result_dict['F2_-15']
+            df_data_dict['Ф2(-1.0)'] = result_dict['F2_-10']
             df_data_dict['Ф2(0)'] = result_dict['F2_0']
-            df_data_dict['ТМ(2.5)'] = result_dict['TM']
-            df_data_dict['ТБ(2.5)'] = result_dict['TB']
-            df_data_dict['ИТМ1(1.5)'] = result_dict['IT1_men']
-            df_data_dict['ИТБ1(1.5)'] = result_dict['IT1_bol']
-            df_data_dict['ИТМ2(1.5)'] = result_dict['IT2_men']
-            df_data_dict['ИТБ2(1.5)'] = result_dict['IT2_bol']
+            df_data_dict['Ф2(+1.0)'] = result_dict['F2_10']
+            df_data_dict['Ф2(+1.5)'] = result_dict['F2_15']
+            df_data_dict['ТМ(1.5)'] = result_dict['TM_15']
+            df_data_dict['ТМ(2.0)'] = result_dict['TM_20']
+            df_data_dict['ТМ(2.5)'] = result_dict['TM_25']
+            df_data_dict['ТМ(3.0)'] = result_dict['TM_30']
+            df_data_dict['ТМ(3.5)'] = result_dict['TM_35']
+            df_data_dict['ТБ(1.5)'] = result_dict['TB_15']
+            df_data_dict['ТБ(2.0)'] = result_dict['TB_20']
+            df_data_dict['ТБ(2.5)'] = result_dict['TB_25']
+            df_data_dict['ТБ(3.0)'] = result_dict['TB_30']
+            df_data_dict['ТБ(3.5)'] = result_dict['TB_35']
+            df_data_dict['ИТМ1(1.0)'] = result_dict['IT1_men_10']
+            df_data_dict['ИТМ1(1.5)'] = result_dict['IT1_men_15']
+            df_data_dict['ИТМ1(2.0)'] = result_dict['IT1_men_20']
+            df_data_dict['ИТБ1(1.0)'] = result_dict['IT1_bol_10']
+            df_data_dict['ИТБ1(1.5)'] = result_dict['IT1_bol_15']
+            df_data_dict['ИТБ1(2.0)'] = result_dict['IT1_bol_20']
+            df_data_dict['ИТМ2(1.0)'] = result_dict['IT2_men_10']
+            df_data_dict['ИТМ2(1.5)'] = result_dict['IT2_men_15']
+            df_data_dict['ИТМ2(2.0)'] = result_dict['IT2_men_20']
+            df_data_dict['ИТБ2(1.0)'] = result_dict['IT2_bol_10']
+            df_data_dict['ИТБ2(1.5)'] = result_dict['IT2_bol_15']
+            df_data_dict['ИТБ2(2.0)'] = result_dict['IT2_bol_20']
             df_data_dict['ОЗ Да'] = result_dict['ALL_win_yes']
             df_data_dict['ОЗ Нет'] = result_dict['ALL_win_no']
             df_data_dict['Гол оба тайма Да'] = result_dict['ALL_times_yes']
@@ -333,14 +347,34 @@ class XLiteParser(Parser):
             df_data_dict['_1_1Х'] = result_dict['1_time__1X']
             df_data_dict['_1_12'] = result_dict['1_time__12']
             df_data_dict['_1_Х2'] = result_dict['1_time__2X']
+            df_data_dict['_1_Ф1(-1.0)'] = result_dict['1_time_F1_-10']
             df_data_dict['_1_Ф1(0)'] = result_dict['1_time_F1_0']
+            df_data_dict['_1_Ф1(+1.0)'] = result_dict['1_time_F1_10']
+            df_data_dict['_1_Ф2(-1.0)'] = result_dict['1_time_F2_-10']
             df_data_dict['_1_Ф2(0)'] = result_dict['1_time_F2_0']
-            df_data_dict['_1_ТМ(1.5)'] = result_dict['1_time_TM']
-            df_data_dict['_1_ТБ(1.5)'] = result_dict['1_time_TB']
-            df_data_dict['_1_ИТМ1(0.5)'] = result_dict['1_time_IT1_men']
-            df_data_dict['_1_ИТБ1(0.5)'] = result_dict['1_time_IT1_bol']
-            df_data_dict['_1_ИТМ2(0.5)'] = result_dict['1_time_IT2_men']
-            df_data_dict['_1_ИТБ2(0.5)'] = result_dict['1_time_IT2_bol']
+            df_data_dict['_1_Ф2(+1.0)'] = result_dict['1_time_F2_10']
+            df_data_dict['_1_ТМ(0.5)'] = result_dict['1_time_TM_05']
+            df_data_dict['_1_ТМ(1.0)'] = result_dict['1_time_TM_10']
+            df_data_dict['_1_ТМ(1.5)'] = result_dict['1_time_TM_15']
+            df_data_dict['_1_ТМ(2.0)'] = result_dict['1_time_TM_20']
+            df_data_dict['_1_ТМ(2.5)'] = result_dict['1_time_TM_25']
+            df_data_dict['_1_ТБ(0.5)'] = result_dict['1_time_TB_05']
+            df_data_dict['_1_ТБ(1.0)'] = result_dict['1_time_TB_10']
+            df_data_dict['_1_ТБ(1.5)'] = result_dict['1_time_TB_15']
+            df_data_dict['_1_ТБ(2.0)'] = result_dict['1_time_TB_20']
+            df_data_dict['_1_ТБ(2.5)'] = result_dict['1_time_TB_25']
+            df_data_dict['_1_ИТМ1(0.5)'] = result_dict['1_time_IT1_men_05']
+            df_data_dict['_1_ИТМ1(1.0)'] = result_dict['1_time_IT1_men_10']
+            df_data_dict['_1_ИТМ1(1.5)'] = result_dict['1_time_IT1_men_15']
+            df_data_dict['_1_ИТБ1(0.5)'] = result_dict['1_time_IT1_bol_05']
+            df_data_dict['_1_ИТБ1(1.0)'] = result_dict['1_time_IT1_bol_10']
+            df_data_dict['_1_ИТБ1(1.5)'] = result_dict['1_time_IT1_bol_15']
+            df_data_dict['_1_ИТМ2(0.5)'] = result_dict['1_time_IT2_men_05']
+            df_data_dict['_1_ИТМ2(1.0)'] = result_dict['1_time_IT2_men_10']
+            df_data_dict['_1_ИТМ2(1.5)'] = result_dict['1_time_IT2_men_15']
+            df_data_dict['_1_ИТБ2(0.5)'] = result_dict['1_time_IT2_bol_05']
+            df_data_dict['_1_ИТБ2(1.0)'] = result_dict['1_time_IT2_bol_10']
+            df_data_dict['_1_ИТБ2(1.5)'] = result_dict['1_time_IT2_bol_15']
 
             df_data_dict['_2_1'] = result_dict['2_time_P1']
             df_data_dict['_2_Х'] = result_dict['2_time_X']
@@ -348,14 +382,34 @@ class XLiteParser(Parser):
             df_data_dict['_2_1Х'] = result_dict['2_time__1X']
             df_data_dict['_2_12'] = result_dict['2_time__12']
             df_data_dict['_2_Х2'] = result_dict['2_time__2X']
+            df_data_dict['_2_Ф1(-1.0)'] = result_dict['2_time_F1_-10']
             df_data_dict['_2_Ф1(0)'] = result_dict['2_time_F1_0']
+            df_data_dict['_2_Ф1(+1.0)'] = result_dict['2_time_F1_10']
+            df_data_dict['_2_Ф2(-1.0)'] = result_dict['2_time_F2_-10']
             df_data_dict['_2_Ф2(0)'] = result_dict['2_time_F2_0']
-            df_data_dict['_2_ТМ(1.5)'] = result_dict['2_time_TM']
-            df_data_dict['_2_ТБ(1.5)'] = result_dict['2_time_TB']
-            df_data_dict['_2_ИТМ1(0.5)'] = result_dict['2_time_IT1_men']
-            df_data_dict['_2_ИТБ1(0.5)'] = result_dict['2_time_IT1_bol']
-            df_data_dict['_2_ИТМ2(0.5)'] = result_dict['2_time_IT2_men']
-            df_data_dict['_2_ИТБ2(0.5)'] = result_dict['2_time_IT2_bol']
+            df_data_dict['_2_Ф2(+1.0)'] = result_dict['2_time_F2_10']
+            df_data_dict['_2_ТМ(0.5)'] = result_dict['2_time_TM_05']
+            df_data_dict['_2_ТМ(1.0)'] = result_dict['2_time_TM_10']
+            df_data_dict['_2_ТМ(1.5)'] = result_dict['2_time_TM_15']
+            df_data_dict['_2_ТМ(2.0)'] = result_dict['2_time_TM_20']
+            df_data_dict['_2_ТМ(2.5)'] = result_dict['2_time_TM_25']
+            df_data_dict['_2_ТБ(0.5)'] = result_dict['2_time_TB_05']
+            df_data_dict['_2_ТБ(1.0)'] = result_dict['2_time_TB_10']
+            df_data_dict['_2_ТБ(1.5)'] = result_dict['2_time_TB_15']
+            df_data_dict['_2_ТБ(2.0)'] = result_dict['2_time_TB_20']
+            df_data_dict['_2_ТБ(2.5)'] = result_dict['2_time_TB_25']
+            df_data_dict['_2_ИТМ1(0.5)'] = result_dict['2_time_IT1_men_05']
+            df_data_dict['_2_ИТМ1(1.0)'] = result_dict['2_time_IT1_men_10']
+            df_data_dict['_2_ИТМ1(1.5)'] = result_dict['2_time_IT1_men_15']
+            df_data_dict['_2_ИТБ1(0.5)'] = result_dict['2_time_IT1_bol_05']
+            df_data_dict['_2_ИТБ1(1.0)'] = result_dict['2_time_IT1_bol_10']
+            df_data_dict['_2_ИТБ1(1.5)'] = result_dict['2_time_IT1_bol_15']
+            df_data_dict['_2_ИТМ2(0.5)'] = result_dict['2_time_IT2_men_05']
+            df_data_dict['_2_ИТМ2(1.0)'] = result_dict['2_time_IT2_men_10']
+            df_data_dict['_2_ИТМ2(1.5)'] = result_dict['2_time_IT2_men_15']
+            df_data_dict['_2_ИТБ2(0.5)'] = result_dict['2_time_IT2_bol_05']
+            df_data_dict['_2_ИТБ2(1.0)'] = result_dict['2_time_IT2_bol_10']
+            df_data_dict['_2_ИТБ2(1.5)'] = result_dict['2_time_IT2_bol_15']
 
         return df_data_dict
 
@@ -370,9 +424,10 @@ class XLiteParser(Parser):
         return result
 
     async def parse(self, browser):
+        await browser.close()
         result = None
         msg = f'Открываем {self.url}'
-        logger.info(msg)
+        self.logger.info(msg)
         self.status = msg
         min_offset_values = {
             'За всё время': None,
@@ -385,7 +440,7 @@ class XLiteParser(Parser):
         min_offset = min_offset_values.get(self.radio_period)
         ids = await self.get_all_ids(min_offset)
         df_data = []
-        logger.info(f'Количество ссылок: {len(ids)}')
+        self.logger.info(f'Количество ссылок: {len(ids)}')
         self.count_links = len(ids)
         self.status = 'Собираем данные по каждому матчу'
         for page_id in self.tqdm(ids):
@@ -401,176 +456,9 @@ class XLiteParser(Parser):
                     )
                 except Exception:
                     attempt += 1
-                    logger.exception('Ошибка')
+                    self.logger.exception('Ошибка')
                     await asyncio.sleep(5)
                 else:
                     break
-        await browser.close()
-        if df_data:
-            msg = f'Собрано данных: {len(df_data)}'
-            logger.info(msg)
-            self.status = msg
-            df = pd.DataFrame.from_records(df_data)
-            now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
-            df['Дата слепка, МСК'] = now_msk
-            columns = [
-                'Ссылка',
-                'Страна',
-                'Лига',
-                'Команда 1',
-                'Команда 2',
-                'Дата',
-                'Дата слепка, МСК',
-                '1',
-                'Х',
-                '2',
-                '1Х',
-                '12',
-                'Х2',
-                'Ф1(0)',
-                'Ф2(0)',
-                'ТМ(2.5)',
-                'ТБ(2.5)',
-                'ИТМ1(1.5)',
-                'ИТБ1(1.5)',
-                'ИТМ2(1.5)',
-                'ИТБ2(1.5)',
-                'ОЗ Да',
-                'ОЗ Нет',
-                'Гол оба тайма Да',
-                'Гол оба тайма Нет',
-                '_1_1',
-                '_1_Х',
-                '_1_2',
-                '_1_1Х',
-                '_1_12',
-                '_1_Х2',
-                '_1_Ф1(0)',
-                '_1_Ф2(0)',
-                '_1_ТМ(1.5)',
-                '_1_ТБ(1.5)',
-                '_1_ИТМ1(0.5)',
-                '_1_ИТБ1(0.5)',
-                '_1_ИТМ2(0.5)',
-                '_1_ИТБ2(0.5)',
-                '_2_1',
-                '_2_Х',
-                '_2_2',
-                '_2_1Х',
-                '_2_12',
-                '_2_Х2',
-                '_2_Ф1(0)',
-                '_2_Ф2(0)',
-                '_2_ТМ(1.5)',
-                '_2_ТБ(1.5)',
-                '_2_ИТМ1(0.5)',
-                '_2_ИТБ1(0.5)',
-                '_2_ИТМ2(0.5)',
-                '_2_ИТБ2(0.5)',
-            ]
-            df = df.reindex(columns=columns)
-            value_columns_start = columns.index('1')
-            # решаем проблему округления числа 1.285 в 1.29, а не 1.28 путем прибавления 0.0001
-            df.iloc[:, value_columns_start:] = (
-                df.iloc[:, value_columns_start:].astype(np.float64) + pow(10, -4)
-            ).round(2)
-            df['Дата'] = df['Дата'].dt.tz_localize(None)
-            df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
-            older_data = Path('storage') / Path('older.json')
-            older_df = pd.DataFrame(columns=columns)
-            if older_data.exists() and not DEBUG:
-                older_df = pd.read_json(older_data, date_unit='s')
-                older_df['Дата'] = older_df['Дата'].astype('datetime64[s]')
-                older_df['Дата слепка, МСК'] = older_df['Дата слепка, МСК'].astype('datetime64[s]')
-            path = f'files/xbet_{now_msk.isoformat()}.xlsx'
-            if older_df.empty:
-                full_df = df
-            else:
-                full_df = pd.concat((df, older_df))
-            full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
-            full_df = full_df.sort_values(
-                [
-                    'Дата',
-                    'Команда 1',
-                    'Команда 2',
-                ],
-                ascending=[False, True, True]
-            )
-            full_df['Double'] = full_df[['Команда 1', 'Команда 2']].duplicated()
-            full_df = full_df.reset_index(drop=True)
-            data = np.array(full_df[full_df['Double']].index.values)
-            ddiff = np.diff(data)
-            subArrays = np.split(data, np.where(ddiff != 1)[0]+1)
-
-            with pd.ExcelWriter(path, datetime_format='%d.%m.%y %H:%M') as writer:
-                full_df.to_excel(writer, index=False, startrow=1, columns=columns)
-                workbook = writer.book
-
-                sheet = workbook.active
-                for i in range(1, sheet.max_column + 1):
-                    sheet.cell(2, i).alignment = Alignment(text_rotation=90)
-
-                match_index_start = columns.index('1') + 1
-                first_time_index_start = columns.index('_1_1') + 1
-                second_time_index_start = columns.index('_2_1') + 1
-
-                match_index_end = first_time_index_start - 1
-                first_time_index_end = second_time_index_start - 1
-                second_time_index_end = len(columns)
-
-                thin_border = Border(
-                    left=Side(style='thin'),
-                    right=Side(style='thin'),
-                    top=Side(style='thin'),
-                    bottom=Side(style='thin')
-                )
-
-                sheet.merge_cells(
-                    start_row=1,
-                    end_row=1,
-                    start_column=match_index_start,
-                    end_column=match_index_end
-                )
-                sheet.cell(1, match_index_start).value = 'Матч'
-                sheet.cell(1, match_index_start).alignment = Alignment(horizontal='center')
-                sheet.cell(1, match_index_start).border = thin_border
-
-                sheet.merge_cells(
-                    start_row=1,
-                    end_row=1,
-                    start_column=first_time_index_start,
-                    end_column=first_time_index_end
-                )
-                sheet.cell(1, first_time_index_start).value = '1 тайм'
-                sheet.cell(1, first_time_index_start).alignment = Alignment(horizontal='center')
-                sheet.cell(1, first_time_index_start).border = thin_border
-
-                sheet.merge_cells(
-                    start_row=1,
-                    end_row=1,
-                    start_column=second_time_index_start,
-                    end_column=second_time_index_end
-                )
-                sheet.cell(1, second_time_index_start).value = '2 тайм'
-                sheet.cell(1, second_time_index_start).alignment = Alignment(horizontal='center')
-                sheet.cell(1, second_time_index_start).border = thin_border
-
-                for i in range(first_time_index_start, first_time_index_end + 2):
-                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_1_', '')
-
-                for i in range(second_time_index_start, second_time_index_end + 2):
-                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_2_', '')
-
-                for subArray in subArrays:
-                    if subArray.size > 0:
-                        sheet.row_dimensions.group(subArray[0] + 3, subArray[-1] + 3, hidden=True)
-
-                workbook.save(path)
-            full_df.to_json(older_data, date_unit='s', date_format='iso')
-            result = FileResponse(
-                path=path,
-                filename=path
-            )
-        else:
-            return PlainTextResponse('Не собрали данных')
+        result = self.get_file_response(df_data=df_data)
         return result

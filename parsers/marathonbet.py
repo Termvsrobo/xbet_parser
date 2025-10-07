@@ -1,24 +1,13 @@
 import asyncio
 from collections import defaultdict
-from datetime import datetime
-from pathlib import Path
 from urllib.parse import urlparse
 
-import numpy as np
-import pandas as pd
-import pytz
 from bs4 import BeautifulSoup
-from fastapi.responses import FileResponse, PlainTextResponse
-from loguru import logger
-from openpyxl.styles import Alignment, Border, Side
+from fastapi.responses import PlainTextResponse
 from playwright._impl._errors import Error, TimeoutError
 
 from base import Parser
 from utils import parse_date_str
-
-logger.add('logs/marathonbet.log')
-
-DEBUG = True
 
 
 def get_players_links(page_content):
@@ -140,13 +129,22 @@ def parse(page_content, page_link):
         table_data = [t.find_all('td') for t in head_starts_table.tbody.find_all('tr')]
         left_table_data = [t[0] for t in table_data if t]
         right_table_data = [t[1] for t in table_data if t]
-        for key, table in (
-            ('F1_0', left_table_data),
-            ('F2_0', right_table_data),
+        for key, table, coeff in (
+            ('F1_-15', left_table_data, '(-1.5)'),
+            ('F1_-10', left_table_data, '(-1.0)'),
+            ('F1_0', left_table_data, '(0)'),
+            ('F1_+10', left_table_data, '(+1.0)'),
+            ('F1_+15', left_table_data, '(+1.5)'),
+            # ------------------------------------
+            ('F2_-15', right_table_data, '(-1.5)'),
+            ('F2_-10', right_table_data, '(-1.0)'),
+            ('F2_0', right_table_data, '(0)'),
+            ('F2_+10', right_table_data, '(+1.0)'),
+            ('F2_+15', right_table_data, '(+1.5)'),
         ):
             for td in table:
                 _td = td.find(
-                    lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0)' in tag.text
+                    lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                 )
                 if _td:
                     head_starts_dict[key] = _td.find_next_sibling().span.text
@@ -176,13 +174,22 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in totals_table.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('TM_25', left_table_data),
-                ('TB_25', right_table_data),
+            for key, table, coeff in (
+                ('TM_15', left_table_data, '(1.5)'),
+                ('TM_20', left_table_data, '(2.0)'),
+                ('TM_25', left_table_data, '(2.5)'),
+                ('TM_30', left_table_data, '(3.0)'),
+                ('TM_35', left_table_data, '(3.5)'),
+                # ------------------------------------
+                ('TB_15', right_table_data, '(1.5)'),
+                ('TB_20', right_table_data, '(2.0)'),
+                ('TB_25', right_table_data, '(2.5)'),
+                ('TB_30', right_table_data, '(3.0)'),
+                ('TB_35', right_table_data, '(3.5)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(2.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -193,13 +200,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in it_1_totals_table.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('IT1_men_15', left_table_data),
-                ('IT1_bol_15', right_table_data),
+            for key, table, coeff in (
+                ('IT1_men_10', left_table_data, '(1.0)'),
+                ('IT1_men_15', left_table_data, '(1.5)'),
+                ('IT1_men_20', left_table_data, '(2.0)'),
+                # ------------------------------------
+                ('IT1_bol_10', right_table_data, '(1.0)'),
+                ('IT1_bol_15', right_table_data, '(1.5)'),
+                ('IT1_bol_20', right_table_data, '(2.0)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -210,13 +222,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in it_2_totals_table.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('IT2_men_15', left_table_data),
-                ('IT2_bol_15', right_table_data),
+            for key, table, coeff in (
+                ('IT2_men_10', left_table_data, '(1.0)'),
+                ('IT2_men_15', left_table_data, '(1.5)'),
+                ('IT2_men_20', left_table_data, '(2.0)'),
+                # ------------------------------------
+                ('IT2_bol_10', right_table_data, '(1.0)'),
+                ('IT2_bol_15', right_table_data, '(1.5)'),
+                ('IT2_bol_20', right_table_data, '(2.0)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -397,13 +414,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in head_starts_table_1_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('F1_0_1_time', left_table_data),
-                ('F2_0_1_time', right_table_data),
+            for key, table, coeff in (
+                ('F1_-10_1_time', left_table_data, '(-1.0)'),
+                ('F1_0_1_time', left_table_data, '(0)'),
+                ('F1_+10_1_time', left_table_data, '(+1.0)'),
+                # -------------------------------------------
+                ('F2_-10_1_time', right_table_data, '(-1.0)'),
+                ('F2_0_1_time', right_table_data, '(0)'),
+                ('F2_+10_1_time', right_table_data, '(+1.0)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -415,13 +437,22 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in totals_table_1_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('TM_15_1_time', left_table_data),
-                ('TB_15_1_time', right_table_data),
+            for key, table, coeff in (
+                ('TM_05_1_time', left_table_data, '(0.5)'),
+                ('TM_10_1_time', left_table_data, '(1.0)'),
+                ('TM_15_1_time', left_table_data, '(1.5)'),
+                ('TM_20_1_time', left_table_data, '(2.0)'),
+                ('TM_25_1_time', left_table_data, '(2.5)'),
+                # -------------------------------------------
+                ('TB_05_1_time', right_table_data, '(0.5)'),
+                ('TB_10_1_time', right_table_data, '(1.0)'),
+                ('TB_15_1_time', right_table_data, '(1.5)'),
+                ('TB_20_1_time', right_table_data, '(2.0)'),
+                ('TB_25_1_time', right_table_data, '(2.5)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -433,13 +464,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in it_1_totals_table_1_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('IT1_men_05_1_time', left_table_data),
-                ('IT1_bol_05_1_time', right_table_data),
+            for key, table, coeff in (
+                ('IT1_men_05_1_time', left_table_data, '(0.5)'),
+                ('IT1_men_10_1_time', left_table_data, '(1.0)'),
+                ('IT1_men_15_1_time', left_table_data, '(1.5)'),
+                # -------------------------------------------
+                ('IT1_bol_05_1_time', right_table_data, '(0.5)'),
+                ('IT1_bol_10_1_time', right_table_data, '(1.0)'),
+                ('IT1_bol_15_1_time', right_table_data, '(1.5)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -450,13 +486,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in it_2_totals_table_1_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('IT2_men_05_1_time', left_table_data),
-                ('IT2_bol_05_1_time', right_table_data),
+            for key, table, coeff in (
+                ('IT2_men_05_1_time', left_table_data, '(0.5)'),
+                ('IT2_men_10_1_time', left_table_data, '(1.0)'),
+                ('IT2_men_15_1_time', left_table_data, '(1.5)'),
+                # -------------------------------------------
+                ('IT2_bol_05_1_time', right_table_data, '(0.5)'),
+                ('IT2_bol_10_1_time', right_table_data, '(1.0)'),
+                ('IT2_bol_15_1_time', right_table_data, '(1.5)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -487,13 +528,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in head_starts_table_2_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('F1_0_2_time', left_table_data),
-                ('F2_0_2_time', right_table_data),
+            for key, table, coeff in (
+                ('F1_-10_2_time', left_table_data, '(-1.0)'),
+                ('F1_0_2_time', left_table_data, '(0)'),
+                ('F1_+10_2_time', left_table_data, '(+1.0)'),
+                # -------------------------------------------
+                ('F2_-10_2_time', right_table_data, '(-1.0)'),
+                ('F2_0_2_time', right_table_data, '(0)'),
+                ('F2_+10_2_time', right_table_data, '(+1.0)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -505,13 +551,22 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in totals_table_2_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('TM_15_2_time', left_table_data),
-                ('TB_15_2_time', right_table_data),
+            for key, table, coeff in (
+                ('TM_05_2_time', left_table_data, '(0.5)'),
+                ('TM_10_2_time', left_table_data, '(1.0)'),
+                ('TM_15_2_time', left_table_data, '(1.5)'),
+                ('TM_20_2_time', left_table_data, '(2.0)'),
+                ('TM_25_2_time', left_table_data, '(2.5)'),
+                # -------------------------------------------
+                ('TB_05_2_time', right_table_data, '(0.5)'),
+                ('TB_10_2_time', right_table_data, '(1.0)'),
+                ('TB_15_2_time', right_table_data, '(1.5)'),
+                ('TB_20_2_time', right_table_data, '(2.0)'),
+                ('TB_25_2_time', right_table_data, '(2.5)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(1.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -522,13 +577,19 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in it_1_totals_table_2_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('IT1_men_05_2_time', left_table_data),
-                ('IT1_bol_05_2_time', right_table_data),
+            for key, table, coeff in (
+                ('IT1_men_05_2_time', left_table_data, '(0.5)'),
+                ('IT1_men_10_2_time', left_table_data, '(1.0)'),
+                ('IT1_men_15_2_time', left_table_data, '(1.5)'),
+                # -------------------------------------------
+                ('IT1_bol_05_2_time', right_table_data, '(0.5)'),
+                ('IT1_bol_10_2_time', right_table_data, '(1.0)'),
+                ('IT1_bol_15_2_time', right_table_data, '(1.5)'),
+
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -539,13 +600,18 @@ def parse(page_content, page_link):
             table_data = [t.find_all('td') for t in it_2_totals_table_2_time.tbody.find_all('tr')]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
-            for key, table in (
-                ('IT2_men_05_2_time', left_table_data),
-                ('IT2_bol_05_2_time', right_table_data),
+            for key, table, coeff in (
+                ('IT2_men_05_2_time', left_table_data, '(0.5)'),
+                ('IT2_men_10_2_time', left_table_data, '(1.0)'),
+                ('IT2_men_15_2_time', left_table_data, '(1.5)'),
+                # -------------------------------------------
+                ('IT2_bol_05_2_time', right_table_data, '(0.5)'),
+                ('IT2_bol_10_2_time', right_table_data, '(1.0)'),
+                ('IT2_bol_15_2_time', right_table_data, '(1.5)'),
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and '(0.5)' in tag.text
+                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -576,14 +642,38 @@ def parse(page_content, page_link):
     df_data_dict['1Х'] = result_dict['_1X']
     df_data_dict['12'] = result_dict['_12']
     df_data_dict['Х2'] = result_dict['_2X']
+    df_data_dict['Ф1(-1.5)'] = head_starts_dict['F1_-15']
+    df_data_dict['Ф1(-1.0)'] = head_starts_dict['F1_-10']
     df_data_dict['Ф1(0)'] = head_starts_dict['F1_0']
+    df_data_dict['Ф1(+1.0)'] = head_starts_dict['F1_+10']
+    df_data_dict['Ф1(+1.5)'] = head_starts_dict['F1_+15']
+    df_data_dict['Ф2(-1.5)'] = head_starts_dict['F2_-15']
+    df_data_dict['Ф2(-1.0)'] = head_starts_dict['F2_-10']
     df_data_dict['Ф2(0)'] = head_starts_dict['F2_0']
+    df_data_dict['Ф2(+1.0)'] = head_starts_dict['F2_+10']
+    df_data_dict['Ф2(+1.5)'] = head_starts_dict['F2_+15']
+    df_data_dict['ТМ(1.5)'] = totals_dict['TM_15']
+    df_data_dict['ТМ(2.0)'] = totals_dict['TM_20']
     df_data_dict['ТМ(2.5)'] = totals_dict['TM_25']
+    df_data_dict['ТМ(3.0)'] = totals_dict['TM_30']
+    df_data_dict['ТМ(3.5)'] = totals_dict['TM_35']
+    df_data_dict['ТБ(1.5)'] = totals_dict['TB_15']
+    df_data_dict['ТБ(2.0)'] = totals_dict['TB_20']
     df_data_dict['ТБ(2.5)'] = totals_dict['TB_25']
+    df_data_dict['ТБ(3.0)'] = totals_dict['TB_30']
+    df_data_dict['ТБ(3.5)'] = totals_dict['TB_35']
+    df_data_dict['ИТМ1(1.0)'] = totals_dict['IT1_men_10']
     df_data_dict['ИТМ1(1.5)'] = totals_dict['IT1_men_15']
+    df_data_dict['ИТМ1(2.0)'] = totals_dict['IT1_men_20']
+    df_data_dict['ИТБ1(1.0)'] = totals_dict['IT1_bol_10']
     df_data_dict['ИТБ1(1.5)'] = totals_dict['IT1_bol_15']
+    df_data_dict['ИТБ1(2.0)'] = totals_dict['IT1_bol_20']
+    df_data_dict['ИТМ2(1.0)'] = totals_dict['IT2_men_10']
     df_data_dict['ИТМ2(1.5)'] = totals_dict['IT2_men_15']
+    df_data_dict['ИТМ2(2.0)'] = totals_dict['IT2_men_20']
+    df_data_dict['ИТБ2(1.0)'] = totals_dict['IT2_bol_10']
     df_data_dict['ИТБ2(1.5)'] = totals_dict['IT2_bol_15']
+    df_data_dict['ИТБ2(2.0)'] = totals_dict['IT2_bol_20']
     df_data_dict['ОЗ Да'] = goals_dict['ALL_win_yes']
     df_data_dict['ОЗ Нет'] = goals_dict['ALL_win_no']
     df_data_dict['Гол оба тайма Да'] = goals_dict['ALL_times_yes']
@@ -595,14 +685,34 @@ def parse(page_content, page_link):
     df_data_dict['_1_1Х'] = times_dict['goal_1_time_1X']
     df_data_dict['_1_12'] = times_dict['goal_1_time_12']
     df_data_dict['_1_Х2'] = times_dict['goal_1_time_2X']
+    df_data_dict['_1_Ф1(-1.0)'] = times_dict['F1_-10_1_time']
     df_data_dict['_1_Ф1(0)'] = times_dict['F1_0_1_time']
+    df_data_dict['_1_Ф1(+1.0)'] = times_dict['F1_+10_1_time']
+    df_data_dict['_1_Ф2(-1.0)'] = times_dict['F2_-10_1_time']
     df_data_dict['_1_Ф2(0)'] = times_dict['F2_0_1_time']
+    df_data_dict['_1_Ф2(+1.0)'] = times_dict['F2_+10_1_time']
+    df_data_dict['_1_ТМ(0.5)'] = times_dict['TM_05_1_time']
+    df_data_dict['_1_ТМ(1.0)'] = times_dict['TM_10_1_time']
     df_data_dict['_1_ТМ(1.5)'] = times_dict['TM_15_1_time']
+    df_data_dict['_1_ТМ(2.0)'] = times_dict['TM_20_1_time']
+    df_data_dict['_1_ТМ(2.5)'] = times_dict['TM_25_1_time']
+    df_data_dict['_1_ТБ(0.5)'] = times_dict['TB_05_1_time']
+    df_data_dict['_1_ТБ(1.0)'] = times_dict['TB_10_1_time']
     df_data_dict['_1_ТБ(1.5)'] = times_dict['TB_15_1_time']
+    df_data_dict['_1_ТБ(2.0)'] = times_dict['TB_20_1_time']
+    df_data_dict['_1_ТБ(2.5)'] = times_dict['TB_25_1_time']
     df_data_dict['_1_ИТМ1(0.5)'] = times_dict['IT1_men_05_1_time']
+    df_data_dict['_1_ИТМ1(1.0)'] = times_dict['IT1_men_10_1_time']
+    df_data_dict['_1_ИТМ1(1.5)'] = times_dict['IT1_men_15_1_time']
     df_data_dict['_1_ИТБ1(0.5)'] = times_dict['IT1_bol_05_1_time']
+    df_data_dict['_1_ИТБ1(1.0)'] = times_dict['IT1_bol_10_1_time']
+    df_data_dict['_1_ИТБ1(1.5)'] = times_dict['IT1_bol_15_1_time']
     df_data_dict['_1_ИТМ2(0.5)'] = times_dict['IT2_men_05_1_time']
+    df_data_dict['_1_ИТМ2(1.0)'] = times_dict['IT2_men_10_1_time']
+    df_data_dict['_1_ИТМ2(1.5)'] = times_dict['IT2_men_15_1_time']
     df_data_dict['_1_ИТБ2(0.5)'] = times_dict['IT2_bol_05_1_time']
+    df_data_dict['_1_ИТБ2(1.0)'] = times_dict['IT2_bol_10_1_time']
+    df_data_dict['_1_ИТБ2(1.5)'] = times_dict['IT2_bol_15_1_time']
 
     df_data_dict['_2_1'] = times_dict['goal_2_time_P1']
     df_data_dict['_2_Х'] = times_dict['goal_2_time_X']
@@ -610,23 +720,46 @@ def parse(page_content, page_link):
     df_data_dict['_2_1Х'] = times_dict['goal_2_time_1X']
     df_data_dict['_2_12'] = times_dict['goal_2_time_12']
     df_data_dict['_2_Х2'] = times_dict['goal_2_time_2X']
+    df_data_dict['_2_Ф1(-1.0)'] = times_dict['F1_-10_2_time']
     df_data_dict['_2_Ф1(0)'] = times_dict['F1_0_2_time']
+    df_data_dict['_2_Ф1(+1.0)'] = times_dict['F1_+10_2_time']
+    df_data_dict['_2_Ф2(-1.0)'] = times_dict['F2_-10_2_time']
     df_data_dict['_2_Ф2(0)'] = times_dict['F2_0_2_time']
+    df_data_dict['_2_Ф2(+1.0)'] = times_dict['F2_+10_2_time']
+    df_data_dict['_2_ТМ(0.5)'] = times_dict['TM_05_2_time']
+    df_data_dict['_2_ТМ(1.0)'] = times_dict['TM_10_2_time']
     df_data_dict['_2_ТМ(1.5)'] = times_dict['TM_15_2_time']
+    df_data_dict['_2_ТМ(2.0)'] = times_dict['TM_20_2_time']
+    df_data_dict['_2_ТМ(2.5)'] = times_dict['TM_25_2_time']
+    df_data_dict['_2_ТБ(0.5)'] = times_dict['TB_05_2_time']
+    df_data_dict['_2_ТБ(1.0)'] = times_dict['TB_10_2_time']
     df_data_dict['_2_ТБ(1.5)'] = times_dict['TB_15_2_time']
+    df_data_dict['_2_ТБ(2.0)'] = times_dict['TB_20_2_time']
+    df_data_dict['_2_ТБ(2.5)'] = times_dict['TB_25_2_time']
     df_data_dict['_2_ИТМ1(0.5)'] = times_dict['IT1_men_05_2_time']
+    df_data_dict['_2_ИТМ1(1.0)'] = times_dict['IT1_men_10_2_time']
+    df_data_dict['_2_ИТМ1(1.5)'] = times_dict['IT1_men_15_2_time']
     df_data_dict['_2_ИТБ1(0.5)'] = times_dict['IT1_bol_05_2_time']
+    df_data_dict['_2_ИТБ1(1.0)'] = times_dict['IT1_bol_10_2_time']
+    df_data_dict['_2_ИТБ1(1.5)'] = times_dict['IT1_bol_15_2_time']
     df_data_dict['_2_ИТМ2(0.5)'] = times_dict['IT2_men_05_2_time']
+    df_data_dict['_2_ИТМ2(1.0)'] = times_dict['IT2_men_10_2_time']
+    df_data_dict['_2_ИТМ2(1.5)'] = times_dict['IT2_men_15_2_time']
     df_data_dict['_2_ИТБ2(0.5)'] = times_dict['IT2_bol_05_2_time']
+    df_data_dict['_2_ИТБ2(1.0)'] = times_dict['IT2_bol_10_2_time']
+    df_data_dict['_2_ИТБ2(1.5)'] = times_dict['IT2_bol_15_2_time']
 
     return df_data_dict
 
 
 class MarathonbetParser(Parser):
+    def parser_log_filter(self, record):
+        return __name__ == record['name']
+
     async def parse(self, browser):
         result = None
         msg = f'Открываем {self.url}'
-        logger.info(msg)
+        self.logger.info(msg)
         self.status = msg
         page = await browser.new_page()
         page.set_default_timeout(180000)
@@ -635,13 +768,13 @@ class MarathonbetParser(Parser):
         await page.goto('su')
         await page.wait_for_load_state()
         msg = 'Ждем окончания проверки браузера'
-        logger.info(msg)
+        self.logger.info(msg)
         self.status = msg
         try:
             while 'Just' in await page.title():
                 await asyncio.sleep(1)
         except Error as exc:
-            logger.exception(exc.message)
+            self.logger.exception(exc.message)
             page = browser.pages[-1]
             return PlainTextResponse('Во время обработки произошла ошибка. Попробуйте позже.')
         else:
@@ -654,11 +787,11 @@ class MarathonbetParser(Parser):
                     timeout=180000
                 )
             except TimeoutError as exc:
-                logger.exception(exc.message)
+                self.logger.exception(exc.message)
                 return PlainTextResponse('Вышло время ожидания страницы. Попробуйте позже.')
             else:
                 msg = f'Собираем список матчей по футболу за {self.radio_period}'
-                logger.info(msg)
+                self.logger.info(msg)
                 self.status = msg
                 await page.get_by_text('Футбол').first.click()
                 await page.get_by_text(self.radio_period).first.click()
@@ -678,7 +811,7 @@ class MarathonbetParser(Parser):
                         content = await page.content()
                 df_data = []
                 players_links = get_players_links(await page.content())
-                logger.info(f'Количество ссылок: {len(players_links)}')
+                self.logger.info(f'Количество ссылок: {len(players_links)}')
                 self.count_links = len(players_links)
                 self.status = 'Собираем данные по каждому матчу'
                 for player_link in self.tqdm(players_links):
@@ -707,171 +840,5 @@ class MarathonbetParser(Parser):
                         else:
                             break
                 await browser.close()
-                if df_data:
-                    msg = f'Собрано данных: {len(df_data)}'
-                    logger.info(msg)
-                    self.status = msg
-                    df = pd.DataFrame.from_records(df_data)
-                    now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
-                    df['Дата слепка, МСК'] = now_msk
-                    columns = [
-                        'Ссылка',
-                        'Страна',
-                        'Лига',
-                        'Команда 1',
-                        'Команда 2',
-                        'Дата',
-                        'Дата слепка, МСК',
-                        '1',
-                        'Х',
-                        '2',
-                        '1Х',
-                        '12',
-                        'Х2',
-                        'Ф1(0)',
-                        'Ф2(0)',
-                        'ТМ(2.5)',
-                        'ТБ(2.5)',
-                        'ИТМ1(1.5)',
-                        'ИТБ1(1.5)',
-                        'ИТМ2(1.5)',
-                        'ИТБ2(1.5)',
-                        'ОЗ Да',
-                        'ОЗ Нет',
-                        'Гол оба тайма Да',
-                        'Гол оба тайма Нет',
-                        '_1_1',
-                        '_1_Х',
-                        '_1_2',
-                        '_1_1Х',
-                        '_1_12',
-                        '_1_Х2',
-                        '_1_Ф1(0)',
-                        '_1_Ф2(0)',
-                        '_1_ТМ(1.5)',
-                        '_1_ТБ(1.5)',
-                        '_1_ИТМ1(0.5)',
-                        '_1_ИТБ1(0.5)',
-                        '_1_ИТМ2(0.5)',
-                        '_1_ИТБ2(0.5)',
-                        '_2_1',
-                        '_2_Х',
-                        '_2_2',
-                        '_2_1Х',
-                        '_2_12',
-                        '_2_Х2',
-                        '_2_Ф1(0)',
-                        '_2_Ф2(0)',
-                        '_2_ТМ(1.5)',
-                        '_2_ТБ(1.5)',
-                        '_2_ИТМ1(0.5)',
-                        '_2_ИТБ1(0.5)',
-                        '_2_ИТМ2(0.5)',
-                        '_2_ИТБ2(0.5)',
-                    ]
-                    df = df.reindex(columns=columns)
-                    value_columns_start = columns.index('1')
-                    # решаем проблему округления числа 1.285 в 1.29, а не 1.28 путем прибавления 0.0001
-                    df.iloc[:, value_columns_start:] = (
-                        df.iloc[:, value_columns_start:].astype(np.float64) + pow(10, -4)
-                    ).round(2)
-                    df['Дата'] = df['Дата'].dt.tz_localize(None)
-                    df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
-                    older_data = Path('storage') / Path('older.json')
-                    older_df = pd.DataFrame(columns=columns)
-                    if older_data.exists() and not DEBUG:
-                        older_df = pd.read_json(older_data, date_unit='s')
-                        older_df['Дата'] = older_df['Дата'].astype('datetime64[s]')
-                        older_df['Дата слепка, МСК'] = older_df['Дата слепка, МСК'].astype('datetime64[s]')
-                    path = f'files/marathonbet_{now_msk.isoformat()}.xlsx'
-                    if older_df.empty:
-                        full_df = df
-                    else:
-                        full_df = pd.concat((df, older_df))
-                    full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
-                    full_df = full_df.sort_values(
-                        [
-                            'Дата',
-                            'Команда 1',
-                            'Команда 2',
-                        ],
-                        ascending=[False, True, True]
-                    )
-                    full_df['Double'] = full_df[['Команда 1', 'Команда 2']].duplicated()
-                    full_df = full_df.reset_index(drop=True)
-                    data = np.array(full_df[full_df['Double']].index.values)
-                    ddiff = np.diff(data)
-                    subArrays = np.split(data, np.where(ddiff != 1)[0]+1)
-
-                    with pd.ExcelWriter(path, datetime_format='%d.%m.%y %H:%M') as writer:
-                        full_df.to_excel(writer, index=False, startrow=1, columns=columns)
-                        workbook = writer.book
-
-                        sheet = workbook.active
-                        for i in range(1, sheet.max_column + 1):
-                            sheet.cell(2, i).alignment = Alignment(text_rotation=90)
-
-                        match_index_start = columns.index('1') + 1
-                        first_time_index_start = columns.index('_1_1') + 1
-                        second_time_index_start = columns.index('_2_1') + 1
-
-                        match_index_end = first_time_index_start - 1
-                        first_time_index_end = second_time_index_start - 1
-                        second_time_index_end = len(columns)
-
-                        thin_border = Border(
-                            left=Side(style='thin'),
-                            right=Side(style='thin'),
-                            top=Side(style='thin'),
-                            bottom=Side(style='thin')
-                        )
-
-                        sheet.merge_cells(
-                            start_row=1,
-                            end_row=1,
-                            start_column=match_index_start,
-                            end_column=match_index_end
-                        )
-                        sheet.cell(1, match_index_start).value = 'Матч'
-                        sheet.cell(1, match_index_start).alignment = Alignment(horizontal='center')
-                        sheet.cell(1, match_index_start).border = thin_border
-
-                        sheet.merge_cells(
-                            start_row=1,
-                            end_row=1,
-                            start_column=first_time_index_start,
-                            end_column=first_time_index_end
-                        )
-                        sheet.cell(1, first_time_index_start).value = '1 тайм'
-                        sheet.cell(1, first_time_index_start).alignment = Alignment(horizontal='center')
-                        sheet.cell(1, first_time_index_start).border = thin_border
-
-                        sheet.merge_cells(
-                            start_row=1,
-                            end_row=1,
-                            start_column=second_time_index_start,
-                            end_column=second_time_index_end
-                        )
-                        sheet.cell(1, second_time_index_start).value = '2 тайм'
-                        sheet.cell(1, second_time_index_start).alignment = Alignment(horizontal='center')
-                        sheet.cell(1, second_time_index_start).border = thin_border
-
-                        for i in range(first_time_index_start, first_time_index_end + 2):
-                            sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_1_', '')
-
-                        for i in range(second_time_index_start, second_time_index_end + 2):
-                            sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_2_', '')
-
-                        for subArray in subArrays:
-                            if subArray.size > 0:
-                                sheet.row_dimensions.group(subArray[0] + 3, subArray[-1] + 3, hidden=True)
-
-                        workbook.save(path)
-                    full_df.to_json(older_data, date_unit='s', date_format='iso')
-                    result = FileResponse(
-                        path=path,
-                        filename=path
-                    )
-                else:
-                    return PlainTextResponse('Не собрали данных')
+                result = self.get_file_response(df_data=df_data)
         return result

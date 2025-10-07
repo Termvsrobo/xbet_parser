@@ -3,7 +3,6 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 COPY **.py .
-COPY older.json .
 COPY poetry.lock .
 COPY pyproject.toml .
 COPY marathonbetparser_url.yaml .

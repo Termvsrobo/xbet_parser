@@ -188,3 +188,4 @@ browser/
 screenshots/
 saved_url.yaml
 older.json
+mongo_backups/

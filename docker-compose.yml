@@ -1,4 +1,17 @@
 services:
+  mongo:
+    image: mongo
+    restart: always
+    container_name: mongo-docker
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: mongoadmin
+      #MONGODB_AUTH_DATABASE: admin
+    volumes:
+      - ./workspace:/workspace
+      - type: volume
+        source: mongodb_data_volume
+        target: /data/db
   web:
     restart: always
     build: .
@@ -6,6 +19,7 @@ services:
       - 8080:8080
     environment:
       - DISPLAY=:0
+      - MONGO_URL=mongodb://mongoadmin:mongoadmin@mongo:27017/mydb?authSource=admin
     # command: sh -c "python main.py"
     healthcheck:
       test: curl --fail http://localhost:8080/ || exit 1
@@ -18,6 +32,42 @@ services:
       - ./screenshots:/app/screenshots
       - ./storage:/app/storage
       - ./files:/app/files
+    depends_on:
+      - mongo
+      - mongo-backup
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "28081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: changeme
+      #ME_CONFIG_MONGODB_AUTH_DATABASE: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: mongoadmin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mongoadmin
+      ME_CONFIG_MONGODB_URL: mongo://mongoadmin:mongoadmin@mongo:27017/
+    depends_on:
+      - mongo
+
+  mongo-backup:
+    image: brammys/mongodump:latest
+    restart: always
+    links:
+      - mongo
+    depends_on:
+      - mongo
+    volumes:
+      - ./mongo_backups:/backups:rw
+    environment:
+      - MONGO_URI=mongodb://mongoadmin:mongoadmin@mongo:27017/mydb?authSource=admin
+      - CRON_SCHEDULE=* * * * *
+      - DELETE_AFTER=5
 
 volumes:
   browser:
+  mongodb_data_volume:
+    driver: local
