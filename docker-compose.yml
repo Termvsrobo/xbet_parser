@@ -64,7 +64,7 @@ services:
       - ./mongo_backups:/backups:rw
     environment:
       - MONGO_URI=mongodb://mongoadmin:mongoadmin@mongo:27017/mydb?authSource=admin
-      - CRON_SCHEDULE=* * * * *
+      - CRON_SCHEDULE=0 0 * * *
       - DELETE_AFTER=5
 
 volumes:
