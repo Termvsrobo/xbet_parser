@@ -1,3 +1,4 @@
+from itertools import count
 from threading import Event
 
 from nicegui import app, ui
@@ -82,11 +83,39 @@ async def xlite_page():
     ui.button('Скачать excel', on_click=download('/parse_xlite'))
 
 
+@ui.page('/fhbstat_page')
+async def fhbstat_page():
+    def add_tab():
+        i = next(number_click)
+        with tabs:
+            tab = ui.tab(f'Вкладка {i}')
+        with panels:
+            with ui.tab_panel(tab):
+                ui.label(f'Панель с данными {i}')
+            panels.set_value(tab)
+        ui.notify('Добавлена новая вкладка с результатами поиска')
+    number_click = count(0)
+    with ui.row(align_items='center'):
+        ui.label('Фильтр')
+    with ui.card():
+        with ui.grid(columns=12):
+            for i in range(1, 37):
+                with ui.row():
+                    ui.input(f'Фильтр {i}')
+    with ui.row(align_items='center'):
+        ui.button('ПОИСК', on_click=add_tab)
+    with ui.row(align_items='center'):
+        ui.label('Вкладки')
+    tabs = ui.tabs().classes('w-full').classes('w-full')
+    panels = ui.tab_panels(tabs).classes('w-full')
+
+
 if __name__ in {"__main__", "__mp_main__"}:
     ui.page_title('Parser bet')
     ui.link('Получить excel', '/parse_page', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)
     ui.link('Получить 1xlite', '/xlite_page', new_tab=True)
+    ui.link('fhbstat', '/fhbstat_page', new_tab=True)
     ui.run(
         show=False
     )
