@@ -269,7 +269,7 @@ class FHBParser(Parser):
                         else:
                             response = await logged_client.get(
                                 'https://fhbstat.com/football',
-                                json={'page': page_number}
+                                params={'page': page_number}
                             )
                         if response.status_code == 200:
                             df = self.parse_content(response.content)
