@@ -1,10 +1,10 @@
-from itertools import count
 from threading import Event
 
 from nicegui import app, ui
 
 from base import BrowserManager
 from beta_baza import parse_bet_baza  # noqa:F401
+from parsers.fhbstat import FHBParser
 from parsers.marathonbet import MarathonbetParser
 from parsers.xlite import XLiteParser
 
@@ -13,6 +13,7 @@ is_running = Event()
 
 marathonbet_parser = MarathonbetParser(is_running=is_running)
 xlite_parser = XLiteParser(is_running=is_running)
+fhbstat_parser = FHBParser(is_running=is_running)
 
 
 @app.get('/parse')
@@ -85,29 +86,83 @@ async def xlite_page():
 
 @ui.page('/fhbstat_page')
 async def fhbstat_page():
-    def add_tab():
-        i = next(number_click)
-        with tabs:
-            tab = ui.tab(f'Вкладка {i}')
-        with panels:
-            with ui.tab_panel(tab):
-                ui.label(f'Панель с данными {i}')
-            panels.set_value(tab)
-        ui.notify('Добавлена новая вкладка с результатами поиска')
-    number_click = count(0)
-    with ui.row(align_items='center'):
-        ui.label('Фильтр')
-    with ui.card():
-        with ui.grid(columns=12):
-            for i in range(1, 37):
-                with ui.row():
-                    ui.input(f'Фильтр {i}')
-    with ui.row(align_items='center'):
-        ui.button('ПОИСК', on_click=add_tab)
-    with ui.row(align_items='center'):
-        ui.label('Вкладки')
-    tabs = ui.tabs().classes('w-full').classes('w-full')
-    panels = ui.tab_panels(tabs).classes('w-full')
+    @app.get('/parse_fhbstat')
+    async def parse_fhbstat():
+        b_manager = BrowserManager(is_running=is_running, parser=fhbstat_parser)
+        async with b_manager as browser:
+            if browser:
+                response = await b_manager.parse(browser)
+                return response
+
+    with ui.row():
+        labels = [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            25,
+            26,
+            27,
+            32,
+            33,
+            34,
+            28,
+            29,
+            30,
+            35,
+            36,
+            37,
+            38,
+            39,
+            127,
+            113,
+            114,
+            128,
+            92,
+            95,
+            129,
+            44,
+            45,
+            46,
+            130,
+            47,
+            48,
+            49,
+            131,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+        ]
+        fields = [ui.input(label=label) for label in labels]
+        for field in fields:
+            field.disable()
+    # ui.button('Start', on_click=parse_fhbstat)
+    ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
+    ui.button('Скачать excel (Между собой)', on_click=download('/parse_fhbstat'))
 
 
 if __name__ in {"__main__", "__mp_main__"}:
