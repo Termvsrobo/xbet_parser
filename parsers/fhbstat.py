@@ -15,6 +15,32 @@ from config import settings
 
 
 class FHBParser(Parser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._email = None
+        self._password = None
+
+    @property
+    def email(self):
+        email = None
+        if self._email:
+            email = self._email
+        return email
+
+    @email.setter
+    def email(self, value):
+        if value:
+            self._email = value
+
+    @property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, value):
+        if value:
+            self._password = value
+
     def parser_log_filter(self, record):
         return __name__ == record['name']
 
@@ -28,8 +54,10 @@ class FHBParser(Parser):
             'https://fhbstat.com/авторизация',
             data={
                 'posts[className]': 'вход',
-                'posts[value][email]': 'termvsrobo@yandex.ru',
-                'posts[value][пароль]': '272000359',
+                # 'posts[value][email]': 'termvsrobo@yandex.ru',
+                # 'posts[value][пароль]': '272000359',
+                'posts[value][email]': self.email,
+                'posts[value][пароль]': self.password,
                 'posts[location]': 'https://fhbstat.com/авторизация',
             },
             cookies=cookies,

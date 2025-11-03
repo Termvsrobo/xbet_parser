@@ -160,7 +160,8 @@ async def fhbstat_page():
         fields = [ui.input(label=label) for label in labels]
         for field in fields:
             field.disable()
-    # ui.button('Start', on_click=parse_fhbstat)
+    ui.input('Email').bind_value(fhbstat_parser, 'email')
+    ui.input('Пароль', password=True).bind_value(fhbstat_parser, 'password')
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
     ui.button('Скачать excel (Между собой)', on_click=download('/parse_fhbstat'))
 
