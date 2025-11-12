@@ -160,8 +160,12 @@ async def fhbstat_page():
         fields = [ui.input(label=label) for label in labels]
         for field in fields:
             field.disable()
-    ui.input('Email').bind_value(fhbstat_parser, 'email')
-    ui.input('Пароль', password=True).bind_value(fhbstat_parser, 'password')
+    with ui.row():
+        ui.input('Email').bind_value(fhbstat_parser, 'email')
+        ui.input('Пароль', password=True).bind_value(fhbstat_parser, 'password')
+    with ui.row():
+        ui.select(['Футбол Исход между собой'], label='Выберите вид спорта')
+        ui.select([None] + [i for i in range(1, 25)], label='Выберите период, (ч.)')
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
     ui.button('Скачать excel (Между собой)', on_click=download('/parse_fhbstat'))
 

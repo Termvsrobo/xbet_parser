@@ -5,10 +5,12 @@ from itertools import count
 from pathlib import Path
 
 import httpx
+import numpy as np
 import pandas as pd
 import pytz
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, PlainTextResponse
+from xlsxtpl.writerx import BookWriter
 
 from base import Parser
 from config import settings
@@ -19,6 +21,7 @@ class FHBParser(Parser):
         super().__init__(*args, **kwargs)
         self._email = None
         self._password = None
+        self._url = 'https://fhbstat.com/football'
 
     @property
     def email(self):
@@ -41,6 +44,11 @@ class FHBParser(Parser):
         if value:
             self._password = value
 
+    def stop(self):
+        super().stop()
+        self._email = None
+        self._password = None
+
     def parser_log_filter(self, record):
         return __name__ == record['name']
 
@@ -54,8 +62,6 @@ class FHBParser(Parser):
             'https://fhbstat.com/авторизация',
             data={
                 'posts[className]': 'вход',
-                # 'posts[value][email]': 'termvsrobo@yandex.ru',
-                # 'posts[value][пароль]': '272000359',
                 'posts[value][email]': self.email,
                 'posts[value][пароль]': self.password,
                 'posts[location]': 'https://fhbstat.com/авторизация',
@@ -194,8 +200,17 @@ class FHBParser(Parser):
             )
             full_df = full_df.reset_index(drop=True)
 
-            with pd.ExcelWriter(self.path, datetime_format='%d.%m.%y %H:%M') as writer:
-                full_df.to_excel(writer, index=False, startrow=1, columns=columns)
+            fname = Path(__file__).parent.parent / Path('excel_templates') / Path('ШАБЛОН Эксель Футбол Исход.xlsx')
+            writer = BookWriter(fname)
+            writer.jinja_env.globals.update(dir=dir, getattr=getattr)
+
+            data = dict()
+            data['rows'] = df.to_dict('records')
+            payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика',  'ctx': data}
+
+            payloads = [payload0]
+            writer.render_book2(payloads=payloads)
+            writer.save(self.path)
             result = FileResponse(
                 self.path,
                 filename=f'{self.name}_{now_msk.isoformat()}.xlsx'
@@ -209,18 +224,20 @@ class FHBParser(Parser):
         soup = BeautifulSoup(content, 'lxml')
         table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
         names = list(map(lambda x: x.text, filter(lambda td: td != '\n' and td.text != '', table_rows[13].contents)))
-        data_rows = table_rows[:14]
+        data_rows = table_rows[3:4]
         data_list = list()
+        key_name = 'data-formula'
         for data in data_rows:
             data_row = dict()
             for td in data.contents:
                 if td != '\n':
-                    if 'data-summa' in td.attrs:
-                        key = td.attrs.get('data-td')
+                    if key_name in td.attrs:
+                        key = td.attrs.get(key_name)
                         value = td.text
-                        data_row[key] = value
+                        data_row[key] = float(value) if value else np.nan
             data_list.append(data_row)
         df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
+        df = df.replace({None: np.nan, '': np.nan})
         return df
 
     @classmethod
@@ -230,12 +247,13 @@ class FHBParser(Parser):
         names = list(map(lambda x: x.text, filter(lambda td: td != '\n' and td.text != '', table_rows[13].contents)))
         data_rows = table_rows[14:]
         data_list = list()
+        key_name = 'data-td'
         for data in data_rows:
             data_row = dict()
             for td in data.contents:
                 if td != '\n':
-                    if 'data-td' in td.attrs:
-                        key = td.attrs.get('data-td')
+                    if key_name in td.attrs:
+                        key = td.attrs.get(key_name)
                         value = td.text
                         data_row[key] = value
             _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
@@ -243,6 +261,7 @@ class FHBParser(Parser):
             data_row['dt'] = _dt
             data_list.append(data_row)
         df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
+        df = df.replace({None: np.nan, '': np.nan})
         return df
 
     async def parse(self, browser):
@@ -291,6 +310,12 @@ class FHBParser(Parser):
                             }
                         )
                         df_9_10 = self.parse_content(response.content)
+                        head_df = self.parse_head_table(response.content)
+                        head_df_records = head_df.to_dict(orient='records')
+                        for h_d_r in head_df_records:
+                            for column_name, column_value in h_d_r.items():
+                                if not (column_value is None or np.isnan(column_value)):
+                                    d_r[column_name] = column_value
                         count_rows, _ = df_9_10.shape
                         d_r['Количество матчей'] = count_rows
                         if count_rows > 1:

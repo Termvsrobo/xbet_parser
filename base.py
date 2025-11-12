@@ -183,7 +183,7 @@ class Parser(ParserBase):
 
     def delete_older_file(self):
         if self._path:
-            Path(self._path).unlink()
+            Path(self._path).unlink(missing_ok=True)
             self._path = None
 
     @property

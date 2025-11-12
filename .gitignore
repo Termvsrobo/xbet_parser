@@ -183,7 +183,7 @@ testtgbot.ru.pem
 
 browser/
 
-**.xlsx
+files/**.xlsx
 **.mkv
 screenshots/
 saved_url.yaml
