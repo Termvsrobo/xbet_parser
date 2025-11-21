@@ -22,6 +22,7 @@ class FHBParser(Parser):
         self._email = None
         self._password = None
         self._url = 'https://fhbstat.com/football'
+        self._filters = dict()
 
     @property
     def email(self):
@@ -48,9 +49,17 @@ class FHBParser(Parser):
         super().stop()
         self._email = None
         self._password = None
+        self._filters = dict()
 
     def parser_log_filter(self, record):
         return __name__ == record['name']
+
+    def add_filter(self, element):
+        self._filters[str(element.sender.label)] = element.value
+
+    @property
+    def filters(self):
+        return self._filters
 
     async def login(self, client: httpx.AsyncClient):
         cookies_file = Path('cookies.json')
@@ -284,11 +293,12 @@ class FHBParser(Parser):
                         if page_number == 1:
                             response = await logged_client.get(
                                 'https://fhbstat.com/football',
+                                params=self.filters
                             )
                         else:
                             response = await logged_client.get(
                                 'https://fhbstat.com/football',
-                                params={'page': page_number}
+                                params={'page': page_number, **self.filters}
                             )
                         if response.status_code == 200:
                             df = self.parse_content(response.content)
@@ -307,10 +317,13 @@ class FHBParser(Parser):
                             params={
                                 '9': d_r['9'],
                                 '10': d_r['10'],
+                                **self.filters
                             }
                         )
                         df_9_10 = self.parse_content(response.content)
                         head_df = self.parse_head_table(response.content)
+                        columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
+                        df_9_10.loc[:, columns] = np.nan
                         head_df_records = head_df.to_dict(orient='records')
                         for h_d_r in head_df_records:
                             for column_name, column_value in h_d_r.items():
