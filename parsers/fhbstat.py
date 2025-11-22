@@ -23,6 +23,7 @@ class FHBParser(Parser):
         self._password = None
         self._url = 'https://fhbstat.com/football'
         self._filters = dict()
+        self.rounded_fields = dict()
 
     @property
     def email(self):
@@ -50,6 +51,7 @@ class FHBParser(Parser):
         self._email = None
         self._password = None
         self._filters = dict()
+        self.rounded_fields = dict()
 
     def parser_log_filter(self, record):
         return __name__ == record['name']
