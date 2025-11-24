@@ -8,6 +8,7 @@ COPY pyproject.toml .
 COPY marathonbetparser_url.yaml .
 COPY xliteparser_url.yaml .
 COPY parsers parsers
+COPY .env .env
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y xvfb
 RUN apt-get install -qqy x11-apps
