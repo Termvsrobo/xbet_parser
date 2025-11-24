@@ -1,12 +1,18 @@
 from threading import Event
+from typing import Optional
 
+from fastapi.responses import RedirectResponse
 from nicegui import app, ui
 
 from base import BrowserManager
 from beta_baza import parse_bet_baza  # noqa:F401
+from config import settings
 from parsers.fhbstat import FHBParser
 from parsers.marathonbet import MarathonbetParser
 from parsers.xlite import XLiteParser
+from utils import AuthMiddleware
+
+app.add_middleware(AuthMiddleware)
 
 is_running = Event()
 
@@ -97,7 +103,7 @@ async def fhbstat_page():
     async def add_rounded_select(element):
         with ui.row():
             ui.select(
-                list(filter(lambda x: x >= 25 and x not in fhbstat_parser.rounded_fields, labels)),
+                list(filter(lambda x: x >= 11 and x not in fhbstat_parser.rounded_fields, labels)),
                 on_change=add_rounded_field
             )
 
@@ -136,68 +142,7 @@ async def fhbstat_page():
                     ui.label('Выберите поля')
                     await add_rounded_select(None)
 
-    labels = [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13,
-        14,
-        15,
-        16,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        25,
-        26,
-        27,
-        32,
-        33,
-        34,
-        28,
-        29,
-        30,
-        35,
-        36,
-        37,
-        38,
-        39,
-        127,
-        113,
-        114,
-        128,
-        92,
-        95,
-        129,
-        44,
-        45,
-        46,
-        130,
-        47,
-        48,
-        49,
-        131,
-        50,
-        51,
-        52,
-        53,
-        54,
-        55,
-        56,
-        57,
-        58,
-    ]
+    labels = list(range(1, 132))
 
     with ui.row():
         ui.label('Выберите вид спорта')
@@ -215,6 +160,24 @@ async def fhbstat_page():
     download_button = ui.button('Скачать excel (...)', on_click=download('/parse_fhbstat'))
 
 
+@ui.page('/login')
+def login(redirect_to: str = '/') -> Optional[RedirectResponse]:
+    def try_login() -> None:  # local function to avoid passing username and password as arguments
+        if password.value == settings.ADMIN_PASSWORD and username.value == settings.ADMIN_USERNAME:
+            app.storage.user.update({'username': username.value, 'authenticated': True})
+            ui.navigate.to(redirect_to)  # go back to where the user wanted to go
+        else:
+            ui.notify('Wrong username or password', color='negative')
+
+    if app.storage.user.get('authenticated', False):
+        return RedirectResponse('/')
+    with ui.card().classes('absolute-center'):
+        username = ui.input('Username').on('keydown.enter', try_login)
+        password = ui.input('Password', password=True, password_toggle_button=True).on('keydown.enter', try_login)
+        ui.button('Log in', on_click=try_login)
+    return None
+
+
 if __name__ in {"__main__", "__mp_main__"}:
     ui.page_title('Parser bet')
     ui.link('Получить excel', '/parse_page', new_tab=True)
@@ -222,5 +185,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     ui.link('Получить 1xlite', '/xlite_page', new_tab=True)
     ui.link('fhbstat', '/fhbstat_page', new_tab=True)
     ui.run(
-        show=False
+        show=False,
+        port=8081,
+        storage_secret=settings.STORAGE_SECRET
     )

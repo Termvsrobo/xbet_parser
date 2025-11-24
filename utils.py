@@ -6,9 +6,13 @@ from typing import Any, Iterator, Optional, Sequence, Union
 import pymongo.errors
 import yaml
 from dateutil.parser import parse, parserinfo
+from fastapi import Request
+from fastapi.responses import RedirectResponse
+from nicegui import app
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.uri_parser import parse_uri
+from starlette.middleware.base import BaseHTTPMiddleware
 
 
 def parse_date_str(date: str):
@@ -137,3 +141,19 @@ def _validate_chunksize(chunksize: int) -> None:
         raise TypeError("Invalid chunksize: Must be an int")
     if not chunksize > 0:
         raise ValueError("Invalid chunksize: Must be > 0")
+
+
+unrestricted_page_routes = {'/login'}
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    """This middleware restricts access to all NiceGUI pages.
+
+    It redirects the user to the login page if they are not authenticated.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        if not app.storage.user.get('authenticated', False):
+            if not request.url.path.startswith('/_nicegui') and request.url.path not in unrestricted_page_routes:
+                return RedirectResponse(f'/login?redirect_to={request.url.path}')
+        return await call_next(request)
