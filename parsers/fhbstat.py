@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from itertools import count
 from pathlib import Path
+from typing import Optional
+from urllib.parse import parse_qs, urlparse, urlunparse
 
 import httpx
 import numpy as np
@@ -24,6 +26,7 @@ class FHBParser(Parser):
         self._url = 'https://fhbstat.com/football'
         self._filters = dict()
         self.rounded_fields = dict()
+        self.target_urls: Optional[set] = set()
 
     @property
     def email(self):
@@ -52,6 +55,7 @@ class FHBParser(Parser):
         self._password = None
         self._filters = dict()
         self.rounded_fields = dict()
+        self.target_urls: Optional[set] = set()
 
     def parser_log_filter(self, record):
         return __name__ == record['name']
@@ -291,49 +295,57 @@ class FHBParser(Parser):
             async with self.page_client(client=client) as logged_client:
                 if logged_client is not None:
                     dfs = []
-                    for page_number in count(1):
-                        if page_number == 1:
-                            response = await logged_client.get(
-                                'https://fhbstat.com/football',
-                                params=self.filters
-                            )
-                        else:
-                            response = await logged_client.get(
-                                'https://fhbstat.com/football',
-                                params={'page': page_number, **self.filters}
-                            )
-                        if response.status_code == 200:
-                            df = self.parse_content(response.content)
-                            now = datetime.now()
-                            if not df[df['dt'] <= now].empty:
-                                dfs.append(df[df['dt'] > now])
-                                break
+                    for target_url in self.target_urls:
+                        self.status = f'Обрабатываем ссылку {target_url}'
+                        scheme, domain, path, params, query, fragment = urlparse(target_url)
+                        query_params = parse_qs(query)
+                        if 'page' in query_params:
+                            del query_params['page']
+                        for key, value in query_params.items():
+                            if isinstance(value, (list, tuple)) and len(value) == 1:
+                                query_params[key] = value[0]
+                        _target_url = urlunparse((scheme, domain, path, params, None, fragment))
+                        for page_number in count(1):
+                            if page_number == 1:
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params=query_params
+                                )
                             else:
-                                dfs.append(df)
-                    future_data = pd.concat(dfs)
-                    data_records = future_data.to_dict(orient='records')
-                    result_df_list = []
-                    for d_r in data_records:
-                        response = await logged_client.get(
-                            'https://fhbstat.com/football',
-                            params={
-                                '9': d_r['9'],
-                                '10': d_r['10'],
-                                **self.filters
-                            }
-                        )
-                        df_9_10 = self.parse_content(response.content)
-                        head_df = self.parse_head_table(response.content)
-                        columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
-                        df_9_10.loc[:, columns] = np.nan
-                        head_df_records = head_df.to_dict(orient='records')
-                        for h_d_r in head_df_records:
-                            for column_name, column_value in h_d_r.items():
-                                if not (column_value is None or np.isnan(column_value)):
-                                    d_r[column_name] = column_value
-                        count_rows, _ = df_9_10.shape
-                        d_r['Количество матчей'] = count_rows
-                        if count_rows > 1:
-                            result_df_list.append(d_r)
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params={'page': page_number, **query_params}
+                                )
+                            if response.status_code == 200:
+                                df = self.parse_content(response.content)
+                                if not df.empty:
+                                    dfs.append(df)
+                                else:
+                                    break
+                        future_data = pd.concat(dfs)
+                        data_records = future_data.to_dict(orient='records')
+                        result_df_list = []
+                        for d_r in data_records:
+                            response = await logged_client.get(
+                                _target_url,
+                                params={
+                                    '9': d_r['9'],
+                                    '10': d_r['10'],
+                                    **{**query_params, **{'32': d_r['32'], '33': d_r['33'], '34': d_r['34']}}
+                                }
+                            )
+                            df_9_10 = self.parse_content(response.content)
+                            head_df = self.parse_head_table(response.content)
+                            columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
+                            df_9_10.loc[:, columns] = np.nan
+                            head_df_records = head_df.to_dict(orient='records')
+                            for h_d_r in head_df_records:
+                                for column_name, column_value in h_d_r.items():
+                                    if not (column_value is None or np.isnan(column_value)):
+                                        d_r[column_name] = column_value
+                            count_rows, _ = df_9_10.shape
+                            d_r['Количество матчей'] = count_rows
+                            if count_rows > 1:
+                                result_df_list.append(d_r)
                     result = self.get_file_response(df_data=result_df_list)
                     return result

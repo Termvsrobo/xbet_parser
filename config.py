@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     STORAGE_SECRET: str
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
+    PORT: int = 8080
 
     model_config = SettingsConfigDict(env_file=".env", extra='allow')
 

@@ -125,29 +125,39 @@ async def fhbstat_page():
         with filter_row:
             filter_row.clear()
             download_button.set_text(text=f'Скачать excel ({element.value or "..."})')
+            fields_count = 11
+            number_fields_count = 3
             if element.value:
                 labels_name = {
                     1: 'День',
                     2: 'Месяц',
                     3: 'Год',
                 }
-                with ui.grid(columns=3):
-                    for label in labels[:3]:
+                with ui.grid(columns=fields_count):
+                    for label in labels[:fields_count]:
                         ui.label(labels_name.get(label, label))
-                    fields = [ui.number(label=label, on_change=fhbstat_parser.add_filter) for label in labels[:3]]
-                    for field in fields:
-                        if field.label not in (1, 2, 3):
-                            field.disable()
+                    [
+                        ui.number(label=label, on_change=fhbstat_parser.add_filter)
+                        for label in labels[:number_fields_count]
+                    ]
+                    [
+                        ui.input(label=label, on_change=fhbstat_parser.add_filter)
+                        for label in labels[number_fields_count:fields_count]
+                    ]
                 with ui.row():
                     ui.label('Выберите поля')
                     await add_rounded_select(None)
+
+    async def add_target_url(element):
+        if element.value:
+            fhbstat_parser.target_urls.add(element.value)
 
     labels = list(range(1, 132))
 
     with ui.row():
         ui.label('Выберите вид спорта')
         ui.select(
-            ['Футбол Исход между собой'],
+            ['Футбол Исход'],
             label='Выберите вид спорта',
             on_change=_get_filters,
             clearable=True
@@ -156,6 +166,10 @@ async def fhbstat_page():
     with ui.row():
         ui.input('Email').bind_value(fhbstat_parser, 'email')
         ui.input('Пароль', password=True, password_toggle_button=True).bind_value(fhbstat_parser, 'password')
+    ui.label('Ссылки вставлять только копированием/вставкой. НЕ ВВОДИТЬ ВРУЧНУЮ')
+    for _ in range(5):
+        with ui.row():
+            ui.input('Ссылка:', on_change=add_target_url)
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
     download_button = ui.button('Скачать excel (...)', on_click=download('/parse_fhbstat'))
 
@@ -186,6 +200,6 @@ if __name__ in {"__main__", "__mp_main__"}:
     ui.link('fhbstat', '/fhbstat_page', new_tab=True)
     ui.run(
         show=False,
-        # port=8081,
+        port=settings.PORT,
         storage_secret=settings.STORAGE_SECRET
     )
