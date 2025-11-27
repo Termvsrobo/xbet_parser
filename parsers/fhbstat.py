@@ -21,6 +21,7 @@ from config import settings
 class FHBParser(Parser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._user_agent = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
         self._email = None
         self._password = None
         self._url = 'https://fhbstat.com/football'
@@ -280,7 +281,6 @@ class FHBParser(Parser):
         return df
 
     async def parse(self, browser):
-        await browser.close()
         result = None
         msg = f'Открываем {self.url}'
         self.logger.info(msg)
@@ -289,7 +289,7 @@ class FHBParser(Parser):
         async with httpx.AsyncClient(
             follow_redirects=True,
             headers={
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
+                'User-Agent': self._user_agent
             }
         ) as client:
             async with self.page_client(client=client) as logged_client:
@@ -331,11 +331,29 @@ class FHBParser(Parser):
                                 params={
                                     '9': d_r['9'],
                                     '10': d_r['10'],
-                                    **{**query_params, **{'32': d_r['32'], '33': d_r['33'], '34': d_r['34']}}
                                 }
                             )
                             df_9_10 = self.parse_content(response.content)
-                            head_df = self.parse_head_table(response.content)
+                            page_url = str(response.request.url)
+                            cookies = [
+                                {
+                                    'name': key,
+                                    'value': value,
+                                    'domain': 'fhbstat.com',
+                                    'path': '/'
+                                }
+                                for key, value in response.cookies.items()
+                            ]
+                            await browser.add_cookies(cookies)
+                            page = await browser.new_page()
+                            page.set_extra_http_headers({
+                                "User-Agent": self._user_agent
+                            })
+                            await page.goto(page_url)
+                            await page.wait_for_load_state()
+                            page_content = await page.content()
+                            head_df = self.parse_head_table(page_content)
+                            await page.close()
                             columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
                             df_9_10.loc[:, columns] = np.nan
                             head_df_records = head_df.to_dict(orient='records')
@@ -345,7 +363,6 @@ class FHBParser(Parser):
                                         d_r[column_name] = column_value
                             count_rows, _ = df_9_10.shape
                             d_r['Количество матчей'] = count_rows
-                            if count_rows > 1:
-                                result_df_list.append(d_r)
+                            result_df_list.append(d_r)
                     result = self.get_file_response(df_data=result_df_list)
                     return result
