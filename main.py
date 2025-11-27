@@ -170,6 +170,9 @@ async def fhbstat_page():
     for _ in range(5):
         with ui.row():
             ui.input('Ссылка:', on_change=add_target_url)
+    ui.label('Обработано ссылок: Вычисляем').bind_text(fhbstat_parser, 'count_processed_links')
+    ui.label('Прошло секунд: Вычисляем').bind_text_from(fhbstat_parser, 'elapsed_time')
+    ui.label('Осталось секунд: Вычисляем').bind_text_from(fhbstat_parser, 'eta')
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
     download_button = ui.button('Скачать excel (...)', on_click=download('/parse_fhbstat'))
 

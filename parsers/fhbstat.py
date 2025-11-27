@@ -325,7 +325,8 @@ class FHBParser(Parser):
                         future_data = pd.concat(dfs)
                         data_records = future_data.to_dict(orient='records')
                         result_df_list = []
-                        for d_r in data_records:
+                        self.count_links = len(data_records)
+                        for d_r in self.tqdm(data_records):
                             response = await logged_client.get(
                                 _target_url,
                                 params={
@@ -355,11 +356,10 @@ class FHBParser(Parser):
                             head_df = self.parse_head_table(page_content)
                             await page.close()
                             columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
-                            df_9_10.loc[:, columns] = np.nan
                             head_df_records = head_df.to_dict(orient='records')
                             for h_d_r in head_df_records:
                                 for column_name, column_value in h_d_r.items():
-                                    if not (column_value is None or np.isnan(column_value)):
+                                    if column_name in columns:
                                         d_r[column_name] = column_value
                             count_rows, _ = df_9_10.shape
                             d_r['Количество матчей'] = count_rows

@@ -8,6 +8,7 @@ COPY pyproject.toml .
 COPY marathonbetparser_url.yaml .
 COPY xliteparser_url.yaml .
 COPY parsers parsers
+COPY excel_templates excel_templates
 COPY .env .env
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y xvfb
