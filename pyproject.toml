@@ -23,6 +23,7 @@ dependencies = [
     "pydantic-settings (>=2.11.0,<3.0.0)",
     "pymongo (>=4.15.2,<5.0.0)",
     "xlsxtpl (>=0.3.1,<0.4.0)",
+    "click (==8.3.1)",
 ]
 
 

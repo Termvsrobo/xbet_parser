@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright/python:v1.56.0-noble
+FROM mcr.microsoft.com/playwright/python:v1.55.0-noble
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -27,8 +27,8 @@ ENV LC_ALL ru_RU.UTF-8
 RUN python -m pip install --break-system-packages pipx
 RUN pipx ensurepath --global --prepend
 RUN pipx install --global poetry
-RUN poetry config virtualenvs.create false \
-    && poetry install --without dev --no-interaction --no-ansi --no-root
+RUN poetry config virtualenvs.create false
+RUN poetry install --without dev --no-interaction --no-ansi --no-root
 
 RUN playwright install chrome
 
