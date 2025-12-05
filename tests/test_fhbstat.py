@@ -11,3 +11,8 @@ def test_page():
     head_df = FHBParser.parse_head_table(content)
     assert not df.empty
     assert not head_df.empty
+
+
+def test_round():
+    value = FHBParser.round(1.55, '0.1')
+    assert value == '1.5'

@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from itertools import count
 from pathlib import Path
 from typing import Optional
@@ -290,9 +290,14 @@ class FHBParser(Parser):
         else:
             return str
 
-    def round(self, value, precision: str = '0'):
-        _value = Decimal(value).quantize(Decimal(precision))
+    @classmethod
+    def round(cls, value, precision: str = '0'):
+        _value = Decimal(value).quantize(Decimal(precision), rounding=ROUND_DOWN)
         _value = float(_value)
+        if _value.is_integer():
+            _value = str(int(_value)) + '.'
+        else:
+            _value = str(_value)
         return _value
 
     def get_url_params(self, url):
@@ -365,7 +370,10 @@ class FHBParser(Parser):
                                     params=filters_data
                                 )
                                 df_match = self.parse_content(response.content)
-                                df_match = df_match.loc[df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk]
+                                if not df_match.empty:
+                                    df_match = df_match.loc[
+                                        df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
+                                    ]
                                 page_url = str(response.request.url)
                                 cookies = [
                                     {
@@ -388,15 +396,14 @@ class FHBParser(Parser):
                                 await page.close()
                                 columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
                                 head_df_records = head_df.to_dict(orient='records')
+                                _data_match = data_match.copy()
                                 for h_d_r in head_df_records:
                                     for column_name, column_value in h_d_r.items():
                                         if column_name in columns:
-                                            data_match[column_name] = column_value
+                                            _data_match[column_name] = column_value
                                 count_rows, _ = df_match.shape
-                                if count_rows:
-                                    count_rows -= 1
-                                data_match['Количество матчей'] = count_rows
-                                data_match['index'] = index
-                                result_df_list.append(data_match)
+                                _data_match['Количество матчей'] = count_rows
+                                _data_match['index'] = index
+                                result_df_list.append(_data_match)
                     result = self.get_file_response(df_data=result_df_list)
                     return result
