@@ -58,6 +58,7 @@ class Parser(ParserBase):
         self._path = None
         self.logger = logger
         self.logger.add(f'logs/{self.name}.log', filter=self.parser_log_filter)
+        self._now_msk = None
 
     def read_mongo(
         self,
@@ -209,16 +210,22 @@ class Parser(ParserBase):
     def is_running(self):
         return self._is_running.is_set()
 
+    @property
+    def now_msk(self):
+        return self._now_msk
+
     def start(self):
         self.delete_older_file()
         self._elapsed_time = time()
+        self._status = None
+        self._now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
 
     def stop(self):
         self._count_processed_links = None
         self._count_links = None
         self._elapsed_time = None
         self._eta = None
-        self._status = None
+        self._now_msk = None
 
     @property
     def status(self):
@@ -320,8 +327,7 @@ class Parser(ParserBase):
             logger.info(msg)
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
-            now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
-            df['Дата слепка, МСК'] = now_msk
+            df['Дата слепка, МСК'] = self.now_msk
             columns = [
                 'Ссылка',
                 'Страна',
@@ -453,7 +459,7 @@ class Parser(ParserBase):
             if not settings.DEBUG:
                 older_df = self.read_mongo('History', [], settings.MONGO_URL.encoded_string())
             self.to_mongo(df, 'History', settings.MONGO_URL.encoded_string(), if_exists='append', index=False)
-            self.path = f'files/{self.name}_{now_msk.isoformat()}.xlsx'
+            self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
             if older_df.empty:
                 full_df = df
             else:
@@ -540,7 +546,7 @@ class Parser(ParserBase):
                 workbook.save(self.path)
             result = FileResponse(
                 self.path,
-                filename=f'{self.name}_{now_msk.isoformat()}.xlsx'
+                filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
             )
         else:
             result = PlainTextResponse('Не собрали данных')

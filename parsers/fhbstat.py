@@ -1,6 +1,8 @@
 import json
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
+from decimal import Decimal
 from itertools import count
 from pathlib import Path
 from typing import Optional
@@ -9,7 +11,6 @@ from urllib.parse import parse_qs, urlparse, urlunparse
 import httpx
 import numpy as np
 import pandas as pd
-import pytz
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, PlainTextResponse
 from xlsxtpl.writerx import BookWriter
@@ -26,7 +27,7 @@ class FHBParser(Parser):
         self._password = None
         self._url = 'https://fhbstat.com/football'
         self._filters = dict()
-        self.rounded_fields = dict()
+        self.rounded_fields = defaultdict(dict)
         self.target_urls: Optional[set] = set()
 
     @property
@@ -55,7 +56,7 @@ class FHBParser(Parser):
         self._email = None
         self._password = None
         self._filters = dict()
-        self.rounded_fields = dict()
+        self.rounded_fields = defaultdict(dict)
         self.target_urls: Optional[set] = set()
 
     def parser_log_filter(self, record):
@@ -128,9 +129,10 @@ class FHBParser(Parser):
             self.logger.info(msg)
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
-            now_msk = datetime.now(tz=pytz.timezone('Europe/Moscow'))
-            df['Дата слепка, МСК'] = now_msk
+            df = df.drop_duplicates()
+            df['Дата слепка, МСК'] = self.now_msk
             columns = [
+                'index',
                 '1',
                 '2',
                 '3',
@@ -199,7 +201,7 @@ class FHBParser(Parser):
             df = df.reindex(columns=columns)
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
             older_df = pd.DataFrame(columns=columns)
-            self.path = f'files/{self.name}_{now_msk.isoformat()}.xlsx'
+            self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
             if older_df.empty:
                 full_df = df
             else:
@@ -229,7 +231,7 @@ class FHBParser(Parser):
             writer.save(self.path)
             result = FileResponse(
                 self.path,
-                filename=f'{self.name}_{now_msk.isoformat()}.xlsx'
+                filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
             )
         else:
             result = PlainTextResponse('Не собрали данных')
@@ -280,6 +282,25 @@ class FHBParser(Parser):
         df = df.replace({None: np.nan, '': np.nan})
         return df
 
+    def get_field_type(self, value):
+        if value < 11:
+            return bool
+        elif value >= 11:
+            return float
+        else:
+            return str
+
+    def round(self, value, precision: str = '0'):
+        _value = Decimal(value).quantize(Decimal(precision))
+        _value = float(_value)
+        return _value
+
+    def get_url_params(self, url):
+        scheme, domain, path, params, query, fragment = urlparse(url)
+        query_params = parse_qs(query)
+        target_url = urlunparse((scheme, domain, path, params, None, fragment))
+        return target_url, query_params
+
     async def parse(self, browser):
         result = None
         msg = f'Открываем {self.url}'
@@ -297,14 +318,12 @@ class FHBParser(Parser):
                     dfs = []
                     for target_url in self.target_urls:
                         self.status = f'Обрабатываем ссылку {target_url}'
-                        scheme, domain, path, params, query, fragment = urlparse(target_url)
-                        query_params = parse_qs(query)
+                        _target_url, query_params = self.get_url_params(target_url)
                         if 'page' in query_params:
                             del query_params['page']
                         for key, value in query_params.items():
                             if isinstance(value, (list, tuple)) and len(value) == 1:
                                 query_params[key] = value[0]
-                        _target_url = urlunparse((scheme, domain, path, params, None, fragment))
                         for page_number in count(1):
                             if page_number == 1:
                                 response = await logged_client.get(
@@ -317,52 +336,67 @@ class FHBParser(Parser):
                                     params={'page': page_number, **query_params}
                                 )
                             if response.status_code == 200:
-                                df = self.parse_content(response.content)
-                                if not df.empty:
-                                    dfs.append(df)
+                                try:
+                                    df = self.parse_content(response.content)
+                                except Exception:
+                                    self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
                                 else:
-                                    break
+                                    if not df.empty:
+                                        dfs.append(df)
+                                    else:
+                                        break
                         future_data = pd.concat(dfs)
                         data_records = future_data.to_dict(orient='records')
                         result_df_list = []
                         self.count_links = len(data_records)
-                        for d_r in self.tqdm(data_records):
-                            response = await logged_client.get(
-                                _target_url,
-                                params={
-                                    '9': d_r['9'],
-                                    '10': d_r['10'],
-                                }
-                            )
-                            df_9_10 = self.parse_content(response.content)
-                            page_url = str(response.request.url)
-                            cookies = [
-                                {
-                                    'name': key,
-                                    'value': value,
-                                    'domain': 'fhbstat.com',
-                                    'path': '/'
-                                }
-                                for key, value in response.cookies.items()
-                            ]
-                            await browser.add_cookies(cookies)
-                            page = await browser.new_page()
-                            page.set_extra_http_headers({
-                                "User-Agent": self._user_agent
-                            })
-                            await page.goto(page_url)
-                            await page.wait_for_load_state()
-                            page_content = await page.content()
-                            head_df = self.parse_head_table(page_content)
-                            await page.close()
-                            columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
-                            head_df_records = head_df.to_dict(orient='records')
-                            for h_d_r in head_df_records:
-                                for column_name, column_value in h_d_r.items():
-                                    if column_name in columns:
-                                        d_r[column_name] = column_value
-                            count_rows, _ = df_9_10.shape
-                            d_r['Количество матчей'] = count_rows
-                            result_df_list.append(d_r)
+                        for index, data_match in enumerate(self.tqdm(data_records), 1):
+                            for filters_value in self.rounded_fields.values():
+                                filters_data = {}
+                                for i, data in filters_value.items():
+                                    field_type = self.get_field_type(i)
+                                    _data_match = data_match.get(str(i))
+                                    if _data_match:
+                                        if issubclass(field_type, bool):
+                                            filters_data[str(i)] = _data_match
+                                        else:
+                                            filters_data[str(i)] = self.round(_data_match, str(data))
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params=filters_data
+                                )
+                                df_match = self.parse_content(response.content)
+                                df_match = df_match[df_match['dt'] <= self.now_msk]
+                                page_url = str(response.request.url)
+                                cookies = [
+                                    {
+                                        'name': key,
+                                        'value': value,
+                                        'domain': 'fhbstat.com',
+                                        'path': '/'
+                                    }
+                                    for key, value in response.cookies.items()
+                                ]
+                                await browser.add_cookies(cookies)
+                                page = await browser.new_page()
+                                page.set_extra_http_headers({
+                                    "User-Agent": self._user_agent
+                                })
+                                await page.goto(page_url)
+                                await page.wait_for_load_state()
+                                page_content = await page.content()
+                                head_df = self.parse_head_table(page_content)
+                                await page.close()
+                                columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
+                                head_df_records = head_df.to_dict(orient='records')
+                                for h_d_r in head_df_records:
+                                    for column_name, column_value in h_d_r.items():
+                                        if column_name in columns:
+                                            data_match[column_name] = column_value
+                                count_rows, _ = df_match.shape
+                                if count_rows:
+                                    count_rows -= 1
+                                data_match['Количество матчей'] = count_rows
+                                data_match['index'] = index
+                                result_df_list.append(data_match)
                     result = self.get_file_response(df_data=result_df_list)
                     return result
