@@ -365,7 +365,7 @@ class FHBParser(Parser):
                                     params=filters_data
                                 )
                                 df_match = self.parse_content(response.content)
-                                df_match = df_match[df_match['dt'] <= self.now_msk]
+                                df_match = df_match.loc[df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk]
                                 page_url = str(response.request.url)
                                 cookies = [
                                     {
