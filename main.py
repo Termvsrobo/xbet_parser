@@ -158,6 +158,11 @@ async def fhbstat_page():
         if element.value:
             fhbstat_parser.target_urls.add(element.value)
 
+    async def clear_filters(element):
+        await _get_filters(fake_element)
+        fhbstat_parser.rounded_fields.clear()
+        fhbstat_parser.target_urls.clear()
+
     class FakeElement:
         def __init__(self, value):
             self.value = value
@@ -177,6 +182,8 @@ async def fhbstat_page():
             clearable=True
         )
     filter_row = ui.card()
+    fake_element = FakeElement('test')
+    ui.button('Очистить фильтр', on_click=clear_filters)
     ui.label('Ссылки вставлять только копированием/вставкой. НЕ ВВОДИТЬ ВРУЧНУЮ')
     for _ in range(1):
         with ui.row():
@@ -186,7 +193,6 @@ async def fhbstat_page():
     ui.label('Осталось секунд: Вычисляем').bind_text_from(fhbstat_parser, 'eta')
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
     download_button = ui.button('Скачать excel (...)', on_click=download('/parse_fhbstat'))
-    fake_element = FakeElement('test')
     await _get_filters(fake_element)
 
 

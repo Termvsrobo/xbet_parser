@@ -55,9 +55,9 @@ class FHBParser(Parser):
         super().stop()
         self._email = None
         self._password = None
-        self._filters = dict()
-        self.rounded_fields = defaultdict(dict)
-        self.target_urls: Optional[set] = set()
+        self._filters.clear()
+        self.rounded_fields.clear()
+        self.target_urls.clear()
 
     def parser_log_filter(self, record):
         return __name__ == record['name']
