@@ -39,6 +39,8 @@ pytest-asyncio = "^1.1.0"
 flake8-pyproject = "^1.2.3"
 pudb = "^2025.1"
 poetry-plugin-dotenv = "^3.0.1"
+gprof2dot = "^2025.4.14"
+profiling-decorator = "^0.0.6"
 
 
 [tool.flake8]

@@ -129,7 +129,6 @@ class FHBParser(Parser):
             self.logger.info(msg)
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
-            df = df.drop_duplicates()
             df['Дата слепка, МСК'] = self.now_msk
             columns = [
                 'index',
@@ -386,7 +385,7 @@ class FHBParser(Parser):
                                 ]
                                 await browser.add_cookies(cookies)
                                 page = await browser.new_page()
-                                page.set_extra_http_headers({
+                                await page.set_extra_http_headers({
                                     "User-Agent": self._user_agent
                                 })
                                 await page.goto(page_url)
