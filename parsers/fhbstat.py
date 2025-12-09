@@ -1,10 +1,12 @@
 import json
+from asyncio import sleep
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from itertools import count
 from pathlib import Path
+from random import randint
 from typing import Optional
 from urllib.parse import parse_qs, urlparse, urlunparse
 
@@ -320,6 +322,7 @@ class FHBParser(Parser):
             async with self.page_client(client=client) as logged_client:
                 if logged_client is not None:
                     dfs = []
+                    result_df_list = []
                     for target_url in self.target_urls:
                         self.status = f'Обрабатываем ссылку {target_url}'
                         _target_url, query_params = self.get_url_params(target_url)
@@ -343,15 +346,19 @@ class FHBParser(Parser):
                                 try:
                                     df = self.parse_content(response.content)
                                 except Exception:
+                                    self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
                                     self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
+                                    break
                                 else:
                                     if not df.empty:
                                         dfs.append(df)
                                     else:
                                         break
-                        future_data = pd.concat(dfs)
+                            await sleep(randint(1, 5))
+                        future_data = pd.DataFrame()
+                        if dfs:
+                            future_data = pd.concat(dfs)
                         data_records = future_data.to_dict(orient='records')
-                        result_df_list = []
                         self.count_links = len(data_records)
                         for index, data_match in enumerate(self.tqdm(data_records), 1):
                             for filters_value in self.rounded_fields.values():
@@ -388,6 +395,7 @@ class FHBParser(Parser):
                                 await page.set_extra_http_headers({
                                     "User-Agent": self._user_agent
                                 })
+                                await sleep(randint(1, 5))
                                 await page.goto(page_url)
                                 await page.wait_for_load_state()
                                 page_content = await page.content()
@@ -404,5 +412,6 @@ class FHBParser(Parser):
                                 _data_match['Количество матчей'] = count_rows
                                 _data_match['index'] = index
                                 result_df_list.append(_data_match)
+                                await sleep(randint(1, 5))
                     result = self.get_file_response(df_data=result_df_list)
                     return result
