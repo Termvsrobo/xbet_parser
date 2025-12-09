@@ -91,7 +91,7 @@ class FHBParser(Parser):
         try:
             json_data = response.json()
         except Exception:
-            pass
+            self.logger.exception('Ошибка во время авторизации')
         else:
             if 'success' in json_data and 'error' in json_data['success']:
                 self.status = json_data['success']['error']
