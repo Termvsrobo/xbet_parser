@@ -88,8 +88,6 @@ class FHBParser(Parser):
             cookies=cookies,
         )
         assert response.status_code == 200, 'Не удалось авторизоваться на сайте fhbstat.com'
-        with cookies_file.open('w') as f:
-            json.dump(dict(client.cookies), f)
         try:
             json_data = response.json()
         except Exception:
@@ -98,6 +96,9 @@ class FHBParser(Parser):
             if 'success' in json_data and 'error' in json_data['success']:
                 self.status = json_data['success']['error']
                 return False
+            else:
+                with cookies_file.open('w') as f:
+                    json.dump(dict(client.cookies), f)
         return True
 
     async def logout(self, client: httpx.AsyncClient):
