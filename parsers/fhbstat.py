@@ -1,4 +1,5 @@
 import json
+import re
 from asyncio import sleep
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -8,7 +9,7 @@ from itertools import count
 from pathlib import Path
 from random import randint
 from typing import Optional
-from urllib.parse import parse_qs, urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import httpx
 import numpy as np
@@ -16,6 +17,11 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, PlainTextResponse
 from xlsxtpl.writerx import BookWriter
+
+try:
+    from pathvalidate import sanitize_filename
+except ImportError:
+    sanitize_filename = None
 
 from base import Parser
 from config import settings
@@ -296,8 +302,12 @@ class FHBParser(Parser):
     def round(cls, value, precision: str = '0'):
         _value = Decimal(value).quantize(Decimal(precision), rounding=ROUND_DOWN)
         _value = float(_value)
-        if _value.is_integer():
+        if _value.is_integer() and re.match(r'^\d+.$', precision):
             _value = str(int(_value)) + '.'
+        elif _value.is_integer() and re.match(r'^\d+$', precision):
+            _value = str(int(_value))
+        elif _value.is_integer() and re.match(r'^\d+.\d+$', precision):
+            _value = str(int(_value)) + '.0'
         else:
             _value = str(_value)
         return _value
@@ -362,7 +372,8 @@ class FHBParser(Parser):
                         data_records = future_data.to_dict(orient='records')
                         self.count_links = len(data_records)
                         for index, data_match in enumerate(self.tqdm(data_records), 1):
-                            for filters_value in self.rounded_fields.values():
+                            _rounded_fields = self.rounded_fields.copy()
+                            for filters_value in _rounded_fields.values():
                                 filters_data = {}
                                 for i, data in filters_value.items():
                                     field_type = self.get_field_type(i)
@@ -372,16 +383,8 @@ class FHBParser(Parser):
                                             filters_data[str(i)] = _data_match
                                         else:
                                             filters_data[str(i)] = self.round(_data_match, str(data))
-                                response = await logged_client.get(
-                                    _target_url,
-                                    params=filters_data
-                                )
-                                df_match = self.parse_content(response.content)
-                                if not df_match.empty:
-                                    df_match = df_match.loc[
-                                        df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
-                                    ]
-                                page_url = str(response.request.url)
+                                scheme, domain, path, params, query, fragment = urlparse(_target_url)
+                                page_url = urlunparse((scheme, domain, path, params, urlencode(filters_data), fragment))
                                 cookies = [
                                     {
                                         'name': key,
@@ -389,18 +392,29 @@ class FHBParser(Parser):
                                         'domain': 'fhbstat.com',
                                         'path': '/'
                                     }
-                                    for key, value in response.cookies.items()
+                                    for key, value in logged_client.cookies.items()
                                 ]
                                 await browser.add_cookies(cookies)
                                 page = await browser.new_page()
                                 await page.set_extra_http_headers({
                                     "User-Agent": self._user_agent
                                 })
-                                await sleep(randint(1, 5))
                                 await page.goto(page_url)
                                 await page.wait_for_load_state()
                                 page_content = await page.content()
+                                df_match = self.parse_content(page_content)
+                                if not df_match.empty:
+                                    df_match = df_match.loc[
+                                        df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
+                                    ]
                                 head_df = self.parse_head_table(page_content)
+                                if sanitize_filename:
+                                    parent_dir = Path('html') / Path(self.now_msk.isoformat())
+                                    parent_dir.mkdir(parents=True, exist_ok=True)
+                                    fname = parent_dir / Path(
+                                        f'{sanitize_filename(page_url.replace("https://fhbstat.com/", ""))}.html'
+                                    )
+                                    fname.write_text(page_content)
                                 await page.close()
                                 columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
                                 head_df_records = head_df.to_dict(orient='records')
@@ -414,5 +428,8 @@ class FHBParser(Parser):
                                 _data_match['index'] = index
                                 result_df_list.append(_data_match)
                                 await sleep(randint(1, 5))
+                            result_df_list.append({str(i): None for i in range(1, 131)})
+                            result_df_list.append({str(i): data_match.get(str(i)) for i in range(1, 131) if i >= 25})
+                            result_df_list.append({str(i): None for i in range(1, 131)})
                     result = self.get_file_response(df_data=result_df_list)
                     return result

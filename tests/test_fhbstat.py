@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from parsers.fhbstat import FHBParser
 
 
@@ -13,6 +15,17 @@ def test_page():
     assert not head_df.empty
 
 
-def test_round():
-    value = FHBParser.round(1.55, '0.1')
-    assert value == '1.5'
+@pytest.mark.parametrize(
+    'value,round_to,result',
+    [
+        (1.55, '0.1', '1.5'),
+        (1.55, '0.', '1.'),
+        (1.55, '0', '1'),
+        (2.05, '0.1', '2.0'),
+        (2.05, '0.', '2.'),
+        (2.05, '0', '2'),
+    ]
+)
+def test_round(value, round_to, result):
+    value = FHBParser.round(value, round_to)
+    assert value == result

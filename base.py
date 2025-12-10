@@ -603,4 +603,5 @@ class BrowserManager:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self._is_running.clear()
         self.parser.stop()
-        await self._ctx_browser.__aexit__(exc_type, exc_val, exc_tb)
+        if self._ctx_browser:
+            await self._ctx_browser.__aexit__(exc_type, exc_val, exc_tb)

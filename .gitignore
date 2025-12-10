@@ -183,6 +183,7 @@ testtgbot.ru-key.pem
 testtgbot.ru.pem
 
 browser/
+html/
 
 files/**.xlsx
 **.mkv
