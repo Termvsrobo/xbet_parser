@@ -5,10 +5,11 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
+from functools import reduce
 from itertools import count
 from pathlib import Path
 from random import randint
-from typing import Optional
+from typing import Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 import httpx
@@ -216,14 +217,6 @@ class FHBParser(Parser):
                 full_df = pd.concat((df, older_df))
             if settings.DEBUG:
                 full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
-            full_df = full_df.sort_values(
-                [
-                    'dt',
-                    '9',
-                    '10',
-                ],
-                ascending=[False, True, True]
-            )
             full_df = full_df.reset_index(drop=True)
 
             fname = Path(__file__).parent.parent / Path('excel_templates') / Path('ШАБЛОН Эксель Футбол Исход.xlsx')
@@ -281,7 +274,16 @@ class FHBParser(Parser):
                     if key_name in td.attrs:
                         key = td.attrs.get(key_name)
                         value = td.text
-                        data_row[key] = value
+                        if value:
+                            try:
+                                if value.isnumeric():
+                                    data_row[key] = int(value)
+                                else:
+                                    data_row[key] = float(value)
+                            except ValueError:
+                                data_row[key] = value
+                        else:
+                            data_row[key] = np.nan
             _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
             _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
             data_row['dt'] = _dt
@@ -311,6 +313,18 @@ class FHBParser(Parser):
         else:
             _value = str(_value)
         return _value
+
+    @classmethod
+    def get_means(cls, list_values: List[Dict[str, float]]):
+        keys = set(reduce(lambda x, y: x + y, [list(lv.keys()) for lv in list_values]))
+        keys = set(filter(lambda x: x not in ('index', 'Количество матчей', 'dt') and int(x) >= 11, keys))
+        res = {key: np.array([d.get(key, np.nan) for d in list_values]) for key in keys}
+        for k, v in res.items():
+            res[k] = v.astype('float')
+        result = dict()
+        for key, value in res.items():
+            result[key] = value[~np.isnan(value)].mean()
+        return result
 
     def get_url_params(self, url):
         scheme, domain, path, params, query, fragment = urlparse(url)
@@ -373,6 +387,7 @@ class FHBParser(Parser):
                         self.count_links = len(data_records)
                         for index, data_match in enumerate(self.tqdm(data_records), 1):
                             _rounded_fields = self.rounded_fields.copy()
+                            local_match_result_df = []
                             for filters_value in _rounded_fields.values():
                                 filters_data = {}
                                 for i, data in filters_value.items():
@@ -426,10 +441,17 @@ class FHBParser(Parser):
                                 count_rows, _ = df_match.shape
                                 _data_match['Количество матчей'] = count_rows
                                 _data_match['index'] = index
-                                result_df_list.append(_data_match)
+                                local_match_result_df.append(_data_match)
                                 await sleep(randint(1, 5))
-                            result_df_list.append({str(i): None for i in range(1, 131)})
-                            result_df_list.append({str(i): data_match.get(str(i)) for i in range(1, 131) if i >= 25})
+                            result_df_list += local_match_result_df
+                            result_df_list.append({
+                                **self.get_means(local_match_result_df),
+                                **{'Количество матчей': '%'}
+                            })
+                            result_df_list.append({
+                                **{str(i): data_match.get(str(i)) for i in range(1, 131) if i >= 25},
+                                **{'Количество матчей': 'Кф'}
+                            })
                             result_df_list.append({str(i): None for i in range(1, 131)})
                     result = self.get_file_response(df_data=result_df_list)
                     return result
