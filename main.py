@@ -168,19 +168,19 @@ async def fhbstat_page():
             self.value = value
             self.sender = self
 
-    labels = {i: fhbstat_parser.get_field_type(i) for i in range(1, 132)}
+    labels = {i: fhbstat_parser.get_field_type(i) for i in range(1, fhbstat_parser.count_columns)}
 
     with ui.row():
         ui.input('Email').bind_value(fhbstat_parser, 'email')
         ui.input('Пароль', password=True, password_toggle_button=True).bind_value(fhbstat_parser, 'password')
-    with ui.row().props('disabled'):
+    with ui.row().props('disabled data-value=15'):
         ui.label('Выберите вид спорта')
         ui.select(
             ['Футбол Исход'],
             label='Выберите вид спорта',
             on_change=_get_filters,
             clearable=True
-        )
+        ).props('disabled')
     filter_row = ui.card()
     fake_element = FakeElement('test')
     ui.button('Очистить фильтр', on_click=clear_filters)

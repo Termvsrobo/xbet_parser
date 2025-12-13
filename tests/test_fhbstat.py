@@ -60,3 +60,20 @@ def test_average(data, result):
     assert res.keys() == result.keys()
     for key in res:
         np.testing.assert_approx_equal(res[key], result[key])
+
+
+@pytest.mark.parametrize(
+    'data_means,data_match,result',
+    [
+        (
+            {'25': 80.0, '26': 50.0},
+            {'25': 1.30, '26': 2.580},
+            {'25': 0.04, '26': 0.29}
+        ),
+    ]
+)
+def test_mathematical_expectation(data_means, data_match, result):
+    res = FHBParser.get_mathematical_expectation(data_means, data_match)
+    assert res.keys() == result.keys()
+    for key in res:
+        np.testing.assert_approx_equal(res[key], result[key])

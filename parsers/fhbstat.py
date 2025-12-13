@@ -29,6 +29,8 @@ from config import settings
 
 
 class FHBParser(Parser):
+    count_columns: int = 256
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._user_agent = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
@@ -132,7 +134,15 @@ class FHBParser(Parser):
         finally:
             await self.logout(client=client)
 
-    def get_file_response(self, df_data):
+    @classmethod
+    def get_excel_template(cls, path):
+        templates = {
+            '/football': 'ШАБЛОН Эксель Футбол Исход.xlsx',
+            '/football_total': 'ШАБЛОН Эксель Футбол Тотал.xlsx',
+        }
+        return templates.get(path)
+
+    def get_file_response(self, df_data, target_path):
         result = None
         if df_data:
             msg = f'Собрано данных: {len(df_data)}'
@@ -140,73 +150,7 @@ class FHBParser(Parser):
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
             df['Дата слепка, МСК'] = self.now_msk
-            columns = [
-                'index',
-                '1',
-                '2',
-                '3',
-                '4',
-                '5',
-                '6',
-                '7',
-                '8',
-                '9',
-                '10',
-                '11',
-                '12',
-                '13',
-                '14',
-                '15',
-                '16',
-                '18',
-                '19',
-                '20',
-                '21',
-                '22',
-                '23',
-                '25',
-                '26',
-                '27',
-                '32',
-                '33',
-                '34',
-                '28',
-                '29',
-                '30',
-                '35',
-                '36',
-                '37',
-                '38',
-                '39',
-                '127',
-                '113',
-                '114',
-                '128',
-                '92',
-                '95',
-                '129',
-                '44',
-                '45',
-                '46',
-                '130',
-                '47',
-                '48',
-                '49',
-                '131',
-                '50',
-                '51',
-                '52',
-                '53',
-                '54',
-                '55',
-                '56',
-                '57',
-                '58',
-                'dt',
-                'Количество матчей',
-                'Дата слепка, МСК'
-
-            ]
+            columns = list(range(1, self.count_columns)) + ['index', 'dt', 'Количество матчей', 'Дата слепка, МСК']
             df = df.reindex(columns=columns)
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
             older_df = pd.DataFrame(columns=columns)
@@ -219,23 +163,27 @@ class FHBParser(Parser):
                 full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
             full_df = full_df.reset_index(drop=True)
 
-            fname = Path(__file__).parent.parent / Path('excel_templates') / Path('ШАБЛОН Эксель Футбол Исход.xlsx')
-            writer = BookWriter(fname)
-            writer.jinja_env.globals.update(dir=dir, getattr=getattr)
+            template_name = self.get_excel_template(target_path)
+            if template_name:
+                fname = Path(__file__).parent.parent / Path('excel_templates') / Path(template_name)
+                writer = BookWriter(fname)
+                writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 
-            data = dict()
-            data['rows'] = df.to_dict('records')
-            payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика',  'ctx': data}
+                data = dict()
+                data['rows'] = df.to_dict('records')
+                payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика',  'ctx': data}
 
-            payloads = [payload0]
-            writer.render_book2(payloads=payloads)
-            writer.save(self.path)
-            result = FileResponse(
-                self.path,
-                filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
-            )
+                payloads = [payload0]
+                writer.render_book2(payloads=payloads)
+                writer.save(self.path)
+                result = FileResponse(
+                    self.path,
+                    filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
+                )
+            else:
+                result = PlainTextResponse('Не нашли шаблон excel.')
         else:
-            result = PlainTextResponse('Не собрали данных')
+            result = PlainTextResponse('Не собрали данных.')
         return result
 
     @classmethod
@@ -285,9 +233,13 @@ class FHBParser(Parser):
                         else:
                             data_row[key] = np.nan
             _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
-            _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
-            data_row['dt'] = _dt
-            data_list.append(data_row)
+            try:
+                _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
+            except ValueError:
+                continue
+            else:
+                data_row['dt'] = _dt
+                data_list.append(data_row)
         df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
         df = df.replace({None: np.nan, '': np.nan})
         return df
@@ -326,11 +278,22 @@ class FHBParser(Parser):
             result[key] = value[~np.isnan(value)].mean()
         return result
 
+    @classmethod
+    def get_mathematical_expectation(cls, data_means, data_match):
+        keys = set(list(data_means.keys()) + list(data_match.keys()))
+        result = dict()
+        for key in keys:
+            key_mean = data_means.get(key, 0)
+            key_match = data_match.get(key, 0)
+            if key_mean and key_match:
+                result[key] = (key_mean / 100 * key_match) - 1
+        return result
+
     def get_url_params(self, url):
         scheme, domain, path, params, query, fragment = urlparse(url)
         query_params = parse_qs(query)
         target_url = urlunparse((scheme, domain, path, params, None, fragment))
-        return target_url, query_params
+        return target_url, query_params, path
 
     async def parse(self, browser):
         result = None
@@ -350,36 +313,49 @@ class FHBParser(Parser):
                     result_df_list = []
                     for target_url in self.target_urls:
                         self.status = f'Обрабатываем ссылку {target_url}'
-                        _target_url, query_params = self.get_url_params(target_url)
-                        if 'page' in query_params:
-                            del query_params['page']
+                        _target_url, query_params, target_path = self.get_url_params(target_url)
                         for key, value in query_params.items():
                             if isinstance(value, (list, tuple)) and len(value) == 1:
                                 query_params[key] = value[0]
-                        for page_number in count(1):
-                            if page_number == 1:
-                                response = await logged_client.get(
-                                    _target_url,
-                                    params=query_params
-                                )
-                            else:
-                                response = await logged_client.get(
-                                    _target_url,
-                                    params={'page': page_number, **query_params}
-                                )
+                        if 'page' not in query_params:
+                            for page_number in count(1):
+                                if page_number == 1:
+                                    response = await logged_client.get(
+                                        _target_url,
+                                        params=query_params
+                                    )
+                                else:
+                                    response = await logged_client.get(
+                                        _target_url,
+                                        params={'page': page_number, **query_params}
+                                    )
+                                if response.status_code == 200:
+                                    try:
+                                        df = self.parse_content(response.content)
+                                    except Exception:
+                                        self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
+                                        self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
+                                        break
+                                    else:
+                                        if not df.empty:
+                                            dfs.append(df)
+                                        else:
+                                            break
+                                await sleep(randint(1, 3))
+                        else:
+                            response = await logged_client.get(
+                                _target_url,
+                                params=query_params
+                            )
                             if response.status_code == 200:
                                 try:
                                     df = self.parse_content(response.content)
                                 except Exception:
                                     self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
                                     self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
-                                    break
                                 else:
                                     if not df.empty:
                                         dfs.append(df)
-                                    else:
-                                        break
-                            await sleep(randint(1, 5))
                         future_data = pd.DataFrame()
                         if dfs:
                             future_data = pd.concat(dfs)
@@ -398,7 +374,7 @@ class FHBParser(Parser):
                                             filters_data[str(i)] = _data_match
                                         else:
                                             filters_data[str(i)] = self.round(_data_match, str(data))
-                                scheme, domain, path, params, query, fragment = urlparse(_target_url)
+                                scheme, domain, path, params, _, fragment = urlparse(_target_url)
                                 page_url = urlunparse((scheme, domain, path, params, urlencode(filters_data), fragment))
                                 cookies = [
                                     {
@@ -442,16 +418,22 @@ class FHBParser(Parser):
                                 _data_match['Количество матчей'] = count_rows
                                 _data_match['index'] = index
                                 local_match_result_df.append(_data_match)
-                                await sleep(randint(1, 5))
+                                await sleep(randint(1, 3))
                             result_df_list += local_match_result_df
+                            means = self.get_means(local_match_result_df)
+                            mathematical_expectation = self.get_mathematical_expectation(means, data_match)
                             result_df_list.append({
-                                **self.get_means(local_match_result_df),
+                                **means,
                                 **{'Количество матчей': '%'}
                             })
                             result_df_list.append({
-                                **{str(i): data_match.get(str(i)) for i in range(1, 131) if i >= 25},
-                                **{'Количество матчей': 'Кф'}
+                                **{str(i): data_match.get(str(i)) for i in range(1, self.count_columns) if i >= 25},
+                                **{'Количество матчей': 'кф'}
                             })
-                            result_df_list.append({str(i): None for i in range(1, 131)})
-                    result = self.get_file_response(df_data=result_df_list)
+                            result_df_list.append({
+                                **mathematical_expectation,
+                                **{'Количество матчей': 'мо'}
+                            })
+                            result_df_list.append({str(i): None for i in range(1, self.count_columns)})
+                    result = self.get_file_response(df_data=result_df_list, target_path=target_path)
                     return result
