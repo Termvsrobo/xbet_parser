@@ -150,7 +150,9 @@ class FHBParser(Parser):
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
             df['Дата слепка, МСК'] = self.now_msk
-            columns = list(range(1, self.count_columns)) + ['index', 'dt', 'Количество матчей', 'Дата слепка, МСК']
+            columns = list(
+                map(str, range(1, self.count_columns))
+            ) + ['index', 'dt', 'Количество матчей', 'Дата слепка, МСК']
             df = df.reindex(columns=columns)
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
             older_df = pd.DataFrame(columns=columns)
