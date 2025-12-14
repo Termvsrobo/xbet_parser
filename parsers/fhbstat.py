@@ -318,7 +318,8 @@ class FHBParser(Parser):
                 if logged_client is not None:
                     dfs = []
                     result_df_list = []
-                    for target_url in self.target_urls.values():
+                    copy_target_urls = self.target_urls.copy()
+                    for target_url in copy_target_urls.values():
                         self.status = f'Обрабатываем ссылку {target_url}'
                         _target_url, query_params, target_path = self.get_url_params(target_url)
                         for key, value in query_params.items():
