@@ -237,6 +237,7 @@ class Parser(ParserBase):
     @status.setter
     def status(self, value: str):
         if value:
+            self.logger.info(value)
             self._status = value
         else:
             self._status = None
@@ -324,7 +325,6 @@ class Parser(ParserBase):
         result = None
         if df_data:
             msg = f'Собрано данных: {len(df_data)}'
-            logger.info(msg)
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
             df['Дата слепка, МСК'] = self.now_msk

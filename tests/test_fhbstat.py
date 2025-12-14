@@ -53,6 +53,10 @@ def test_round(value, round_to, result):
             [{'25': 1.55, '26': 2.05, '11': None}, {'25': 2*1.55, '26': 2*2.05, '32': 3.4, '11': None}],
             {'25': 2.325, '26': 3.075, '32': 3.4, '11': np.float64('nan')}
         ),
+        (
+            [],
+            {}
+        )
     ]
 )
 def test_average(data, result):

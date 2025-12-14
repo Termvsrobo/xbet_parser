@@ -39,7 +39,7 @@ class FHBParser(Parser):
         self._url = 'https://fhbstat.com/football'
         self._filters = dict()
         self.rounded_fields = defaultdict(dict)
-        self.target_urls: Optional[set] = set()
+        self.target_urls: Optional[defaultdict] = defaultdict(str)
 
     @property
     def email(self):
@@ -146,7 +146,6 @@ class FHBParser(Parser):
         result = None
         if df_data:
             msg = f'Собрано данных: {len(df_data)}'
-            self.logger.info(msg)
             self.status = msg
             df = pd.DataFrame.from_records(df_data)
             df['Дата слепка, МСК'] = self.now_msk
@@ -270,14 +269,21 @@ class FHBParser(Parser):
 
     @classmethod
     def get_means(cls, list_values: List[Dict[str, float]]):
-        keys = set(reduce(lambda x, y: x + y, [list(lv.keys()) for lv in list_values]))
+        result = dict()
+        if list_values:
+            keys = set(reduce(lambda x, y: x + y, [list(lv.keys()) for lv in list_values]))
+        else:
+            keys = set()
         keys = set(filter(lambda x: x not in ('index', 'Количество матчей', 'dt') and int(x) >= 11, keys))
         res = {key: np.array([d.get(key, np.nan) for d in list_values]) for key in keys}
         for k, v in res.items():
             res[k] = v.astype('float')
-        result = dict()
         for key, value in res.items():
-            result[key] = value[~np.isnan(value)].mean()
+            no_nan_values = value[~np.isnan(value)]
+            if no_nan_values.size > 0:
+                result[key] = no_nan_values.mean()
+            else:
+                result[key] = np.nan
         return result
 
     @classmethod
@@ -300,7 +306,6 @@ class FHBParser(Parser):
     async def parse(self, browser):
         result = None
         msg = f'Открываем {self.url}'
-        self.logger.info(msg)
         self.status = msg
 
         async with httpx.AsyncClient(
@@ -313,7 +318,7 @@ class FHBParser(Parser):
                 if logged_client is not None:
                     dfs = []
                     result_df_list = []
-                    for target_url in self.target_urls:
+                    for target_url in self.target_urls.values():
                         self.status = f'Обрабатываем ссылку {target_url}'
                         _target_url, query_params, target_path = self.get_url_params(target_url)
                         for key, value in query_params.items():
@@ -370,12 +375,12 @@ class FHBParser(Parser):
                                 filters_data = {}
                                 for i, data in filters_value.items():
                                     field_type = self.get_field_type(i)
-                                    _data_match = data_match.get(str(i))
-                                    if _data_match:
+                                    value_match = data_match.get(str(i))
+                                    if value_match:
                                         if issubclass(field_type, bool):
-                                            filters_data[str(i)] = _data_match
+                                            filters_data[str(i)] = value_match
                                         else:
-                                            filters_data[str(i)] = self.round(_data_match, str(data))
+                                            filters_data[str(i)] = self.round(value_match, str(data))
                                 scheme, domain, path, params, _, fragment = urlparse(_target_url)
                                 page_url = urlunparse((scheme, domain, path, params, urlencode(filters_data), fragment))
                                 cookies = [
@@ -401,25 +406,25 @@ class FHBParser(Parser):
                                         df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
                                     ]
                                 head_df = self.parse_head_table(page_content)
-                                if sanitize_filename:
-                                    parent_dir = Path('html') / Path(self.now_msk.isoformat())
-                                    parent_dir.mkdir(parents=True, exist_ok=True)
-                                    fname = parent_dir / Path(
-                                        f'{sanitize_filename(page_url.replace("https://fhbstat.com/", ""))}.html'
-                                    )
-                                    fname.write_text(page_content)
+                                # if sanitize_filename:
+                                #     parent_dir = Path('html') / Path(self.now_msk.isoformat())
+                                #     parent_dir.mkdir(parents=True, exist_ok=True)
+                                #     fname = parent_dir / Path(
+                                #         f'{sanitize_filename(page_url.replace("https://fhbstat.com/", ""))}.html'
+                                #     )
+                                #     fname.write_text(page_content)
                                 await page.close()
                                 columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
                                 head_df_records = head_df.to_dict(orient='records')
-                                _data_match = data_match.copy()
+                                copy_data_match = data_match.copy()
                                 for h_d_r in head_df_records:
                                     for column_name, column_value in h_d_r.items():
                                         if column_name in columns:
-                                            _data_match[column_name] = column_value
+                                            copy_data_match[column_name] = column_value
                                 count_rows, _ = df_match.shape
-                                _data_match['Количество матчей'] = count_rows
-                                _data_match['index'] = index
-                                local_match_result_df.append(_data_match)
+                                copy_data_match['Количество матчей'] = count_rows
+                                copy_data_match['index'] = index
+                                local_match_result_df.append(copy_data_match)
                                 await sleep(randint(1, 3))
                             result_df_list += local_match_result_df
                             means = self.get_means(local_match_result_df)

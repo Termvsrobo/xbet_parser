@@ -156,7 +156,7 @@ async def fhbstat_page():
 
     async def add_target_url(element):
         if element.value:
-            fhbstat_parser.target_urls.add(element.value)
+            fhbstat_parser.target_urls[element.sender] = element.value
 
     async def clear_filters(element):
         await _get_filters(fake_element)
@@ -187,7 +187,13 @@ async def fhbstat_page():
     ui.label('Ссылки вставлять только копированием/вставкой. НЕ ВВОДИТЬ ВРУЧНУЮ')
     for _ in range(1):
         with ui.row():
-            ui.input('Ссылка:', on_change=add_target_url)
+            if fhbstat_parser.target_urls:
+                copy_target_urls = fhbstat_parser.target_urls.copy()
+                fhbstat_parser.target_urls.clear()
+                for value in copy_target_urls.values():
+                    ui.input('Ссылка:', on_change=add_target_url).set_value(value)
+            else:
+                ui.input('Ссылка:', on_change=add_target_url)
     ui.label('Обработано ссылок: Вычисляем').bind_text(fhbstat_parser, 'count_processed_links')
     ui.label('Прошло секунд: Вычисляем').bind_text_from(fhbstat_parser, 'elapsed_time')
     ui.label('Осталось секунд: Вычисляем').bind_text_from(fhbstat_parser, 'eta')

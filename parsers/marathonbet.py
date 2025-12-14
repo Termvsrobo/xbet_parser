@@ -759,7 +759,6 @@ class MarathonbetParser(Parser):
     async def parse(self, browser):
         result = None
         msg = f'Открываем {self.url}'
-        self.logger.info(msg)
         self.status = msg
         page = await browser.new_page()
         page.set_default_timeout(180000)
@@ -768,7 +767,6 @@ class MarathonbetParser(Parser):
         await page.goto('su')
         await page.wait_for_load_state()
         msg = 'Ждем окончания проверки браузера'
-        self.logger.info(msg)
         self.status = msg
         try:
             while 'Just' in await page.title():
@@ -791,7 +789,6 @@ class MarathonbetParser(Parser):
                 return PlainTextResponse('Вышло время ожидания страницы. Попробуйте позже.')
             else:
                 msg = f'Собираем список матчей по футболу за {self.radio_period}'
-                self.logger.info(msg)
                 self.status = msg
                 await page.get_by_text('Футбол').first.click()
                 await page.get_by_text(self.radio_period).first.click()

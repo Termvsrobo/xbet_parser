@@ -427,7 +427,6 @@ class XLiteParser(Parser):
         await browser.close()
         result = None
         msg = f'Открываем {self.url}'
-        self.logger.info(msg)
         self.status = msg
         min_offset_values = {
             'За всё время': None,
