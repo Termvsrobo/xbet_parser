@@ -30,6 +30,7 @@ from config import settings
 
 class FHBParser(Parser):
     count_columns: int = 256
+    max_time_sleep_sec: int = 2
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -349,7 +350,7 @@ class FHBParser(Parser):
                                             dfs.append(df)
                                         else:
                                             break
-                                await sleep(randint(1, 3))
+                                await sleep(randint(1, self.max_time_sleep_sec))
                         else:
                             response = await logged_client.get(
                                 _target_url,
@@ -426,7 +427,7 @@ class FHBParser(Parser):
                                 copy_data_match['Количество матчей'] = count_rows
                                 copy_data_match['index'] = index
                                 local_match_result_df.append(copy_data_match)
-                                await sleep(randint(1, 3))
+                                await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
                             means = self.get_means(local_match_result_df)
                             mathematical_expectation = self.get_mathematical_expectation(means, data_match)
