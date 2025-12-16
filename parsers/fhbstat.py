@@ -431,10 +431,11 @@ class FHBParser(Parser):
                             result_df_list += local_match_result_df
                             means = self.get_means(local_match_result_df)
                             mathematical_expectation = self.get_mathematical_expectation(means, data_match)
-                            result_df_list.append({
-                                **means,
-                                **{'Количество матчей': '%'}
-                            })
+                            # result_df_list.append({
+                            #     **means,
+                            #     **{'Количество матчей': '%'}
+                            # })
+                            result_df_list.append({str(i): np.nan for i in range(1, self.count_columns)})
                             result_df_list.append({
                                 **{str(i): data_match.get(str(i)) for i in range(1, self.count_columns) if i >= 25},
                                 **{'Количество матчей': 'кф'}
@@ -443,6 +444,6 @@ class FHBParser(Parser):
                                 **mathematical_expectation,
                                 **{'Количество матчей': 'мо'}
                             })
-                            result_df_list.append({str(i): None for i in range(1, self.count_columns)})
+                            result_df_list.append({str(i): np.nan for i in range(1, self.count_columns)})
                     result = self.get_file_response(df_data=result_df_list, target_path=target_path)
                     return result
