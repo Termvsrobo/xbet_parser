@@ -131,8 +131,12 @@ async def fhbstat_page():
             ui.checkbox(value=True, on_change=await set_field(element.value)).props('disabled')
             fhbstat_parser.rounded_fields[parent_row_id][element.value] = True
         elif issubclass(field_type, float):
-            ui.number(label=element.value, value=0.0001, on_change=await set_field(element.value))
-            fhbstat_parser.rounded_fields[parent_row_id][element.value] = 0.0001
+            ui.input(
+                label=element.value,
+                value=fhbstat_parser.round_precision,
+                on_change=await set_field(element.value)
+            )
+            fhbstat_parser.rounded_fields[parent_row_id][element.value] = fhbstat_parser.round_precision
         else:
             ui.input(label=element.value, on_change=await set_field(element.value))
         ui.button('Добавить', on_click=add_rounded_select)

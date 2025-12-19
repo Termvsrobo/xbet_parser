@@ -19,11 +19,6 @@ from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, PlainTextResponse
 from xlsxtpl.writerx import BookWriter
 
-try:
-    from pathvalidate import sanitize_filename
-except ImportError:
-    sanitize_filename = None
-
 from base import Parser
 from config import settings
 
@@ -31,6 +26,7 @@ from config import settings
 class FHBParser(Parser):
     count_columns: int = 256
     max_time_sleep_sec: int = 2
+    round_precision: str = '0.0001'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -140,6 +136,7 @@ class FHBParser(Parser):
         templates = {
             '/football': 'ШАБЛОН Эксель Футбол Исход.xlsx',
             '/football_total': 'ШАБЛОН Эксель Футбол Тотал.xlsx',
+            '/football_24': 'ШАБЛОН Эксель Футбол 24.xlsx',
         }
         return templates.get(path)
 
@@ -275,15 +272,25 @@ class FHBParser(Parser):
             keys = set(reduce(lambda x, y: x + y, [list(lv.keys()) for lv in list_values]))
         else:
             keys = set()
-        keys = set(filter(lambda x: x not in ('index', 'Количество матчей', 'dt') and int(x) >= 11, keys))
+        keys = set(
+            filter(
+                lambda x: x not in ('index', 'dt') and (x == 'Количество матчей' or int(x) >= 11),
+                keys
+            )
+        )
         res = {key: np.array([d.get(key, np.nan) for d in list_values]) for key in keys}
         for k, v in res.items():
             res[k] = v.astype('float')
-        for key, value in res.items():
-            no_nan_values = value[~np.isnan(value)]
-            if no_nan_values.size > 0:
-                result[key] = no_nan_values.mean()
-            else:
+        if 'Количество матчей' in res:
+            count_matches = res.pop('Количество матчей')
+            for key, value in res.items():
+                if np.nansum(count_matches) > 0:
+                    result[key] = np.nansum(value * count_matches) / np.nansum(count_matches)
+                    result[key] = result[key].round(4)
+                else:
+                    result[key] = np.nan
+        else:
+            for key, value in res.items():
                 result[key] = np.nan
         return result
 
@@ -408,13 +415,6 @@ class FHBParser(Parser):
                                         df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
                                     ]
                                 head_df = self.parse_head_table(page_content)
-                                # if sanitize_filename:
-                                #     parent_dir = Path('html') / Path(self.now_msk.isoformat())
-                                #     parent_dir.mkdir(parents=True, exist_ok=True)
-                                #     fname = parent_dir / Path(
-                                #         f'{sanitize_filename(page_url.replace("https://fhbstat.com/", ""))}.html'
-                                #     )
-                                #     fname.write_text(page_content)
                                 await page.close()
                                 columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
                                 head_df_records = head_df.to_dict(orient='records')
@@ -431,11 +431,10 @@ class FHBParser(Parser):
                             result_df_list += local_match_result_df
                             means = self.get_means(local_match_result_df)
                             mathematical_expectation = self.get_mathematical_expectation(means, data_match)
-                            # result_df_list.append({
-                            #     **means,
-                            #     **{'Количество матчей': '%'}
-                            # })
-                            result_df_list.append({str(i): np.nan for i in range(1, self.count_columns)})
+                            result_df_list.append({
+                                **means,
+                                **{'Количество матчей': '%'}
+                            })
                             result_df_list.append({
                                 **{str(i): data_match.get(str(i)) for i in range(1, self.count_columns) if i >= 25},
                                 **{'Количество матчей': 'кф'}
