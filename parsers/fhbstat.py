@@ -25,7 +25,7 @@ from config import settings
 
 class FHBParser(Parser):
     count_columns: int = 256
-    max_time_sleep_sec: int = 2
+    max_time_sleep_sec: int = 1
     round_precision: str = '0.0001'
 
     def __init__(self, *args, **kwargs):
@@ -175,6 +175,10 @@ class FHBParser(Parser):
                 payloads = [payload0]
                 writer.render_book2(payloads=payloads)
                 writer.save(self.path)
+
+                workbook = writer.workbook
+                sheet = workbook.active
+
                 result = FileResponse(
                     self.path,
                     filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
