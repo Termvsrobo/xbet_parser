@@ -290,7 +290,7 @@ class FHBParser(Parser):
             keys = set()
         keys = set(
             filter(
-                lambda x: x not in ('index', 'dt') and (x == 'Количество матчей' or int(x) >= 11),
+                lambda x: x not in ('index', 'dt', 'url') and (x == 'Количество матчей' or int(x) >= 11),
                 keys
             )
         )
