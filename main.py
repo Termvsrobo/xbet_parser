@@ -177,6 +177,8 @@ async def fhbstat_page():
     with ui.row():
         ui.input('Email').bind_value(fhbstat_parser, 'email')
         ui.input('Пароль', password=True, password_toggle_button=True).bind_value(fhbstat_parser, 'password')
+    with ui.row():
+        ui.input('Название файла (без расширения)').bind_value(fhbstat_parser, 'file_name')
     with ui.row().props('disabled data-value=15'):
         ui.label('Выберите вид спорта')
         ui.select(

@@ -37,6 +37,7 @@ class FHBParser(Parser):
         self._filters = dict()
         self.rounded_fields = defaultdict(dict)
         self.target_urls: Optional[defaultdict] = defaultdict(str)
+        self.file_name: str = ''
 
     @property
     def email(self):
@@ -76,6 +77,14 @@ class FHBParser(Parser):
     @property
     def filters(self):
         return self._filters
+
+    def get_filters(self) -> dict[str, str]:
+        result = defaultdict(dict)
+        for row_id, field_dict in self.rounded_fields.items():
+            for field, value in field_dict.items():
+                if value:
+                    result[row_id][field.value] = value
+        return result
 
     async def login(self, client: httpx.AsyncClient):
         cookies_file = Path('cookies.json')
@@ -149,11 +158,14 @@ class FHBParser(Parser):
             df['Дата слепка, МСК'] = self.now_msk
             columns = list(
                 map(str, range(1, self.count_columns))
-            ) + ['index', 'dt', 'Количество матчей', 'Дата слепка, МСК']
+            ) + ['index', 'dt', 'Количество матчей', 'Дата слепка, МСК', 'url']
             df = df.reindex(columns=columns)
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
             older_df = pd.DataFrame(columns=columns)
-            self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
+            if self.file_name:
+                self.path = f'files/{self.file_name}.xlsx'
+            else:
+                self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
             if older_df.empty:
                 full_df = df
             else:
@@ -382,6 +394,7 @@ class FHBParser(Parser):
                         data_records = future_data.to_dict(orient='records')
                         self.count_links = len(data_records)
                         for index, data_match in enumerate(self.tqdm(data_records), 1):
+                            # _rounded_fields = self.get_filters()
                             _rounded_fields = self.rounded_fields.copy()
                             local_match_result_df = []
                             for filters_value in _rounded_fields.values():
@@ -430,6 +443,7 @@ class FHBParser(Parser):
                                 count_rows, _ = df_match.shape
                                 copy_data_match['Количество матчей'] = count_rows
                                 copy_data_match['index'] = index
+                                copy_data_match['url'] = page_url
                                 local_match_result_df.append(copy_data_match)
                                 await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
