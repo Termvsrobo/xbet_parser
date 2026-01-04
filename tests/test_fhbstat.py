@@ -1,4 +1,5 @@
 from pathlib import Path
+from threading import Event
 
 import numpy as np
 import pytest
@@ -105,3 +106,62 @@ def test_mathematical_expectation(data_means, data_match, result):
     assert res.keys() == result.keys()
     for key in res:
         np.testing.assert_approx_equal(res[key], result[key])
+
+
+@pytest.mark.parametrize(
+    'data,target',
+    [
+        (
+            [
+                {
+                    '1': 25,
+                    '2': 234,
+                    'index': 1,
+                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                },
+            ],
+            '/football'
+        ),
+        (
+            [
+                {
+                    '1': 25,
+                    '2': 234,
+                    'index': 1,
+                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                },
+            ],
+            '/football_24'
+        ),
+        (
+            [
+                {
+                    '1': 25,
+                    '2': 234,
+                    'index': 1,
+                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                },
+            ],
+            '/football_total'
+        ),
+    ]
+)
+def test_get_file_response(data, target):
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.start()
+    response = fhbstat_parser.get_file_response(
+        [
+            {
+                '1': 25,
+                '2': 234,
+                'index': 1,
+                'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+            },
+        ],
+        '/football'
+    )
+    fhbstat_parser.stop()
+    assert response
+    assert Path(response.path).exists()
+    Path(response.path).unlink()
