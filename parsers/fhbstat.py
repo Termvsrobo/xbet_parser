@@ -164,8 +164,10 @@ class FHBParser(Parser):
             older_df = pd.DataFrame(columns=columns)
             if self.file_name:
                 self.path = f'files/{self.file_name}.xlsx'
+                filename = f'{self.file_name}.xlsx'
             else:
                 self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
+                filename = f'{self.name}_{self.now_msk.isoformat()}.xlsx'
             if older_df.empty:
                 full_df = df
             else:
@@ -193,7 +195,7 @@ class FHBParser(Parser):
 
                 result = FileResponse(
                     self.path,
-                    filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
+                    filename=filename
                 )
             else:
                 result = PlainTextResponse('Не нашли шаблон excel.')
@@ -269,7 +271,9 @@ class FHBParser(Parser):
 
     @classmethod
     def round(cls, value, precision: str = '0'):
-        _value = Decimal(value).quantize(Decimal(precision), rounding=ROUND_DOWN)
+        exp = Decimal(precision).as_tuple().exponent * -1
+        adjust_value = 10 ** (-1 * (exp + 2))
+        _value = Decimal(value + adjust_value).quantize(Decimal(precision), rounding=ROUND_DOWN)
         _value = float(_value)
         if _value.is_integer() and re.match(r'^\d+.$', precision):
             _value = str(int(_value)) + '.'

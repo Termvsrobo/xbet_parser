@@ -26,9 +26,14 @@ def test_page():
         (2.05, '0.1', '2.0'),
         (2.05, '0.', '2.'),
         (2.05, '0', '2'),
+        ('7.6', '0.1', '7.6'),
+        ('7.655', '0.01', '7.65'),
+        ('7.65', '0.01', '7.65')
     ]
 )
 def test_round(value, round_to, result):
+    if isinstance(value, str):
+        value = float(value)
     value = FHBParser.round(value, round_to)
     assert value == result
 
@@ -109,7 +114,7 @@ def test_mathematical_expectation(data_means, data_match, result):
 
 
 @pytest.mark.parametrize(
-    'data,target',
+    'data,target,file_name',
     [
         (
             [
@@ -117,10 +122,11 @@ def test_mathematical_expectation(data_means, data_match, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football?1=19&2=12&3=2025'
                 },
             ],
-            '/football'
+            '/football',
+            None,
         ),
         (
             [
@@ -131,7 +137,8 @@ def test_mathematical_expectation(data_means, data_match, result):
                     'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
                 },
             ],
-            '/football_24'
+            '/football_24',
+            'test1'
         ),
         (
             [
@@ -139,29 +146,27 @@ def test_mathematical_expectation(data_means, data_match, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football_total?1=19&2=12&3=2025'
                 },
             ],
-            '/football_total'
+            '/football_total',
+            'test2'
         ),
     ]
 )
-def test_get_file_response(data, target):
+def test_get_file_response(data, target, file_name):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
     fhbstat_parser.start()
+    if file_name:
+        fhbstat_parser.file_name = file_name
     response = fhbstat_parser.get_file_response(
-        [
-            {
-                '1': 25,
-                '2': 234,
-                'index': 1,
-                'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
-            },
-        ],
-        '/football'
+        data,
+        target
     )
     fhbstat_parser.stop()
     assert response
     assert Path(response.path).exists()
+    if file_name:
+        assert response.filename == f'{file_name}.xlsx'
     Path(response.path).unlink()
