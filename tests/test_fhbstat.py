@@ -39,6 +39,19 @@ def test_round(value, round_to, result):
 
 
 @pytest.mark.parametrize(
+    'value,round_to,result',
+    [
+        ('23:45', '00:00', '23:45'),
+        ('23:45', '00:', '23:'),
+        ('23:45', '00', '23'),
+    ]
+)
+def test_round_datetime(value, round_to, result):
+    value = FHBParser.round_datetime(value, round_to)
+    assert value == result
+
+
+@pytest.mark.parametrize(
     'data,result',
     [
         (
@@ -151,6 +164,42 @@ def test_mathematical_expectation(data_means, data_match, result):
             ],
             '/football_total',
             'test2'
+        ),
+        (
+            [
+                {
+                    '1': 25,
+                    '2': 234,
+                    'index': 1,
+                    'url': 'https://fhbstat.com/football?1=19&2=12&3=2025'
+                },
+            ],
+            '/hockey',
+            None,
+        ),
+        (
+            [
+                {
+                    '1': 25,
+                    '2': 234,
+                    'index': 1,
+                    'url': 'https://fhbstat.com/football_total?1=19&2=12&3=2025'
+                },
+            ],
+            '/hockey_total',
+            'test2'
+        ),
+        (
+            [
+                {
+                    '1': 25,
+                    '2': 234,
+                    'index': 1,
+                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                },
+            ],
+            '/hockey_24',
+            'test1'
         ),
     ]
 )

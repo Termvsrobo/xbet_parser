@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from xlsxtpl.writerx import BookWriter
 
 from parsers.fhbstat import FHBParser
@@ -43,8 +44,15 @@ def test_create_excel_template():
     writer.save(fname)
 
 
-def test_fill_excel_template_from_df():
-    file_path = Path(__file__).parent / Path('data') / Path('FHB_ Футбол Исход.html')
+@pytest.mark.parametrize(
+    'source_filename,template_name',
+    [
+        ('FHB_ Футбол Исход.html', 'ШАБЛОН Эксель Футбол Исход.xlsx'),
+        ('FHB_ Хоккей Исход.html', 'ШАБЛОН Эксель Хоккей Исход.xlsx'),
+    ]
+)
+def test_fill_excel_template_from_df(source_filename, template_name):
+    file_path = Path(__file__).parent / Path('data') / Path(source_filename)
     assert file_path.exists()
     content = file_path.read_text()
     df = FHBParser.parse_content(content)
@@ -52,7 +60,7 @@ def test_fill_excel_template_from_df():
     columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
     df.update(head_df.loc[:, columns])
 
-    fname = Path(__file__).parent.parent / Path('excel_templates') / Path('ШАБЛОН Эксель Футбол Исход.xlsx')
+    fname = Path(__file__).parent.parent / Path('excel_templates') / Path(template_name)
     writer = BookWriter(fname)
     writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 

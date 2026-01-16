@@ -10,7 +10,7 @@ from itertools import count
 from pathlib import Path
 from random import randint
 from typing import Dict, List, Optional
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse, urlunparse
 
 import httpx
 import numpy as np
@@ -27,6 +27,7 @@ class FHBParser(Parser):
     count_columns: int = 256
     max_time_sleep_sec: int = 1
     round_precision: str = '0.0001'
+    datetime_round: str = '00:00'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -146,6 +147,9 @@ class FHBParser(Parser):
             '/football': 'ШАБЛОН Эксель Футбол Исход.xlsx',
             '/football_total': 'ШАБЛОН Эксель Футбол Тотал.xlsx',
             '/football_24': 'ШАБЛОН Эксель Футбол 24.xlsx',
+            '/hockey': 'ШАБЛОН Эксель Хоккей Исход.xlsx',
+            '/hockey_total': 'ШАБЛОН Эксель Хоккей Тотал.xlsx',
+            '/hockey_24': 'ШАБЛОН Эксель Хоккей 24.xlsx',
         }
         return templates.get(path)
 
@@ -207,7 +211,14 @@ class FHBParser(Parser):
     def parse_head_table(cls, content):
         soup = BeautifulSoup(content, 'lxml')
         table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
-        names = list(map(lambda x: x.text, filter(lambda td: td != '\n' and td.text != '', table_rows[13].contents)))
+        first_data_row = next(filter(lambda tr: 'data-status' in tr.attrs, table_rows))
+        first_data_index = table_rows.index(first_data_row)
+        names = list(
+            map(
+                lambda x: x.text,
+                filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)
+            )
+        )
         data_rows = table_rows[3:4]
         data_list = list()
         key_name = 'data-formula'
@@ -228,8 +239,15 @@ class FHBParser(Parser):
     def parse_content(cls, content):
         soup = BeautifulSoup(content, 'lxml')
         table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
-        names = list(map(lambda x: x.text, filter(lambda td: td != '\n' and td.text != '', table_rows[13].contents)))
-        data_rows = table_rows[14:]
+        first_data_row = next(filter(lambda tr: 'data-status' in tr.attrs, table_rows))
+        first_data_index = table_rows.index(first_data_row)
+        names = list(
+            map(
+                lambda x: x.text,
+                filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)
+            )
+        )
+        data_rows = table_rows[first_data_index:]
         data_list = list()
         key_name = 'data-td'
         for data in data_rows:
@@ -262,7 +280,9 @@ class FHBParser(Parser):
         return df
 
     def get_field_type(self, value):
-        if value < 11:
+        if value == 4:
+            return str
+        elif value < 11:
             return bool
         elif value >= 11:
             return float
@@ -284,6 +304,17 @@ class FHBParser(Parser):
         else:
             _value = str(_value)
         return _value
+
+    @classmethod
+    def round_datetime(cls, value: str, precision: str = '00:00') -> str:
+        result = ''
+        if ':' not in precision:
+            result = value.split(':')[0]
+        elif precision.endswith(':'):
+            result = value.split(':')[0] + ':'
+        else:
+            result = value
+        return result
 
     @classmethod
     def get_means(cls, list_values: List[Dict[str, float]]):
@@ -409,6 +440,8 @@ class FHBParser(Parser):
                                     if value_match:
                                         if issubclass(field_type, bool):
                                             filters_data[str(i)] = value_match
+                                        elif i == 4:
+                                            filters_data[str(i)] = self.round_datetime(value_match, str(data))
                                         else:
                                             filters_data[str(i)] = self.round(value_match, str(data))
                                 scheme, domain, path, params, _, fragment = urlparse(_target_url)
@@ -447,7 +480,7 @@ class FHBParser(Parser):
                                 count_rows, _ = df_match.shape
                                 copy_data_match['Количество матчей'] = count_rows
                                 copy_data_match['index'] = index
-                                copy_data_match['url'] = page_url
+                                copy_data_match['url'] = unquote(page_url)
                                 local_match_result_df.append(copy_data_match)
                                 await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
@@ -465,6 +498,8 @@ class FHBParser(Parser):
                                 **mathematical_expectation,
                                 **{'Количество матчей': 'мо'}
                             })
-                            result_df_list.append({str(i): np.nan for i in range(1, self.count_columns)})
+                            # Добавляем пустые строки
+                            for _ in range(4):
+                                result_df_list.append({str(i): np.nan for i in range(1, self.count_columns)})
                     result = self.get_file_response(df_data=result_df_list, target_path=target_path)
                     return result

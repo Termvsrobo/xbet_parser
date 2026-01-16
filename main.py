@@ -137,6 +137,8 @@ async def fhbstat_page():
                 on_change=await set_field(element.value)
             )
             fhbstat_parser.rounded_fields[parent_row_id][element.value] = fhbstat_parser.round_precision
+        elif element.value == 4:
+            ui.input(label=element.value, value=fhbstat_parser.datetime_round, on_change=await set_field(element.value))
         else:
             ui.input(label=element.value, on_change=await set_field(element.value))
         ui.button('Добавить', on_click=add_rounded_select)
