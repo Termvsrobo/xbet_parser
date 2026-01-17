@@ -49,6 +49,7 @@ def test_create_excel_template():
     [
         ('FHB_ Футбол Исход.html', 'ШАБЛОН Эксель Футбол Исход.xlsx'),
         ('FHB_ Хоккей Исход.html', 'ШАБЛОН Эксель Хоккей Исход.xlsx'),
+        ('FHB_ Футбол Тотал_2.html', 'ШАБЛОН Эксель Футбол Тотал.xlsx'),
     ]
 )
 def test_fill_excel_template_from_df(source_filename, template_name):

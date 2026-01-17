@@ -28,6 +28,7 @@ class FHBParser(Parser):
     max_time_sleep_sec: int = 1
     round_precision: str = '0.0001'
     datetime_round: str = '00:00'
+    count_empty_rows: int = 4
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -192,10 +193,53 @@ class FHBParser(Parser):
 
                 payloads = [payload0]
                 writer.render_book2(payloads=payloads)
-                writer.save(self.path)
 
-                workbook = writer.workbook
-                sheet = workbook.active
+                # workbook = writer.workbook
+                # sheet = workbook.active
+                # start_row = None
+                # start_column = None
+                # split_column = None
+                # for i, value in enumerate(sheet.values):
+                #     if '№' in value and 'Количество матчей' in value:
+                #         start_row = i + 4
+                #         start_column = value.index('№')
+                #         split_column = value.index('Количество матчей')
+                #         break
+
+                # max_rows = start_row
+                # for row in range(start_row + 1, sheet.max_row + 1):
+                #     if sheet.cell(row=row, column=start_column + 1).value is None:
+                #         max_rows = row - 1
+                #         break
+
+                # for col in range(start_column + 1, split_column):
+                #     first_row = start_row
+                #     end_row = first_row
+                #     while end_row <= max_rows:
+                #         group_value = sheet.cell(row=first_row, column=col).value
+                #         current_value = sheet.cell(row=end_row, column=col).value
+                #         if (
+                #             np.allclose(current_value, group_value, equal_nan=True)
+                #         ) or (
+                #             current_value is None
+                #             and group_value is None
+                #         ) or (
+                #             np.isnan(current_value)
+                #             and np.isnan(group_value)
+                #         ):
+                #             end_row += 1
+                #         else:
+                #             end_row -= 1
+                #             sheet.merge_cells(
+                #                 start_column=col,
+                #                 end_column=col,
+                #                 start_row=first_row,
+                #                 end_row=end_row
+                #             )
+                #             first_row = end_row + 1
+                #             end_row = first_row
+
+                writer.save(self.path)
 
                 result = FileResponse(
                     self.path,
@@ -208,75 +252,84 @@ class FHBParser(Parser):
         return result
 
     @classmethod
-    def parse_head_table(cls, content):
+    def get_head_data(cls, content):
+        first_data_index = None
+        names = []
         soup = BeautifulSoup(content, 'lxml')
         table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
-        first_data_row = next(filter(lambda tr: 'data-status' in tr.attrs, table_rows))
-        first_data_index = table_rows.index(first_data_row)
-        names = list(
-            map(
-                lambda x: x.text,
-                filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)
-            )
+        first_data_row = next(
+            filter(lambda tr: 'data-status' in tr.attrs, table_rows),
+            None
         )
-        data_rows = table_rows[3:4]
-        data_list = list()
-        key_name = 'data-formula'
-        for data in data_rows:
-            data_row = dict()
-            for td in data.contents:
-                if td != '\n':
-                    if key_name in td.attrs:
-                        key = td.attrs.get(key_name)
-                        value = td.text
-                        data_row[key] = float(value) if value else np.nan
-            data_list.append(data_row)
-        df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
-        df = df.replace({None: np.nan, '': np.nan})
+        if first_data_row:
+            first_data_index = table_rows.index(first_data_row)
+            names = list(
+                map(
+                    lambda x: x.text,
+                    filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)
+                )
+            )
+        return table_rows, first_data_index, names
+
+    @classmethod
+    def parse_head_table(cls, content):
+        table_rows, first_data_index, names = cls.get_head_data(content)
+        if first_data_index:
+            data_rows = table_rows[3:4]
+            data_list = list()
+            key_name = 'data-formula'
+            for data in data_rows:
+                data_row = dict()
+                for td in data.contents:
+                    if td != '\n':
+                        if key_name in td.attrs:
+                            key = td.attrs.get(key_name)
+                            value = td.text
+                            data_row[key] = float(value) if value else np.nan
+                if data_row:
+                    data_list.append(data_row)
+            df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
+            df = df.replace({None: np.nan, '': np.nan})
+        else:
+            df = pd.DataFrame()
         return df
 
     @classmethod
     def parse_content(cls, content):
-        soup = BeautifulSoup(content, 'lxml')
-        table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
-        first_data_row = next(filter(lambda tr: 'data-status' in tr.attrs, table_rows))
-        first_data_index = table_rows.index(first_data_row)
-        names = list(
-            map(
-                lambda x: x.text,
-                filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)
-            )
-        )
-        data_rows = table_rows[first_data_index:]
-        data_list = list()
-        key_name = 'data-td'
-        for data in data_rows:
-            data_row = dict()
-            for td in data.contents:
-                if td != '\n':
-                    if key_name in td.attrs:
-                        key = td.attrs.get(key_name)
-                        value = td.text
-                        if value:
-                            try:
-                                if value.isnumeric():
-                                    data_row[key] = int(value)
-                                else:
-                                    data_row[key] = float(value)
-                            except ValueError:
-                                data_row[key] = value
-                        else:
-                            data_row[key] = np.nan
-            _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
-            try:
-                _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
-            except ValueError:
-                continue
-            else:
-                data_row['dt'] = _dt
-                data_list.append(data_row)
-        df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
-        df = df.replace({None: np.nan, '': np.nan})
+        table_rows, first_data_index, names = cls.get_head_data(content)
+        if first_data_index:
+            data_rows = table_rows[first_data_index:]
+            data_list = list()
+            key_name = 'data-td'
+            for data in data_rows:
+                data_row = dict()
+                for td in data.contents:
+                    if td != '\n':
+                        if key_name in td.attrs:
+                            key = td.attrs.get(key_name)
+                            value = td.text
+                            if value:
+                                try:
+                                    if value.isnumeric():
+                                        data_row[key] = int(value)
+                                    else:
+                                        data_row[key] = float(value)
+                                except ValueError:
+                                    data_row[key] = value
+                            else:
+                                data_row[key] = np.nan
+                _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
+                try:
+                    _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
+                except ValueError:
+                    continue
+                else:
+                    data_row['dt'] = _dt
+                    data_list.append(data_row)
+            df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
+            df = df.replace({None: np.nan, '': np.nan})
+        else:
+            df = pd.DataFrame()
         return df
 
     def get_field_type(self, value):
@@ -488,18 +541,30 @@ class FHBParser(Parser):
                             mathematical_expectation = self.get_mathematical_expectation(means, data_match)
                             result_df_list.append({
                                 **means,
-                                **{'Количество матчей': '%'}
+                                **{
+                                    'index': index,
+                                    'Количество матчей': '%'
+                                }
                             })
                             result_df_list.append({
                                 **{str(i): data_match.get(str(i)) for i in range(1, self.count_columns) if i >= 25},
-                                **{'Количество матчей': 'кф'}
+                                **{
+                                    'index': index,
+                                    'Количество матчей': 'кф'
+                                }
                             })
                             result_df_list.append({
                                 **mathematical_expectation,
-                                **{'Количество матчей': 'мо'}
+                                **{
+                                    'index': index,
+                                    'Количество матчей': 'мо'
+                                }
                             })
                             # Добавляем пустые строки
-                            for _ in range(4):
-                                result_df_list.append({str(i): np.nan for i in range(1, self.count_columns)})
+                            for _ in range(self.count_empty_rows):
+                                result_df_list.append({
+                                    **{str(i): np.nan for i in range(1, self.count_columns)},
+                                    **{'index': index}
+                                })
                     result = self.get_file_response(df_data=result_df_list, target_path=target_path)
                     return result

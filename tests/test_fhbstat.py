@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 from threading import Event
 
@@ -192,11 +193,45 @@ def test_mathematical_expectation(data_means, data_match, result):
         (
             [
                 {
-                    '1': 25,
-                    '2': 234,
+                    '1': 19,
+                    '2': 12,
+                    '3': 2025,
+                    '4': '23:45',
+                    '7': 'asdfasdf',
+                    '8': 'qwerqwer',
+                    '9': '[poipi]',
+                    '10': 'zxcvzxcv',
                     'index': 1,
-                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
                 },
+                {
+                    '1': 19,
+                    '2': 12,
+                    '3': 2025,
+                    '4': '23:45',
+                    '7': 'asdfasdf',
+                    '8': 'qwerqwer',
+                    '9': '[poipi]',
+                    '10': 'zxcvzxcv',
+                    'index': 1,
+                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                },
+                {
+                    '1': 19,
+                    '2': 12,
+                    '3': 2025,
+                    '4': '23:45',
+                    '7': 'asdfasdf',
+                    '8': 'qwerqwer',
+                    '9': '[poipi]',
+                    '10': 'zxcvzxcv',
+                    'index': 1,
+                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                },
+
             ],
             '/hockey_24',
             'test1'
@@ -206,6 +241,64 @@ def test_mathematical_expectation(data_means, data_match, result):
 def test_get_file_response(data, target, file_name):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.start()
+    if file_name:
+        fhbstat_parser.file_name = file_name
+    response = fhbstat_parser.get_file_response(
+        data,
+        target
+    )
+    fhbstat_parser.stop()
+    assert response
+    assert Path(response.path).exists()
+    if file_name:
+        assert response.filename == f'{file_name}.xlsx'
+    Path(response.path).unlink()
+
+
+@pytest.mark.parametrize(
+    'target,file_name',
+    [
+        ('/hockey_24', 'test1')
+    ]
+)
+def test_get_file_response_merge_cells(target, file_name):
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    data = []
+    for i in range(1, 10 + 1):
+        for _ in range(4):
+            data.append(
+                {
+                    '1': 19,
+                    '2': 12,
+                    '3': 2025,
+                    '4': '23:45',
+                    '7': 'asdfasdf',
+                    '8': 'qwerqwer',
+                    '9': '[poipi]',
+                    '10': 'zxcvzxcv',
+                    'index': i,
+                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                },
+            )
+        for _ in range(7):
+            data.append(
+                {
+                    '1': np.nan,
+                    '2': np.nan,
+                    '3': np.nan,
+                    '4': np.nan,
+                    '7': np.nan,
+                    '8': np.nan,
+                    '9': np.nan,
+                    '10': np.nan,
+                    'index': i,
+                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    **{str(i): np.nan for i in range(30, 67)}
+                }
+            )
     fhbstat_parser.start()
     if file_name:
         fhbstat_parser.file_name = file_name
