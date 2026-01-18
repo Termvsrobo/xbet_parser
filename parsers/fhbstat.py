@@ -29,6 +29,7 @@ class FHBParser(Parser):
     round_precision: str = '0.0001'
     datetime_round: str = '00:00'
     count_empty_rows: int = 4
+    digits_columns_start: int = 25
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -378,7 +379,10 @@ class FHBParser(Parser):
             keys = set()
         keys = set(
             filter(
-                lambda x: x not in ('index', 'dt', 'url') and (x == 'Количество матчей' or int(x) >= 11),
+                lambda x: (
+                    x not in ('index', 'dt', 'url')
+                    and (x == 'Количество матчей' or int(x) >= cls.digits_columns_start)
+                ),
                 keys
             )
         )
@@ -523,7 +527,12 @@ class FHBParser(Parser):
                                     ]
                                 head_df = self.parse_head_table(page_content)
                                 await page.close()
-                                columns = list(filter(lambda x: int(x) >= 25, head_df.columns[:-1]))
+                                columns = list(
+                                    filter(
+                                        lambda x: int(x) >= self.digits_columns_start,
+                                        head_df.columns[:-1]
+                                    )
+                                )
                                 head_df_records = head_df.to_dict(orient='records')
                                 copy_data_match = data_match.copy()
                                 for h_d_r in head_df_records:
@@ -547,7 +556,10 @@ class FHBParser(Parser):
                                 }
                             })
                             result_df_list.append({
-                                **{str(i): data_match.get(str(i)) for i in range(1, self.count_columns) if i >= 25},
+                                **{
+                                    str(i): data_match.get(str(i))
+                                    for i in range(1, self.count_columns) if i >= self.digits_columns_start
+                                },
                                 **{
                                     'index': index,
                                     'Количество матчей': 'кф'
