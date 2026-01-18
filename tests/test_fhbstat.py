@@ -311,4 +311,3 @@ def test_get_file_response_merge_cells(target, file_name):
     assert Path(response.path).exists()
     if file_name:
         assert response.filename == f'{file_name}.xlsx'
-    Path(response.path).unlink()

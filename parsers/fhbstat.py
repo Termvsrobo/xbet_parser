@@ -3,6 +3,7 @@ import re
 from asyncio import sleep
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from functools import reduce
@@ -17,6 +18,8 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, PlainTextResponse
+from openpyxl.styles import Border, Side
+from openpyxl.worksheet.cell_range import CellRange
 from xlsxtpl.writerx import BookWriter
 
 from base import Parser
@@ -195,50 +198,61 @@ class FHBParser(Parser):
                 payloads = [payload0]
                 writer.render_book2(payloads=payloads)
 
-                # workbook = writer.workbook
-                # sheet = workbook.active
-                # start_row = None
-                # start_column = None
-                # split_column = None
-                # for i, value in enumerate(sheet.values):
-                #     if '№' in value and 'Количество матчей' in value:
-                #         start_row = i + 4
-                #         start_column = value.index('№')
-                #         split_column = value.index('Количество матчей')
-                #         break
+                workbook = writer.workbook
+                sheet = workbook.active
+                start_row = None
+                start_column = None
+                split_column = None
+                for i, value in enumerate(sheet.values):
+                    if '№' in value and 'Количество матчей' in value:
+                        start_row = i + 4
+                        start_column = value.index('№') + 1
+                        split_column = value.index('Количество матчей') + 1
+                        break
 
-                # max_rows = start_row
-                # for row in range(start_row + 1, sheet.max_row + 1):
-                #     if sheet.cell(row=row, column=start_column + 1).value is None:
-                #         max_rows = row - 1
-                #         break
+                max_rows = start_row
+                for row in range(start_row + 1, sheet.max_row + 1):
+                    if sheet.cell(row=row, column=start_column).value is None:
+                        max_rows = row
+                        break
 
-                # for col in range(start_column + 1, split_column):
-                #     first_row = start_row
-                #     end_row = first_row
-                #     while end_row <= max_rows:
-                #         group_value = sheet.cell(row=first_row, column=col).value
-                #         current_value = sheet.cell(row=end_row, column=col).value
-                #         if (
-                #             np.allclose(current_value, group_value, equal_nan=True)
-                #         ) or (
-                #             current_value is None
-                #             and group_value is None
-                #         ) or (
-                #             np.isnan(current_value)
-                #             and np.isnan(group_value)
-                #         ):
-                #             end_row += 1
-                #         else:
-                #             end_row -= 1
-                #             sheet.merge_cells(
-                #                 start_column=col,
-                #                 end_column=col,
-                #                 start_row=first_row,
-                #                 end_row=end_row
-                #             )
-                #             first_row = end_row + 1
-                #             end_row = first_row
+                for col in range(start_column, split_column):
+                    first_row = start_row
+                    end_row = first_row
+                    while end_row <= max_rows:
+                        group_value = sheet.cell(row=first_row, column=col).value
+                        current_value = sheet.cell(row=end_row, column=col).value
+                        if (
+                            current_value == group_value or current_value is group_value
+                        ):
+                            end_row += 1
+                        else:
+                            end_row -= 1
+                            sheet.merge_cells(
+                                start_column=col,
+                                end_column=col,
+                                start_row=first_row,
+                                end_row=end_row
+                            )
+                            if col == start_column:
+                                cell_range = CellRange(
+                                    min_col=col,
+                                    max_col=sheet.max_column,
+                                    min_row=first_row,
+                                    max_row=end_row
+                                )
+                                sides = ('left', 'right', 'top', 'bottom')
+                                for side in sides:
+                                    for cell in getattr(cell_range, side, []):
+                                        _cell = sheet.cell(cell[0], cell[1])
+                                        other_sides = filter(lambda _side: _side != side, sides)
+                                        old_border = copy(_cell.border)
+                                        _cell.border = Border(
+                                            **{side: Side(border_style='thick')},
+                                            **{other_side: getattr(old_border, other_side) for other_side in other_sides}
+                                        )
+                            first_row = end_row + 1
+                            end_row = first_row
 
                 writer.save(self.path)
 
