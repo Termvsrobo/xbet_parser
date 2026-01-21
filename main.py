@@ -100,9 +100,30 @@ async def fhbstat_page():
                 response = await b_manager.parse(browser)
                 return response
 
-    async def add_rounded_select(element):
+    @app.get('/download_filters')
+    async def download_filters():
+        response = fhbstat_parser.download_filters()
+        return response
+
+    def handle_upload(e):
+        fhbstat_parser.upload_filters(e)
+        filters.refresh()
+        e.sender.reset()
+        e.sender.delete()
+
+    def upload():
+        def wrapper():
+            if not is_running.is_set():
+                ui.upload(
+                    on_upload=handle_upload
+                )
+            else:
+                ui.notify('Запущен процесс парсинга. Дождитесь окончания и загрузите новыве фильтры!')
+        return wrapper
+
+    def add_rounded_select(element):
         if element:
-            parent_row_id = element.sender.parent_slot.parent.id
+            parent_row_id = element.sender.parent_slot.parent.props['filter_id']
             ui.select(
                 list(filter(lambda x: x not in fhbstat_parser.rounded_fields[parent_row_id], labels.keys())),
                 on_change=add_rounded_field
@@ -113,8 +134,8 @@ async def fhbstat_page():
                 on_change=add_rounded_field
             )
 
-    async def set_field(number_field):
-        async def change_rounded_field(element):
+    def set_field(number_field):
+        def change_rounded_field(element):
             parent_row_id = element.sender.parent_slot.parent.id
             if element.value:
                 fhbstat_parser.rounded_fields[parent_row_id][number_field] = element.value
@@ -124,90 +145,135 @@ async def fhbstat_page():
                     del fhbstat_parser.rounded_fields[parent_row_id]
         return change_rounded_field
 
-    async def add_rounded_field(element):
+    def add_rounded_field(element):
         field_type = labels.get(element.value)
-        parent_row_id = element.sender.parent_slot.parent.id
+        parent_row_id = element.sender.parent_slot.parent.props['filter_id']
+        old_value = element.sender.props.get('old_value')
+        if old_value:
+            del fhbstat_parser.rounded_fields[parent_row_id][int(old_value)]
+            if not fhbstat_parser.rounded_fields[parent_row_id]:
+                del fhbstat_parser.rounded_fields[parent_row_id]
         if issubclass(field_type, bool):
-            ui.checkbox(value=True, on_change=await set_field(element.value)).props('disabled')
             fhbstat_parser.rounded_fields[parent_row_id][element.value] = True
         elif issubclass(field_type, float):
-            ui.input(
-                label=element.value,
-                value=fhbstat_parser.round_precision,
-                on_change=await set_field(element.value)
-            )
             fhbstat_parser.rounded_fields[parent_row_id][element.value] = fhbstat_parser.round_precision
         elif element.value == 4:
-            ui.input(label=element.value, value=fhbstat_parser.datetime_round, on_change=await set_field(element.value))
+            fhbstat_parser.rounded_fields[parent_row_id][element.value] = fhbstat_parser.datetime_round
         else:
-            ui.input(label=element.value, on_change=await set_field(element.value))
-        ui.button('Добавить', on_click=add_rounded_select)
+            fhbstat_parser.rounded_fields[parent_row_id][element.value] = ''
+        filters.refresh()
 
-    async def _get_filters(element):
-        with filter_row:
-            filter_row.clear()
-            download_button.set_text(text=f'Скачать excel ({element.value or "..."})')
-            if element.value:
-                with ui.row():
-                    ui.label('Выберите поля')
-                    await add_rounded_select(None)
-                ui.button('Добавить фильтр', on_click=add_filter_card)
+    def add_filter_card(element):
+        with ui.row():
+            ui.label('Выберите поля')
+            with ui.row().props(f'filter_id={get_filter_id()}'):
+                add_rounded_select(None)
 
-    async def add_filter_card(element):
-        with filter_row:
-            with ui.row():
-                ui.label('Выберите поля')
-                await add_rounded_select(None)
-            ui.button('Добавить фильтр', on_click=add_filter_card)
-
-    async def add_target_url(element):
+    def add_target_url(element):
         if element.value:
-            fhbstat_parser.target_urls[element.sender] = element.value
+            fhbstat_parser.target_urls[element.sender.props['link_id']] = element.value
+            link.refresh()
 
-    async def clear_filters(element):
-        await _get_filters(fake_element)
+    def clear_filters(element):
         fhbstat_parser.rounded_fields.clear()
         fhbstat_parser.target_urls.clear()
+        filters.refresh()
 
-    class FakeElement:
-        def __init__(self, value):
-            self.value = value
-            self.sender = self
+    def get_filter_id():
+        result = 1
+        if fhbstat_parser.rounded_fields:
+            last_id = max(map(int, fhbstat_parser.rounded_fields.keys()))
+            result = last_id + 1
+        return result
+
+    @ui.refreshable
+    def link():
+        if fhbstat_parser.target_urls:
+            for key, value in fhbstat_parser.target_urls.items():
+                with ui.row():
+                    ui.input('Ссылка:', value=value, on_change=add_target_url).props(f'link_id={int(key)}')
+        else:
+            for i in range(1):
+                with ui.row():
+                    ui.input('Ссылка:', on_change=add_target_url).props(f'link_id={i}')
+
+    @ui.refreshable
+    def filters():
+        if fhbstat_parser.rounded_fields:
+            with ui.row():
+                for filter_id, field_dict in fhbstat_parser.rounded_fields.items():
+                    ui.label('Выберите поля')
+                    with ui.row().props(f'filter_id={filter_id}'):
+                        for column, value in field_dict.items():
+                            _labels = list(
+                                filter(
+                                    lambda x: x not in fhbstat_parser.rounded_fields[filter_id],
+                                    labels.keys()
+                                )
+                            )
+                            if int(column) not in _labels:
+                                _labels.append(int(column))
+                            select_field = ui.select(
+                                sorted(
+                                    _labels
+                                ),
+                                value=column,
+                                on_change=add_rounded_field
+                            )
+                            select_field.props(f'old_value={column}')
+                            field_type = labels.get(column)
+                            if issubclass(field_type, bool):
+                                ui.checkbox(value=True, on_change=set_field(column)).props('disabled')
+                                fhbstat_parser.rounded_fields[filter_id][column] = True
+                            elif issubclass(field_type, float):
+                                ui.input(
+                                    label=column,
+                                    value=value,
+                                    on_change=set_field(column)
+                                )
+                                fhbstat_parser.rounded_fields[filter_id][column] = fhbstat_parser.round_precision
+                            elif column == 4:
+                                ui.input(label=column, value=value, on_change=set_field(column))
+                            else:
+                                ui.input(label=column, on_change=set_field(column))
+                        ui.button('Добавить', on_click=add_rounded_select)
+                    ui.separator()
+        else:
+            with ui.row():
+                next_filter_id = get_filter_id()
+                ui.label('Выберите поля')
+                with ui.row().props(f'filter_id={next_filter_id}'):
+                    select_field = ui.select(
+                        list(labels.keys()),
+                        on_change=add_rounded_field
+                    )
+                    select_field.props('old_value=""')
+        add_button = ui.button('Добавить фильтр', on_click=add_filter_card)
+        if not bool(fhbstat_parser.rounded_fields):
+            add_button.disable()
+        else:
+            add_button.enable()
 
     labels = {i: fhbstat_parser.get_field_type(i) for i in range(1, fhbstat_parser.count_columns)}
+
+    ui.page_title('FHB Stat')
 
     with ui.row():
         ui.input('Email').bind_value(fhbstat_parser, 'email')
         ui.input('Пароль', password=True, password_toggle_button=True).bind_value(fhbstat_parser, 'password')
     with ui.row():
         ui.input('Название файла (без расширения)').bind_value(fhbstat_parser, 'file_name')
-    with ui.row().props('disabled data-value=15'):
-        ui.label('Выберите вид спорта')
-        ui.select(
-            ['Футбол Исход'],
-            label='Выберите вид спорта',
-            on_change=_get_filters,
-            clearable=True
-        ).props('disabled')
-    filter_row = ui.card()
-    fake_element = FakeElement('test')
+    filters()
     ui.button('Очистить фильтр', on_click=clear_filters)
-    ui.label('Ссылки вставлять только копированием/вставкой. НЕ ВВОДИТЬ ВРУЧНУЮ')
-    for _ in range(1):
-        with ui.row():
-            if fhbstat_parser.target_urls:
-                copy_target_urls = fhbstat_parser.target_urls.copy()
-                fhbstat_parser.target_urls.clear()
-                for value in copy_target_urls.values():
-                    ui.input('Ссылка:', on_change=add_target_url).set_value(value)
-            else:
-                ui.input('Ссылка:', on_change=add_target_url)
+
+    link()
     ui.label('Обработано ссылок: Вычисляем').bind_text(fhbstat_parser, 'count_processed_links')
     ui.label('Прошло секунд: Вычисляем').bind_text_from(fhbstat_parser, 'elapsed_time')
     ui.label('Осталось секунд: Вычисляем').bind_text_from(fhbstat_parser, 'eta')
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
-    download_button = ui.button('Скачать excel (...)', on_click=download('/parse_fhbstat'))
-    await _get_filters(fake_element)
+    ui.button('Скачать excel', on_click=download('/parse_fhbstat'))
+    ui.button('Скачать json-фильтров', on_click=download('/download_filters'))
+    ui.button('Загрузить фильтры из файла', on_click=upload())
 
 
 @ui.page('/login')

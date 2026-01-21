@@ -17,7 +17,8 @@ import httpx
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from nicegui.events import UploadEventArguments
 from openpyxl.styles import Border, Side
 from openpyxl.worksheet.cell_range import CellRange
 from xlsxtpl.writerx import BookWriter
@@ -29,7 +30,7 @@ from config import settings
 class FHBParser(Parser):
     count_columns: int = 256
     max_time_sleep_sec: int = 1
-    round_precision: str = '0.0001'
+    round_precision: str = '0.1'
     datetime_round: str = '00:00'
     count_empty_rows: int = 4
     digits_columns_start: int = 25
@@ -39,8 +40,7 @@ class FHBParser(Parser):
         self._user_agent = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
         self._email = None
         self._password = None
-        self._url = 'https://fhbstat.com/football'
-        self._filters = dict()
+        self._url = 'https://fhbstat.com'
         self.rounded_fields = defaultdict(dict)
         self.target_urls: Optional[defaultdict] = defaultdict(str)
         self.file_name: str = ''
@@ -70,27 +70,20 @@ class FHBParser(Parser):
         super().stop()
         self._email = None
         self._password = None
-        self._filters.clear()
-        self.rounded_fields.clear()
-        self.target_urls.clear()
 
     def parser_log_filter(self, record):
         return __name__ == record['name']
 
-    def add_filter(self, element):
-        self._filters[str(element.sender.label)] = element.value
+    def download_filters(self):
+        return JSONResponse(self.rounded_fields)
 
-    @property
-    def filters(self):
-        return self._filters
-
-    def get_filters(self) -> dict[str, str]:
-        result = defaultdict(dict)
-        for row_id, field_dict in self.rounded_fields.items():
-            for field, value in field_dict.items():
-                if value:
-                    result[row_id][field.value] = value
-        return result
+    def upload_filters(self, upload_file: UploadEventArguments):
+        _data = json.load(upload_file.content)
+        data = {}
+        for key, value in _data.items():
+            data[key] = {int(k): v for k, v in value.items()}
+        self.rounded_fields.clear()
+        self.rounded_fields.update(data)
 
     async def login(self, client: httpx.AsyncClient):
         cookies_file = Path('cookies.json')
@@ -203,7 +196,10 @@ class FHBParser(Parser):
                 start_row = None
                 start_column = None
                 split_column = None
+                link_column = None
                 for i, value in enumerate(sheet.values):
+                    if 'Ссылка' in value:
+                        link_column = value.index('Ссылка') + 1
                     if '№' in value and 'Количество матчей' in value:
                         start_row = i + 4
                         start_column = value.index('№') + 1
@@ -235,9 +231,12 @@ class FHBParser(Parser):
                                 end_row=end_row
                             )
                             if col == start_column:
+                                max_column = sheet.max_column
+                                if link_column:
+                                    max_column -= 1
                                 cell_range = CellRange(
                                     min_col=col,
-                                    max_col=sheet.max_column,
+                                    max_col=max_column,
                                     min_row=first_row,
                                     max_row=end_row
                                 )
@@ -249,10 +248,20 @@ class FHBParser(Parser):
                                         old_border = copy(_cell.border)
                                         _cell.border = Border(
                                             **{side: Side(border_style='thick')},
-                                            **{other_side: getattr(old_border, other_side) for other_side in other_sides}
+                                            **{
+                                                other_side: getattr(old_border, other_side)
+                                                for other_side in other_sides
+                                            }
                                         )
                             first_row = end_row + 1
                             end_row = first_row
+
+                if link_column:
+                    for row in range(start_row, max_rows + 1):
+                        value = sheet.cell(row, link_column).value
+                        if value and isinstance(value, str):
+                            sheet.cell(row, link_column).hyperlink = value
+                            sheet.cell(row, link_column).style = "Hyperlink"
 
                 writer.save(self.path)
 
@@ -500,7 +509,6 @@ class FHBParser(Parser):
                         data_records = future_data.to_dict(orient='records')
                         self.count_links = len(data_records)
                         for index, data_match in enumerate(self.tqdm(data_records), 1):
-                            # _rounded_fields = self.get_filters()
                             _rounded_fields = self.rounded_fields.copy()
                             local_match_result_df = []
                             for filters_value in _rounded_fields.values():
