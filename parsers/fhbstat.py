@@ -44,6 +44,8 @@ class FHBParser(Parser):
         self.rounded_fields = defaultdict(dict)
         self.target_urls: Optional[defaultdict] = defaultdict(str)
         self.file_name: str = ''
+        self.from_time: str = ''
+        self.to_time: str = ''
 
     @property
     def email(self):
@@ -436,6 +438,20 @@ class FHBParser(Parser):
                 result[key] = (key_mean / 100 * key_match) - 1
         return result
 
+    @classmethod
+    def filter_df_by_time(cls, df: pd.DataFrame, from_time: str, to_time: str) -> pd.DataFrame:
+        _df = df
+        if not df.empty:
+            if all([from_time, to_time]):
+                _df = df.set_index('dt')
+                _df = _df.between_time(from_time, to_time)
+                _df = _df.reset_index()
+            elif from_time:
+                _df = df[df['dt'].dt.time >= datetime.strptime(from_time, '%H:%M').time()]
+            elif to_time:
+                _df = df[df['dt'].dt.time <= datetime.strptime(to_time, '%H:%M').time()]
+        return _df
+
     def get_url_params(self, url):
         scheme, domain, path, params, query, fragment = urlparse(url)
         query_params = parse_qs(query)
@@ -479,6 +495,7 @@ class FHBParser(Parser):
                                 if response.status_code == 200:
                                     try:
                                         df = self.parse_content(response.content)
+                                        df = self.filter_df_by_time(df, self.from_time, self.to_time)
                                     except Exception:
                                         self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
                                         self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
@@ -497,6 +514,7 @@ class FHBParser(Parser):
                             if response.status_code == 200:
                                 try:
                                     df = self.parse_content(response.content)
+                                    df = self.filter_df_by_time(df, self.from_time, self.to_time)
                                 except Exception:
                                     self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
                                     self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'

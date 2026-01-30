@@ -265,7 +265,20 @@ async def fhbstat_page():
         ui.input('Название файла (без расширения)').bind_value(fhbstat_parser, 'file_name')
     filters()
     ui.button('Очистить фильтр', on_click=clear_filters)
-
+    with ui.input('Время с').bind_value(fhbstat_parser, 'from_time') as from_time:
+        with ui.menu().props('no-parent-event') as menu:
+            with ui.time().props('format24h').bind_value(from_time):
+                with ui.row().classes('justify-end'):
+                    ui.button('Close', on_click=menu.close).props('flat')
+        with from_time.add_slot('append'):
+            ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
+    with ui.input('Время до').bind_value(fhbstat_parser, 'to_time') as to_time:
+        with ui.menu().props('no-parent-event') as menu:
+            with ui.time().props('format24h').bind_value(to_time):
+                with ui.row().classes('justify-end'):
+                    ui.button('Close', on_click=menu.close).props('flat')
+        with to_time.add_slot('append'):
+            ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     link()
     ui.label('Обработано ссылок: Вычисляем').bind_text(fhbstat_parser, 'count_processed_links')
     ui.label('Прошло секунд: Вычисляем').bind_text_from(fhbstat_parser, 'elapsed_time')
