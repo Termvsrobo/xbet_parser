@@ -5,7 +5,8 @@ from threading import Event
 import numpy as np
 import pytest
 
-from parsers.fhbstat import FHBParser
+from base import BrowserManager
+from parsers.fhbstat import FHBParser, FHBStatFilter, FieldType, FloatField
 
 
 def test_page():
@@ -33,9 +34,10 @@ def test_page():
     ]
 )
 def test_round(value, round_to, result):
+    float_field = FloatField(type=FieldType.FLOAT, filter_value=round_to, column=22)
     if isinstance(value, str):
         value = float(value)
-    value = FHBParser.round(value, round_to)
+    value = float_field.get_value(value)
     assert value == result
 
 
@@ -311,3 +313,80 @@ def test_get_file_response_merge_cells(target, file_name):
     assert Path(response.path).exists()
     if file_name:
         assert response.filename == f'{file_name}.xlsx'
+
+
+def test_fhbstat_filter():
+    filter_instance = FHBStatFilter(
+        filter_id=15,
+        filters=[dict(type=FieldType.FLOAT, filter_value='0.1', priority=1, column=22)]
+    )
+    assert filter_instance
+    assert filter_instance.filter_id == 15
+    for filter_field in filter_instance.filters:
+        assert filter_field.type is FieldType.FLOAT
+        assert filter_field.filter_value == '0.1'
+        assert filter_field.priority == 1
+        assert filter_field.get_value(15.422) == '15.4'
+        result = {0: '15.4', 1: '15.'}
+        for i, next_value in enumerate(filter_field.next_value(15.422)):
+            assert result.get(i) == next_value
+        assert i == 1
+
+
+def test_add_user_filters():
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.add_user_filter(filter_value='0.1', priority=1, column=22)
+    fhbstat_parser.add_user_filter(
+        filter_value='0.01',
+        priority=1,
+        column=22,
+        filter_id=fhbstat_parser.user_filters.root[0].filter_id
+    )
+    assert fhbstat_parser.user_filters.root[0].filters[0].filter_value == '0.01'
+
+
+def test_change_priority_filters():
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.add_user_filter(filter_value='0.01', priority=1, column=22)
+    fhbstat_parser.add_user_filter(priority=5, column=22, filter_id=fhbstat_parser.user_filters.root[0].filter_id)
+    assert fhbstat_parser.user_filters.root[0].filters[0].filter_value == '0.01'
+    assert fhbstat_parser.user_filters.root[0].filters[0].priority == 5
+
+
+def test_wrong_user_filters():
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.add_user_filter(filter_id=15, filter_value='0.1', priority=1, column=22)
+    with pytest.raises(ValueError):
+        fhbstat_parser.add_user_filter(filter_id=15, filter_value=15, priority=-11, column=22)
+        assert fhbstat_parser.user_filters.root[0].filters[0].filter_value == '0.01'
+
+
+def test_user_filters():
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.add_user_filter(filter_id=15, filter_value='0.1', priority=1, column=22)
+    for _filter in fhbstat_parser.user_filters.root:
+        _filter.filter_id
+        for sub_filter in _filter.filters:
+            sub_filter.get_value(15)
+
+
+@pytest.mark.asyncio
+async def test_fhbstat_parser():
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.target_urls['1'] = 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+    fhbstat_parser.email = 'termvsrobo@yandex.ru'
+    fhbstat_parser.password = '1389308105'
+    fhbstat_parser.add_user_filter(column=9, filter_id=1)
+    fhbstat_parser.add_user_filter(column=10, filter_id=1)
+    fhbstat_parser.add_user_filter(column=22, filter_value='0.1', filter_id=1, priority=1)
+    fhbstat_parser.add_user_filter(column=23, filter_value='0.1', filter_id=1, priority=2)
+    b_manager = BrowserManager(is_running=is_running, parser=fhbstat_parser)
+    async with b_manager as browser:
+        if browser:
+            response = await b_manager.parse(browser)
+            assert response

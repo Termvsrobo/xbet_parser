@@ -36,6 +36,30 @@ services:
       - mongo
       - mongo-backup
 
+  web_dev:
+    restart: always
+    build: .
+    ports:
+      - 8081:8080
+    environment:
+      - DISPLAY=:0
+      - MONGO_URL=mongodb://mongoadmin:mongoadmin@mongo:27017/mydb?authSource=admin
+    # command: sh -c "python main.py"
+    healthcheck:
+      test: curl --fail http://localhost:8080/ || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./logs:/app/logs
+      - ./screenshots:/app/screenshots
+      - ./storage:/app/storage
+      - ./files:/app/files
+    depends_on:
+      - mongo
+      - mongo-backup
+
   mongo-express:
     image: mongo-express
     container_name: mongo-express

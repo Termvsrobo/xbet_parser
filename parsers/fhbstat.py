@@ -6,11 +6,12 @@ from contextlib import asynccontextmanager
 from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
+from enum import IntEnum
 from functools import reduce
 from itertools import count
 from pathlib import Path
 from random import randint
-from typing import Dict, List, Optional
+from typing import Annotated, Dict, List, Literal, Optional, Union
 from urllib.parse import parse_qs, unquote, urlencode, urlparse, urlunparse
 
 import httpx
@@ -21,10 +22,111 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from nicegui.events import UploadEventArguments
 from openpyxl.styles import Border, Side
 from openpyxl.worksheet.cell_range import CellRange
+from pydantic import (BaseModel, Discriminator, Field, PositiveInt, RootModel,
+                      Tag, TypeAdapter)
 from xlsxtpl.writerx import BookWriter
 
 from base import Parser
 from config import settings
+
+
+class FieldType(IntEnum):
+    BOOL: int = 1
+    TIME: int = 2
+    FLOAT: int = 3
+    STR: int = 4
+
+
+def filter_type_discriminator(v):
+    result = None
+    if isinstance(v, dict):
+        result = v.get('type', None)
+    else:
+        result = getattr(v, 'type', None)
+    return result
+
+
+class BaseFilterField(BaseModel):
+    filter_value: str
+    column: int
+    priority: Optional[PositiveInt] = None
+
+    def get_value(self, value):
+        return value
+
+    def next_value(self, value):
+        for _ in range(2):
+            yield self.get_value(value)
+            self.filter_value = self.filter_value[:-1]
+
+    class Config:
+        validate_assignment = True
+
+
+class FloatField(BaseFilterField):
+    type: Literal[FieldType.FLOAT]
+    filter_value: Optional[str] = '0.1'
+
+    def get_value(self, value):
+        exp = Decimal(self.filter_value).as_tuple().exponent * -1
+        adjust_value = 10 ** (-1 * (exp + 2))
+        _value = Decimal(value + adjust_value).quantize(Decimal(self.filter_value), rounding=ROUND_DOWN)
+        _value = float(_value)
+        if _value.is_integer() and re.match(r'^\d+.$', self.filter_value):
+            _value = str(int(_value)) + '.'
+        elif _value.is_integer() and re.match(r'^\d+$', self.filter_value):
+            _value = str(int(_value))
+        elif _value.is_integer() and re.match(r'^\d+.\d+$', self.filter_value):
+            _value = str(int(_value)) + '.0'
+        else:
+            _value = str(_value)
+        return _value
+
+
+class TimeField(BaseFilterField):
+    type: Literal[FieldType.TIME]
+    filter_value: Optional[str] = '00:00'
+
+    def get_value(self, value):
+        result = ''
+        if ':' not in self.filter_value:
+            result = value.split(':')[0]
+        elif self.filter_value.endswith(':'):
+            result = value.split(':')[0] + ':'
+        else:
+            result = value
+        return result
+
+
+class StrField(BaseFilterField):
+    type: Literal[FieldType.STR]
+
+
+class BoolField(BaseFilterField):
+    type: Literal[FieldType.BOOL]
+    filter_value: bool = True
+
+
+TypedField = Annotated[
+    Union[
+        Annotated[BoolField, Tag(FieldType.BOOL)],
+        Annotated[StrField, Tag(FieldType.STR)],
+        Annotated[FloatField, Tag(FieldType.FLOAT)],
+        Annotated[TimeField, Tag(FieldType.TIME)]
+    ],
+    Discriminator(filter_type_discriminator)
+]
+
+ta = TypeAdapter(TypedField)
+
+
+class FHBStatFilter(BaseModel):
+    filter_id: PositiveInt
+    filters: List[TypedField]
+
+
+class Filters(RootModel):
+    root: Optional[List[FHBStatFilter]] = Field(default_factory=list)
 
 
 class FHBParser(Parser):
@@ -41,11 +143,11 @@ class FHBParser(Parser):
         self._email = None
         self._password = None
         self._url = 'https://fhbstat.com'
-        self.rounded_fields = defaultdict(dict)
         self.target_urls: Optional[defaultdict] = defaultdict(str)
         self.file_name: str = ''
         self.from_time: str = ''
         self.to_time: str = ''
+        self.user_filters: Optional[Filters] = Filters()
 
     @property
     def email(self):
@@ -76,16 +178,79 @@ class FHBParser(Parser):
     def parser_log_filter(self, record):
         return __name__ == record['name']
 
+    @property
+    def columns(self):
+        return list(range(1, self.count_columns))
+
+    def get_filter_id(self):
+        result = 1
+        if self.user_filters.root:
+            last_id = max(map(lambda x: x.filter_id, self.user_filters.root))
+            result = last_id + 1
+        return result
+
+    def add_user_filter(self, column, filter_value=None, priority=None, filter_id=None):
+        exist_filter = next(
+            filter(lambda x: getattr(x, 'filter_id') == filter_id, self.user_filters.root),
+            None
+        )
+        filter_data_dict = dict(
+            column=column,
+            priority=priority,
+            type=self.get_field_type(column)
+        )
+        if filter_value:
+            filter_data_dict['filter_value'] = filter_value
+        if not exist_filter:
+            self.user_filters.root.append(
+                FHBStatFilter(
+                    filter_id=filter_id or self.get_filter_id(),
+                    filters=[
+                        ta.validate_python(
+                            filter_data_dict
+                        )
+                    ]
+                )
+            )
+        else:
+            exist_column_filter = next(
+                filter(lambda x: x.column == column, exist_filter.filters),
+                None
+            )
+            if exist_column_filter:
+                if filter_value:
+                    exist_column_filter.filter_value = filter_value
+                if priority:
+                    exist_column_filter.priority = priority
+            else:
+                exist_filter.filters.append(
+                    ta.validate_python(
+                        filter_data_dict
+                    )
+                )
+
+    def remove_user_filter(self, filter_id, column):
+        for _filter in self.user_filters.root:
+            if _filter.filter_id == filter_id:
+                for _filter_ in _filter.filters:
+                    if _filter_.column == column:
+                        _filter.filters.remove(_filter_)
+                        break
+
+    def get_used_columns_by_filter(self, filter_id):
+        result = []
+        for _filter in self.user_filters.root:
+            if _filter.filter_id == filter_id:
+                result = [_filter_.column for _filter_ in _filter.filters]
+        return result
+
     def download_filters(self):
-        return JSONResponse(self.rounded_fields)
+        return JSONResponse(self.user_filters.model_dump())
 
     def upload_filters(self, upload_file: UploadEventArguments):
-        _data = json.load(upload_file.content)
-        data = {}
-        for key, value in _data.items():
-            data[key] = {int(k): v for k, v in value.items()}
-        self.rounded_fields.clear()
-        self.rounded_fields.update(data)
+        data = json.load(upload_file.content)
+        self.user_filters = self.user_filters.model_validate(data)
+        print(self.user_filters.model_dump())
 
     async def login(self, client: httpx.AsyncClient):
         cookies_file = Path('cookies.json')
@@ -161,7 +326,7 @@ class FHBParser(Parser):
             df = pd.DataFrame.from_records(df_data)
             df['Дата слепка, МСК'] = self.now_msk
             columns = list(
-                map(str, range(1, self.count_columns))
+                map(str, self.columns)
             ) + ['index', 'dt', 'Количество матчей', 'Дата слепка, МСК', 'url']
             df = df.reindex(columns=columns)
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
@@ -360,40 +525,13 @@ class FHBParser(Parser):
 
     def get_field_type(self, value):
         if value == 4:
-            return str
+            return FieldType.TIME
         elif value < 11:
-            return bool
+            return FieldType.BOOL
         elif value >= 11:
-            return float
+            return FieldType.FLOAT
         else:
-            return str
-
-    @classmethod
-    def round(cls, value, precision: str = '0'):
-        exp = Decimal(precision).as_tuple().exponent * -1
-        adjust_value = 10 ** (-1 * (exp + 2))
-        _value = Decimal(value + adjust_value).quantize(Decimal(precision), rounding=ROUND_DOWN)
-        _value = float(_value)
-        if _value.is_integer() and re.match(r'^\d+.$', precision):
-            _value = str(int(_value)) + '.'
-        elif _value.is_integer() and re.match(r'^\d+$', precision):
-            _value = str(int(_value))
-        elif _value.is_integer() and re.match(r'^\d+.\d+$', precision):
-            _value = str(int(_value)) + '.0'
-        else:
-            _value = str(_value)
-        return _value
-
-    @classmethod
-    def round_datetime(cls, value: str, precision: str = '00:00') -> str:
-        result = ''
-        if ':' not in precision:
-            result = value.split(':')[0]
-        elif precision.endswith(':'):
-            result = value.split(':')[0] + ':'
-        else:
-            result = value
-        return result
+            return FieldType.STR
 
     @classmethod
     def get_means(cls, list_values: List[Dict[str, float]]):
@@ -527,63 +665,119 @@ class FHBParser(Parser):
                         data_records = future_data.to_dict(orient='records')
                         self.count_links = len(data_records)
                         for index, data_match in enumerate(self.tqdm(data_records), 1):
-                            _rounded_fields = self.rounded_fields.copy()
                             local_match_result_df = []
-                            for filters_value in _rounded_fields.values():
+                            for user_filter in self.user_filters.root:
                                 filters_data = {}
-                                for i, data in filters_value.items():
-                                    field_type = self.get_field_type(i)
-                                    value_match = data_match.get(str(i))
-                                    if value_match:
-                                        if issubclass(field_type, bool):
-                                            filters_data[str(i)] = value_match
-                                        elif i == 4:
-                                            filters_data[str(i)] = self.round_datetime(value_match, str(data))
-                                        else:
-                                            filters_data[str(i)] = self.round(value_match, str(data))
+                                for _filter in user_filter.filters:
+                                    value_match = data_match.get(str(_filter.column))
+                                    filters_data[str(_filter.column)] = _filter.get_value(value_match)
                                 scheme, domain, path, params, _, fragment = urlparse(_target_url)
-                                page_url = urlunparse((scheme, domain, path, params, urlencode(filters_data), fragment))
-                                cookies = [
-                                    {
-                                        'name': key,
-                                        'value': value,
-                                        'domain': 'fhbstat.com',
-                                        'path': '/'
-                                    }
-                                    for key, value in logged_client.cookies.items()
-                                ]
-                                await browser.add_cookies(cookies)
-                                page = await browser.new_page()
-                                await page.set_extra_http_headers({
-                                    "User-Agent": self._user_agent
-                                })
-                                await page.goto(page_url)
-                                await page.wait_for_load_state()
-                                page_content = await page.content()
-                                df_match = self.parse_content(page_content)
-                                if not df_match.empty:
-                                    df_match = df_match.loc[
-                                        df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
-                                    ]
-                                head_df = self.parse_head_table(page_content)
-                                await page.close()
-                                columns = list(
+                                priority_queues = sorted(
                                     filter(
-                                        lambda x: int(x) >= self.digits_columns_start,
-                                        head_df.columns[:-1]
-                                    )
+                                        lambda x: x.priority is not None,
+                                        user_filter.filters
+                                    ),
+                                    key=lambda x: x.priority
                                 )
-                                head_df_records = head_df.to_dict(orient='records')
-                                copy_data_match = data_match.copy()
-                                for h_d_r in head_df_records:
-                                    for column_name, column_value in h_d_r.items():
-                                        if column_name in columns:
-                                            copy_data_match[column_name] = column_value
-                                count_rows, _ = df_match.shape
-                                copy_data_match['Количество матчей'] = count_rows
-                                copy_data_match['index'] = index
-                                copy_data_match['url'] = unquote(page_url)
-                                local_match_result_df.append(copy_data_match)
+                                if priority_queues:
+                                    for priority_filter in priority_queues:
+                                        _filters_data = filters_data.copy()
+                                        value_match = data_match.get(str(priority_filter.column))
+                                        for next_value in priority_filter.next_value(value_match):
+                                            _filters_data[str(priority_filter.column)] = next_value
+                                            page_url = urlunparse((
+                                                scheme, domain, path, params, urlencode(_filters_data), fragment
+                                            ))
+                                            cookies = [
+                                                {
+                                                    'name': key,
+                                                    'value': value,
+                                                    'domain': 'fhbstat.com',
+                                                    'path': '/'
+                                                }
+                                                for key, value in logged_client.cookies.items()
+                                            ]
+                                            await browser.add_cookies(cookies)
+                                            page = await browser.new_page()
+                                            await page.set_extra_http_headers({
+                                                "User-Agent": self._user_agent
+                                            })
+                                            await page.goto(page_url)
+                                            await page.wait_for_load_state()
+                                            page_content = await page.content()
+                                            df_match = self.parse_content(page_content)
+                                            if not df_match.empty:
+                                                df_match = df_match.loc[
+                                                    df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
+                                                ]
+                                            head_df = self.parse_head_table(page_content)
+                                            await page.close()
+                                            columns = list(
+                                                filter(
+                                                    lambda x: int(x) >= self.digits_columns_start,
+                                                    head_df.columns[:-1]
+                                                )
+                                            )
+                                            head_df_records = head_df.to_dict(orient='records')
+                                            copy_data_match = data_match.copy()
+                                            for h_d_r in head_df_records:
+                                                for column_name, column_value in h_d_r.items():
+                                                    if column_name in columns:
+                                                        copy_data_match[column_name] = column_value
+                                            count_rows, _ = df_match.shape
+                                            copy_data_match['Количество матчей'] = count_rows
+                                            copy_data_match['index'] = index
+                                            copy_data_match['url'] = unquote(page_url)
+                                            if count_rows:
+                                                local_match_result_df.append(copy_data_match)
+                                                break
+                                            else:
+                                                await sleep(randint(1, self.max_time_sleep_sec))
+                                else:
+                                    page_url = urlunparse((
+                                        scheme, domain, path, params, urlencode(filters_data), fragment
+                                    ))
+                                    cookies = [
+                                        {
+                                            'name': key,
+                                            'value': value,
+                                            'domain': 'fhbstat.com',
+                                            'path': '/'
+                                        }
+                                        for key, value in logged_client.cookies.items()
+                                    ]
+                                    await browser.add_cookies(cookies)
+                                    page = await browser.new_page()
+                                    await page.set_extra_http_headers({
+                                        "User-Agent": self._user_agent
+                                    })
+                                    await page.goto(page_url)
+                                    await page.wait_for_load_state()
+                                    page_content = await page.content()
+                                    df_match = self.parse_content(page_content)
+                                    if not df_match.empty:
+                                        df_match = df_match.loc[
+                                            df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
+                                        ]
+                                    head_df = self.parse_head_table(page_content)
+                                    await page.close()
+                                    columns = list(
+                                        filter(
+                                            lambda x: int(x) >= self.digits_columns_start,
+                                            head_df.columns[:-1]
+                                        )
+                                    )
+                                    head_df_records = head_df.to_dict(orient='records')
+                                    copy_data_match = data_match.copy()
+                                    for h_d_r in head_df_records:
+                                        for column_name, column_value in h_d_r.items():
+                                            if column_name in columns:
+                                                copy_data_match[column_name] = column_value
+                                    count_rows, _ = df_match.shape
+                                    copy_data_match['Количество матчей'] = count_rows
+                                    copy_data_match['index'] = index
+                                    copy_data_match['url'] = unquote(page_url)
+                                    local_match_result_df.append(copy_data_match)
                                 await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
                             means = self.get_means(local_match_result_df)
@@ -598,7 +792,7 @@ class FHBParser(Parser):
                             result_df_list.append({
                                 **{
                                     str(i): data_match.get(str(i))
-                                    for i in range(1, self.count_columns) if i >= self.digits_columns_start
+                                    for i in self.columns if i >= self.digits_columns_start
                                 },
                                 **{
                                     'index': index,
@@ -615,7 +809,7 @@ class FHBParser(Parser):
                             # Добавляем пустые строки
                             for _ in range(self.count_empty_rows):
                                 result_df_list.append({
-                                    **{str(i): np.nan for i in range(1, self.count_columns)},
+                                    **{str(i): np.nan for i in self.columns},
                                     **{'index': index}
                                 })
                     result = self.get_file_response(df_data=result_df_list, target_path=target_path)

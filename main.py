@@ -7,7 +7,7 @@ from nicegui import app, ui
 from base import BrowserManager
 from beta_baza import parse_bet_baza  # noqa:F401
 from config import settings
-from parsers.fhbstat import FHBParser
+from parsers.fhbstat import FHBParser, FieldType
 from parsers.marathonbet import MarathonbetParser
 from parsers.xlite import XLiteParser
 from utils import AuthMiddleware
@@ -123,50 +123,48 @@ async def fhbstat_page():
 
     def add_rounded_select(element):
         if element:
-            parent_row_id = element.sender.parent_slot.parent.props['filter_id']
+            filter_id = int(element.sender.parent_slot.parent.props['filter_id'])
             ui.select(
-                list(filter(lambda x: x not in fhbstat_parser.rounded_fields[parent_row_id], labels.keys())),
+                list(
+                    filter(
+                        lambda x: x not in fhbstat_parser.get_used_columns_by_filter(filter_id),
+                        fhbstat_parser.columns
+                    )
+                ),
                 on_change=add_rounded_field
             )
         else:
             ui.select(
-                list(labels.keys()),
+                fhbstat_parser.columns,
                 on_change=add_rounded_field
             )
 
-    def set_field(number_field):
+    def set_field(number_field, is_priority=False):
         def change_rounded_field(element):
-            parent_row_id = element.sender.parent_slot.parent.id
+            filter_id = int(element.sender.parent_slot.parent.props['filter_id'])
             if element.value:
-                fhbstat_parser.rounded_fields[parent_row_id][number_field] = element.value
+                if not is_priority:
+                    fhbstat_parser.add_user_filter(filter_id=filter_id, column=number_field, filter_value=element.value)
+                else:
+                    fhbstat_parser.add_user_filter(filter_id=filter_id, column=number_field, priority=element.value)
             else:
-                del fhbstat_parser.rounded_fields[parent_row_id][number_field]
-                if not fhbstat_parser.rounded_fields[parent_row_id]:
-                    del fhbstat_parser.rounded_fields[parent_row_id]
+                if not is_priority:
+                    fhbstat_parser.remove_user_filter(filter_id=filter_id, column=number_field)
         return change_rounded_field
 
     def add_rounded_field(element):
-        field_type = labels.get(element.value)
-        parent_row_id = element.sender.parent_slot.parent.props['filter_id']
-        old_value = element.sender.props.get('old_value')
-        if old_value:
-            del fhbstat_parser.rounded_fields[parent_row_id][int(old_value)]
-            if not fhbstat_parser.rounded_fields[parent_row_id]:
-                del fhbstat_parser.rounded_fields[parent_row_id]
-        if issubclass(field_type, bool):
-            fhbstat_parser.rounded_fields[parent_row_id][element.value] = True
-        elif issubclass(field_type, float):
-            fhbstat_parser.rounded_fields[parent_row_id][element.value] = fhbstat_parser.round_precision
-        elif element.value == 4:
-            fhbstat_parser.rounded_fields[parent_row_id][element.value] = fhbstat_parser.datetime_round
-        else:
-            fhbstat_parser.rounded_fields[parent_row_id][element.value] = ''
+        filter_id = int(element.sender.parent_slot.parent.props['filter_id'])
+        old_column = element.sender.props.get('old_column')
+        if old_column:
+            _old_column = int(old_column)
+            fhbstat_parser.remove_user_filter(filter_id=filter_id, column=_old_column)
+        fhbstat_parser.add_user_filter(filter_id=filter_id, column=element.value)
         filters.refresh()
 
     def add_filter_card(element):
         with ui.row():
             ui.label('Выберите поля')
-            with ui.row().props(f'filter_id={get_filter_id()}'):
+            with ui.row().props(f'filter_id={fhbstat_parser.get_filter_id()}'):
                 add_rounded_select(None)
 
     def add_target_url(element):
@@ -175,16 +173,9 @@ async def fhbstat_page():
             link.refresh()
 
     def clear_filters(element):
-        fhbstat_parser.rounded_fields.clear()
+        fhbstat_parser.user_filters.root.clear()
         fhbstat_parser.target_urls.clear()
         filters.refresh()
-
-    def get_filter_id():
-        result = 1
-        if fhbstat_parser.rounded_fields:
-            last_id = max(map(int, fhbstat_parser.rounded_fields.keys()))
-            result = last_id + 1
-        return result
 
     @ui.refreshable
     def link():
@@ -199,62 +190,68 @@ async def fhbstat_page():
 
     @ui.refreshable
     def filters():
-        if fhbstat_parser.rounded_fields:
+        if fhbstat_parser.user_filters.root:
             with ui.row():
-                for filter_id, field_dict in fhbstat_parser.rounded_fields.items():
+                for user_filter in fhbstat_parser.user_filters.root:
                     ui.label('Выберите поля')
-                    with ui.row().props(f'filter_id={filter_id}'):
-                        for column, value in field_dict.items():
+                    with ui.row().props(f'filter_id={user_filter.filter_id}'):
+                        for _filter in user_filter.filters:
                             _labels = list(
                                 filter(
-                                    lambda x: x not in fhbstat_parser.rounded_fields[filter_id],
-                                    labels.keys()
+                                    lambda x: x not in fhbstat_parser.get_used_columns_by_filter(user_filter.filter_id),
+                                    fhbstat_parser.columns
                                 )
                             )
-                            if int(column) not in _labels:
-                                _labels.append(int(column))
+                            if int(_filter.column) not in _labels:
+                                _labels.append(int(_filter.column))
                             select_field = ui.select(
                                 sorted(
                                     _labels
                                 ),
-                                value=column,
+                                value=_filter.column,
                                 on_change=add_rounded_field
                             )
-                            select_field.props(f'old_value={column}')
-                            field_type = labels.get(column)
-                            if issubclass(field_type, bool):
-                                ui.checkbox(value=True, on_change=set_field(column)).props('disabled')
-                                fhbstat_parser.rounded_fields[filter_id][column] = True
-                            elif issubclass(field_type, float):
+                            select_field.props(f'old_column={_filter.column}')
+                            field_type = fhbstat_parser.get_field_type(_filter.column)
+                            if field_type is FieldType.BOOL:
+                                ui.checkbox(value=True, on_change=set_field(_filter.column)).props('disabled')
+                            elif field_type is FieldType.FLOAT:
                                 ui.input(
-                                    label=column,
-                                    value=value,
-                                    on_change=set_field(column)
+                                    label=_filter.column,
+                                    value=_filter.filter_value,
+                                    on_change=set_field(_filter.column)
                                 )
-                                fhbstat_parser.rounded_fields[filter_id][column] = fhbstat_parser.round_precision
-                            elif column == 4:
-                                ui.input(label=column, value=value, on_change=set_field(column))
+                                ui.select(
+                                    [None] + list(range(1, 11)),
+                                    label='Приоритет',
+                                    value=_filter.priority,
+                                    on_change=set_field(_filter.column, is_priority=True)
+                                )
+                            elif field_type is FieldType.TIME:
+                                ui.input(
+                                    label=_filter.column,
+                                    value=_filter.filter_value,
+                                    on_change=set_field(_filter.column)
+                                )
                             else:
-                                ui.input(label=column, on_change=set_field(column))
+                                ui.input(label=_filter.column, on_change=set_field(_filter.column))
                         ui.button('Добавить', on_click=add_rounded_select)
                     ui.separator()
         else:
             with ui.row():
-                next_filter_id = get_filter_id()
+                next_filter_id = fhbstat_parser.get_filter_id()
                 ui.label('Выберите поля')
                 with ui.row().props(f'filter_id={next_filter_id}'):
                     select_field = ui.select(
-                        list(labels.keys()),
+                        fhbstat_parser.columns,
                         on_change=add_rounded_field
                     )
-                    select_field.props('old_value=""')
+                    select_field.props('old_column=""')
         add_button = ui.button('Добавить фильтр', on_click=add_filter_card)
-        if not bool(fhbstat_parser.rounded_fields):
+        if not bool(fhbstat_parser.user_filters.root):
             add_button.disable()
         else:
             add_button.enable()
-
-    labels = {i: fhbstat_parser.get_field_type(i) for i in range(1, fhbstat_parser.count_columns)}
 
     ui.page_title('FHB Stat')
 
