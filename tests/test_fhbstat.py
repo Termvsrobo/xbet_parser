@@ -6,7 +6,9 @@ import numpy as np
 import pytest
 
 from base import BrowserManager
-from parsers.fhbstat import FHBParser, FHBStatFilter, FieldType, FloatField
+from config import settings
+from parsers.fhbstat import (FHBParser, FHBStatFilter, FieldType, FloatField,
+                             TimeField)
 
 
 def test_page():
@@ -50,7 +52,8 @@ def test_round(value, round_to, result):
     ]
 )
 def test_round_datetime(value, round_to, result):
-    value = FHBParser.round_datetime(value, round_to)
+    time_field = TimeField(type=FieldType.TIME, filter_value=round_to, column=4)
+    value = time_field.get_value(value)
     assert value == result
 
 
@@ -83,21 +86,21 @@ def test_round_datetime(value, round_to, result):
                 {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '16': 0},
                 {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4, '16': 0}
             ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545, '16': 0}
+            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
         ),
         (
             [
                 {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '16': '0'},
                 {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4, '16': '0'}
             ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545, '16': 0}
+            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
         ),
         (
             [
                 {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '11': None},
                 {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4, '11': None}
             ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545, '11': 0.0}
+            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
         ),
         (
             [],
@@ -330,6 +333,7 @@ def test_fhbstat_filter():
         result = {0: '15.4', 1: '15.'}
         for i, next_value in enumerate(filter_field.next_value(15.422)):
             assert result.get(i) == next_value
+            assert filter_field.filter_value == '0.1'
         assert i == 1
 
 
@@ -379,12 +383,13 @@ async def test_fhbstat_parser():
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
     fhbstat_parser.target_urls['1'] = 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
-    fhbstat_parser.email = 'termvsrobo@yandex.ru'
-    fhbstat_parser.password = '1389308105'
-    fhbstat_parser.add_user_filter(column=9, filter_id=1)
-    fhbstat_parser.add_user_filter(column=10, filter_id=1)
-    fhbstat_parser.add_user_filter(column=22, filter_value='0.1', filter_id=1, priority=1)
-    fhbstat_parser.add_user_filter(column=23, filter_value='0.1', filter_id=1, priority=2)
+    fhbstat_parser.email = settings.TEST_FHBSTAT_USERNAME
+    fhbstat_parser.password = settings.TEST_FHBSTAT_PASSWORD
+    # fhbstat_parser.add_user_filter(column=9, filter_id=1)
+    # fhbstat_parser.add_user_filter(column=10, filter_id=1)
+    # fhbstat_parser.add_user_filter(column=22, filter_value='0.1', filter_id=1, priority=1)
+    # fhbstat_parser.add_user_filter(column=23, filter_value='0.1', filter_id=1, priority=2)
+    fhbstat_parser.upload_filters_from_json(Path(__file__).parent / Path('data') / Path('download_filters.json'))
     b_manager = BrowserManager(is_running=is_running, parser=fhbstat_parser)
     async with b_manager as browser:
         if browser:

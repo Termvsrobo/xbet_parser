@@ -51,13 +51,14 @@ class BaseFilterField(BaseModel):
     column: int
     priority: Optional[PositiveInt] = None
 
-    def get_value(self, value):
+    def get_value(self, value, filter_value: Optional[str] = None):
         return value
 
     def next_value(self, value):
+        _filter_value = self.filter_value
         for _ in range(2):
-            yield self.get_value(value)
-            self.filter_value = self.filter_value[:-1]
+            yield self.get_value(value, _filter_value)
+            _filter_value = _filter_value[:-1]
 
     class Config:
         validate_assignment = True
@@ -67,16 +68,17 @@ class FloatField(BaseFilterField):
     type: Literal[FieldType.FLOAT]
     filter_value: Optional[str] = '0.1'
 
-    def get_value(self, value):
-        exp = Decimal(self.filter_value).as_tuple().exponent * -1
+    def get_value(self, value, filter_value: Optional[str] = None):
+        _filter_value = filter_value or self.filter_value
+        exp = Decimal(_filter_value).as_tuple().exponent * -1
         adjust_value = 10 ** (-1 * (exp + 2))
-        _value = Decimal(value + adjust_value).quantize(Decimal(self.filter_value), rounding=ROUND_DOWN)
+        _value = Decimal(value + adjust_value).quantize(Decimal(_filter_value), rounding=ROUND_DOWN)
         _value = float(_value)
-        if _value.is_integer() and re.match(r'^\d+.$', self.filter_value):
+        if _value.is_integer() and re.match(r'^\d+.$', _filter_value):
             _value = str(int(_value)) + '.'
-        elif _value.is_integer() and re.match(r'^\d+$', self.filter_value):
+        elif _value.is_integer() and re.match(r'^\d+$', _filter_value):
             _value = str(int(_value))
-        elif _value.is_integer() and re.match(r'^\d+.\d+$', self.filter_value):
+        elif _value.is_integer() and re.match(r'^\d+.\d+$', _filter_value):
             _value = str(int(_value)) + '.0'
         else:
             _value = str(_value)
@@ -87,11 +89,12 @@ class TimeField(BaseFilterField):
     type: Literal[FieldType.TIME]
     filter_value: Optional[str] = '00:00'
 
-    def get_value(self, value):
+    def get_value(self, value, filter_value: Optional[str] = None):
+        _filter_value = filter_value or self.filter_value
         result = ''
-        if ':' not in self.filter_value:
+        if ':' not in _filter_value:
             result = value.split(':')[0]
-        elif self.filter_value.endswith(':'):
+        elif _filter_value.endswith(':'):
             result = value.split(':')[0] + ':'
         else:
             result = value
@@ -250,6 +253,10 @@ class FHBParser(Parser):
     def upload_filters(self, upload_file: UploadEventArguments):
         data = json.load(upload_file.content)
         self.user_filters = self.user_filters.model_validate(data)
+        print(self.user_filters.model_dump())
+
+    def upload_filters_from_json(self, json_file: Path):
+        self.user_filters = self.user_filters.model_validate_json(json_file.read_bytes())
         print(self.user_filters.model_dump())
 
     async def login(self, client: httpx.AsyncClient):
