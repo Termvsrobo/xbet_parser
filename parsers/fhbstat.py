@@ -687,8 +687,8 @@ class FHBParser(Parser):
                                     key=lambda x: x.priority
                                 )
                                 if priority_queues:
+                                    _filters_data = filters_data.copy()
                                     for priority_filter in priority_queues:
-                                        _filters_data = filters_data.copy()
                                         value_match = data_match.get(str(priority_filter.column))
                                         for next_value in priority_filter.next_value(value_match):
                                             _filters_data[str(priority_filter.column)] = next_value
@@ -740,6 +740,8 @@ class FHBParser(Parser):
                                                 break
                                             else:
                                                 await sleep(randint(1, self.max_time_sleep_sec))
+                                        if local_match_result_df:
+                                            break
                                 else:
                                     page_url = urlunparse((
                                         scheme, domain, path, params, urlencode(filters_data), fragment

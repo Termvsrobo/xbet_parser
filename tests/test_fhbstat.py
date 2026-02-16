@@ -373,25 +373,30 @@ def test_user_filters():
     fhbstat_parser = FHBParser(is_running=is_running)
     fhbstat_parser.add_user_filter(filter_id=15, filter_value='0.1', priority=1, column=22)
     for _filter in fhbstat_parser.user_filters.root:
-        _filter.filter_id
         for sub_filter in _filter.filters:
             sub_filter.get_value(15)
 
 
+@pytest.mark.parametrize(
+    'url,filter_path',
+    [
+        (
+            'https://fhbstat.com/football?1=16&2=02&3=2026',
+            Path(__file__).parent / Path('data') / Path('download_filters.json')
+        )
+    ]
+)
 @pytest.mark.asyncio
-async def test_fhbstat_parser():
+async def test_fhbstat_parser(url, filter_path):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
-    fhbstat_parser.target_urls['1'] = 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+    fhbstat_parser.target_urls['1'] = url
     fhbstat_parser.email = settings.TEST_FHBSTAT_USERNAME
     fhbstat_parser.password = settings.TEST_FHBSTAT_PASSWORD
-    # fhbstat_parser.add_user_filter(column=9, filter_id=1)
-    # fhbstat_parser.add_user_filter(column=10, filter_id=1)
-    # fhbstat_parser.add_user_filter(column=22, filter_value='0.1', filter_id=1, priority=1)
-    # fhbstat_parser.add_user_filter(column=23, filter_value='0.1', filter_id=1, priority=2)
-    fhbstat_parser.upload_filters_from_json(Path(__file__).parent / Path('data') / Path('download_filters.json'))
+    fhbstat_parser.upload_filters_from_json(filter_path)
     b_manager = BrowserManager(is_running=is_running, parser=fhbstat_parser)
     async with b_manager as browser:
         if browser:
             response = await b_manager.parse(browser)
             assert response
+            print(response.path)
