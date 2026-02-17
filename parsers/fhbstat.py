@@ -742,6 +742,16 @@ class FHBParser(Parser):
                                                 await sleep(randint(1, self.max_time_sleep_sec))
                                         if local_match_result_df:
                                             break
+                                    if not local_match_result_df:
+                                        local_match_result_df.append(
+                                                pd.DataFrame.from_dict(
+                                                    {
+                                                        **{str(i): np.nan for i in self.columns},
+                                                        **{'index': index}
+                                                    },
+                                                    orient='index'
+                                                )
+                                        )
                                 else:
                                     page_url = urlunparse((
                                         scheme, domain, path, params, urlencode(filters_data), fragment
