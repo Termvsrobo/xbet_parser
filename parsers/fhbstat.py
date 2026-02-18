@@ -751,6 +751,7 @@ class FHBParser(Parser):
                                                         **{str(i): np.nan for i in self.columns},
                                                         **{
                                                             'index': index,
+                                                            'Количество матчей': 0,
                                                             'url': urlunparse((
                                                                 scheme,
                                                                 domain,
