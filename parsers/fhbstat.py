@@ -690,6 +690,7 @@ class FHBParser(Parser):
                                     _filters_data = filters_data.copy()
                                     for priority_filter in priority_queues:
                                         value_match = data_match.get(str(priority_filter.column))
+                                        data_exist = False
                                         for next_value in priority_filter.next_value(value_match):
                                             _filters_data[str(priority_filter.column)] = next_value
                                             page_url = urlunparse((
@@ -737,17 +738,28 @@ class FHBParser(Parser):
                                             copy_data_match['url'] = unquote(page_url)
                                             if count_rows:
                                                 local_match_result_df.append(copy_data_match)
+                                                data_exist = True
                                                 break
                                             else:
                                                 await sleep(randint(1, self.max_time_sleep_sec))
-                                        if local_match_result_df:
+                                        if data_exist:
                                             break
-                                    if not local_match_result_df:
+                                    if not data_exist:
                                         local_match_result_df.append(
                                                 pd.DataFrame.from_dict(
                                                     {
                                                         **{str(i): np.nan for i in self.columns},
-                                                        **{'index': index}
+                                                        **{
+                                                            'index': index,
+                                                            'url': urlunparse((
+                                                                scheme,
+                                                                domain,
+                                                                path,
+                                                                params,
+                                                                urlencode(filters_data),
+                                                                fragment
+                                                            ))
+                                                        }
                                                     },
                                                     orient='index'
                                                 )

@@ -383,6 +383,10 @@ def test_user_filters():
         (
             'https://fhbstat.com/football?1=16&2=02&3=2026',
             Path(__file__).parent / Path('data') / Path('download_filters.json')
+        ),
+        (
+            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',
+            Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json')
         )
     ]
 )
