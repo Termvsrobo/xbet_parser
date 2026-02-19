@@ -264,15 +264,16 @@ def test_get_file_response(data, target, file_name):
 @pytest.mark.parametrize(
     'target,file_name',
     [
-        ('/hockey_24', 'test1')
+        ('/hockey_24', 'test2')
     ]
 )
 def test_get_file_response_merge_cells(target, file_name):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
     data = []
+    fhbstat_parser.upload_filters_from_json(Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json'))
     for i in range(1, 10 + 1):
-        for _ in range(4):
+        for _ in range(len(fhbstat_parser.user_filters.root) + 1):
             data.append(
                 {
                     '1': 19,
@@ -285,10 +286,28 @@ def test_get_file_response_merge_cells(target, file_name):
                     '10': 'zxcvzxcv',
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    'Количество матчей': random.randint(1, 10),
                     **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
                 },
             )
-        for _ in range(7):
+        for sym in ('%', 'кф', 'мо'):
+            data.append(
+                {
+                    '1': np.nan,
+                    '2': np.nan,
+                    '3': np.nan,
+                    '4': np.nan,
+                    '7': np.nan,
+                    '8': np.nan,
+                    '9': np.nan,
+                    '10': np.nan,
+                    'index': i,
+                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+                    'Количество матчей': sym,
+                    **{str(i): np.nan for i in range(30, 67)}
+                }
+            )
+        for _ in range(fhbstat_parser.count_empty_rows):
             data.append(
                 {
                     '1': np.nan,
@@ -387,6 +406,10 @@ def test_user_filters():
         (
             'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',
             Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json')
+        ),
+        (
+            'https://fhbstat.com/football?%D0%BC_6_%D1%87%D0%B5%D0%BC%D0%BF=1&1=18&2=02&3=2026',
+            Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json')
         )
     ]
 )

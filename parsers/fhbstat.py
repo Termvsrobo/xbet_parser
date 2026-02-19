@@ -388,47 +388,46 @@ class FHBParser(Parser):
 
                 for col in range(start_column, split_column):
                     first_row = start_row
-                    end_row = first_row
+                    end_row = first_row + len(self.user_filters.root) + 3 + self.count_empty_rows - 1
                     while end_row <= max_rows:
-                        group_value = sheet.cell(row=first_row, column=col).value
-                        current_value = sheet.cell(row=end_row, column=col).value
-                        if (
-                            current_value == group_value or current_value is group_value
-                        ):
-                            end_row += 1
-                        else:
-                            end_row -= 1
+                        if col == start_column:
                             sheet.merge_cells(
                                 start_column=col,
                                 end_column=col,
                                 start_row=first_row,
                                 end_row=end_row
                             )
-                            if col == start_column:
-                                max_column = sheet.max_column
-                                if link_column:
-                                    max_column -= 1
-                                cell_range = CellRange(
-                                    min_col=col,
-                                    max_col=max_column,
-                                    min_row=first_row,
-                                    max_row=end_row
-                                )
-                                sides = ('left', 'right', 'top', 'bottom')
-                                for side in sides:
-                                    for cell in getattr(cell_range, side, []):
-                                        _cell = sheet.cell(cell[0], cell[1])
-                                        other_sides = filter(lambda _side: _side != side, sides)
-                                        old_border = copy(_cell.border)
-                                        _cell.border = Border(
-                                            **{side: Side(border_style='thick')},
-                                            **{
-                                                other_side: getattr(old_border, other_side)
-                                                for other_side in other_sides
-                                            }
-                                        )
-                            first_row = end_row + 1
-                            end_row = first_row
+                            max_column = sheet.max_column
+                            if link_column:
+                                max_column -= 1
+                            cell_range = CellRange(
+                                min_col=col,
+                                max_col=max_column,
+                                min_row=first_row,
+                                max_row=end_row
+                            )
+                            sides = ('left', 'right', 'top', 'bottom')
+                            for side in sides:
+                                for cell in getattr(cell_range, side, []):
+                                    _cell = sheet.cell(cell[0], cell[1])
+                                    other_sides = filter(lambda _side: _side != side, sides)
+                                    old_border = copy(_cell.border)
+                                    _cell.border = Border(
+                                        **{side: Side(border_style='thick')},
+                                        **{
+                                            other_side: getattr(old_border, other_side)
+                                            for other_side in other_sides
+                                        }
+                                    )
+                        else:
+                            sheet.merge_cells(
+                                start_column=col,
+                                end_column=col,
+                                start_row=first_row,
+                                end_row=first_row + len(self.user_filters.root) - 1
+                            )
+                        first_row = end_row + 1
+                        end_row = first_row + len(self.user_filters.root) + 3 + self.count_empty_rows - 1
 
                 if link_column:
                     for row in range(start_row, max_rows + 1):
