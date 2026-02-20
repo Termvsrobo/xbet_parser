@@ -253,13 +253,12 @@ class FHBParser(Parser):
     def upload_filters(self, upload_file: UploadEventArguments):
         data = json.load(upload_file.content)
         self.user_filters = self.user_filters.model_validate(data)
-        print(self.user_filters.model_dump())
 
     def upload_filters_from_json(self, json_file: Path):
         self.user_filters = self.user_filters.model_validate_json(json_file.read_bytes())
-        print(self.user_filters.model_dump())
 
     async def login(self, client: httpx.AsyncClient):
+        self.status = 'Логинимся'
         cookies_file = Path('cookies.json')
         cookies = {}
         if cookies_file.exists():
@@ -290,6 +289,7 @@ class FHBParser(Parser):
         return True
 
     async def logout(self, client: httpx.AsyncClient):
+        self.status = 'Выходим'
         response = await client.post(
             'https://fhbstat.com/авторизация',
             data={
@@ -299,6 +299,7 @@ class FHBParser(Parser):
             }
         )
         assert response.status_code == 200, 'Не удалось авторизоваться на сайте fhbstat.com'
+        self.status = 'Вышли'
 
     @asynccontextmanager
     async def page_client(self, client: httpx.AsyncClient):
@@ -745,24 +746,23 @@ class FHBParser(Parser):
                                             break
                                     if not data_exist:
                                         local_match_result_df.append(
-                                                pd.DataFrame.from_dict(
-                                                    {
-                                                        **{str(i): np.nan for i in self.columns},
-                                                        **{
-                                                            'index': index,
-                                                            'Количество матчей': 0,
-                                                            'url': urlunparse((
-                                                                scheme,
-                                                                domain,
-                                                                path,
-                                                                params,
-                                                                urlencode(filters_data),
-                                                                fragment
-                                                            ))
-                                                        }
-                                                    },
-                                                    orient='index'
-                                                )
+                                            {
+                                                **{str(i): np.nan for i in self.columns},
+                                                **{
+                                                    'index': index,
+                                                    'Количество матчей': 0,
+                                                    'url': unquote(
+                                                        urlunparse((
+                                                            scheme,
+                                                            domain,
+                                                            path,
+                                                            params,
+                                                            urlencode(filters_data),
+                                                            fragment
+                                                        ))
+                                                    )
+                                                }
+                                            }
                                         )
                                 else:
                                     page_url = urlunparse((

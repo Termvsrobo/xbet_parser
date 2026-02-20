@@ -271,7 +271,9 @@ def test_get_file_response_merge_cells(target, file_name):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
     data = []
-    fhbstat_parser.upload_filters_from_json(Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json'))
+    fhbstat_parser.upload_filters_from_json(
+        Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json')
+    )
     for i in range(1, 10 + 1):
         for _ in range(len(fhbstat_parser.user_filters.root) + 1):
             data.append(
@@ -404,12 +406,16 @@ def test_user_filters():
             Path(__file__).parent / Path('data') / Path('download_filters.json')
         ),
         (
-            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',
+            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',  # noqa:E501
             Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json')
         ),
         (
             'https://fhbstat.com/football?%D0%BC_6_%D1%87%D0%B5%D0%BC%D0%BF=1&1=18&2=02&3=2026',
             Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json')
+        ),
+        (
+            'https://fhbstat.com/football?%D0%BC_6_%D1%87%D0%B5%D0%BC%D0%BF=1&1=21&2=02&3=2026',
+            Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
         )
     ]
 )
