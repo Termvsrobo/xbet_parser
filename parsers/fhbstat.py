@@ -1,6 +1,7 @@
 import json
+import operator
 import re
-from asyncio import sleep
+from asyncio import sleep, to_thread
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from copy import copy
@@ -437,6 +438,27 @@ class FHBParser(Parser):
                             sheet.cell(row, link_column).hyperlink = value
                             sheet.cell(row, link_column).style = "Hyperlink"
 
+                # заполнение формул
+                for fn_col in range(split_column + 1, link_column):
+                    for row in range(start_row, max_rows + 1):
+                        if sheet.cell(row, split_column).value == '%':
+                            average_columns = ','.join([
+                                f'{sheet.cell(_row, fn_col).coordinate}*{sheet.cell(_row, split_column).coordinate}'
+                                for _row in range(row - len(self.user_filters.root), row)
+                            ])
+                            sum_count_matches = (
+                                f'{sheet.cell(row - len(self.user_filters.root), split_column).coordinate}:'
+                                f'{sheet.cell(row-1, split_column).coordinate}'
+                            )
+                            sheet.cell(row, fn_col).value = (
+                                f'=SUM({average_columns})/SUM({sum_count_matches})'
+                            )
+                        elif sheet.cell(row, split_column).value == 'мо':
+                            sheet.cell(row, fn_col).value = (
+                                f'=({sheet.cell(row - 2, fn_col).coordinate}/100*'
+                                f'{sheet.cell(row - 1, fn_col).coordinate})-1'
+                            )
+
                 writer.save(self.path)
 
                 result = FileResponse(
@@ -448,6 +470,9 @@ class FHBParser(Parser):
         else:
             result = PlainTextResponse('Не собрали данных.')
         return result
+
+    async def async_get_file_response(self, *args, **kwargs):
+        return await to_thread(self.get_file_response, *args, **kwargs)
 
     @classmethod
     def get_head_data(cls, content):
@@ -530,6 +555,28 @@ class FHBParser(Parser):
             df = pd.DataFrame()
         return df
 
+    @classmethod
+    def get_formula(cls):
+        formulas = {
+            '32': {'left_column': '11', 'right_column': '12', 'op': operator.gt},
+            '33': {'left_column': '11', 'right_column': '12', 'op': operator.eq},
+            '34': {'left_column': '11', 'right_column': '12', 'op': operator.lt},
+            '38': {'left_column': '11', 'right_column': '12', 'op': operator.gt},
+            '39': {'left_column': '11', 'right_column': '12', 'op': operator.lt},
+        }
+        return formulas
+
+    @classmethod
+    def apply_formula(cls, row: Dict):
+        return
+
+    @classmethod
+    def get_match_coefficients(cls, df: pd.DataFrame) -> Dict[str, float]:
+        _df = df.copy()
+        if not _df.empty:
+            for column, value in cls.get_formula().items():
+                _df.loc[:, column] = _df.apply(cls.apply_formula, axis=1)
+
     def get_field_type(self, value):
         if value == 4:
             return FieldType.TIME
@@ -608,17 +655,20 @@ class FHBParser(Parser):
         msg = f'Открываем {self.url}'
         self.status = msg
 
+        transport = httpx.AsyncHTTPTransport(retries=5)
         async with httpx.AsyncClient(
             follow_redirects=True,
             headers={
                 'User-Agent': self._user_agent
-            }
+            },
+            transport=transport,
         ) as client:
             async with self.page_client(client=client) as logged_client:
                 if logged_client is not None:
                     dfs = []
                     result_df_list = []
                     copy_target_urls = self.target_urls.copy()
+                    target_path = None
                     for target_url in copy_target_urls.values():
                         self.status = f'Обрабатываем ссылку {target_url}'
                         _target_url, query_params, target_path = self.get_url_params(target_url)
@@ -811,10 +861,8 @@ class FHBParser(Parser):
                                     local_match_result_df.append(copy_data_match)
                                 await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
-                            means = self.get_means(local_match_result_df)
-                            mathematical_expectation = self.get_mathematical_expectation(means, data_match)
                             result_df_list.append({
-                                **means,
+                                **{str(i): np.nan for i in self.columns},
                                 **{
                                     'index': index,
                                     'Количество матчей': '%'
@@ -831,7 +879,7 @@ class FHBParser(Parser):
                                 }
                             })
                             result_df_list.append({
-                                **mathematical_expectation,
+                                **{str(i): np.nan for i in self.columns},
                                 **{
                                     'index': index,
                                     'Количество матчей': 'мо'
@@ -843,5 +891,6 @@ class FHBParser(Parser):
                                     **{str(i): np.nan for i in self.columns},
                                     **{'index': index}
                                 })
-                    result = self.get_file_response(df_data=result_df_list, target_path=target_path)
+                    self.status = 'Генерируем excel файл'
+                    result = await self.async_get_file_response(df_data=result_df_list, target_path=target_path)
                     return result

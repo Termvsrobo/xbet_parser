@@ -267,7 +267,8 @@ def test_get_file_response(data, target, file_name):
         ('/hockey_24', 'test2')
     ]
 )
-def test_get_file_response_merge_cells(target, file_name):
+@pytest.mark.asyncio
+async def test_get_file_response_merge_cells(target, file_name):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
     data = []
@@ -275,7 +276,7 @@ def test_get_file_response_merge_cells(target, file_name):
         Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json')
     )
     for i in range(1, 10 + 1):
-        for _ in range(len(fhbstat_parser.user_filters.root) + 1):
+        for _ in range(len(fhbstat_parser.user_filters.root)):
             data.append(
                 {
                     '1': 19,
@@ -289,7 +290,13 @@ def test_get_file_response_merge_cells(target, file_name):
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
                     'Количество матчей': random.randint(1, 10),
-                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                    **{
+                        str(i): random.uniform(0.2, 10.0)
+                        for i in range(
+                            fhbstat_parser.digits_columns_start,
+                            fhbstat_parser.count_columns
+                        )
+                    }
                 },
             )
         for sym in ('%', 'кф', 'мо'):
@@ -306,7 +313,13 @@ def test_get_file_response_merge_cells(target, file_name):
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
                     'Количество матчей': sym,
-                    **{str(i): np.nan for i in range(30, 67)}
+                    **{
+                        str(i): np.nan
+                        for i in range(
+                            fhbstat_parser.digits_columns_start,
+                            fhbstat_parser.count_columns
+                        )
+                    }
                 }
             )
         for _ in range(fhbstat_parser.count_empty_rows):
@@ -322,13 +335,19 @@ def test_get_file_response_merge_cells(target, file_name):
                     '10': np.nan,
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
-                    **{str(i): np.nan for i in range(30, 67)}
+                    **{
+                        str(i): np.nan
+                        for i in range(
+                            fhbstat_parser.digits_columns_start,
+                            fhbstat_parser.count_columns
+                        )
+                    }
                 }
             )
     fhbstat_parser.start()
     if file_name:
         fhbstat_parser.file_name = file_name
-    response = fhbstat_parser.get_file_response(
+    response = await fhbstat_parser.async_get_file_response(
         data,
         target
     )
@@ -416,6 +435,10 @@ def test_user_filters():
         (
             'https://fhbstat.com/football?%D0%BC_6_%D1%87%D0%B5%D0%BC%D0%BF=1&1=21&2=02&3=2026',
             Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
+        ),
+        (
+            '',
+            Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
         )
     ]
 )
@@ -423,7 +446,8 @@ def test_user_filters():
 async def test_fhbstat_parser(url, filter_path):
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
-    fhbstat_parser.target_urls['1'] = url
+    if url:
+        fhbstat_parser.target_urls['1'] = url
     fhbstat_parser.email = settings.TEST_FHBSTAT_USERNAME
     fhbstat_parser.password = settings.TEST_FHBSTAT_PASSWORD
     fhbstat_parser.upload_filters_from_json(filter_path)
@@ -432,4 +456,6 @@ async def test_fhbstat_parser(url, filter_path):
         if browser:
             response = await b_manager.parse(browser)
             assert response
-            print(response.path)
+            if url:
+                assert hasattr(response, 'path')
+                print(response.path)
