@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str
     PORT: int = 8080
 
+    TEST_FHBSTAT_USERNAME: Optional[str] = None
+    TEST_FHBSTAT_PASSWORD: Optional[str] = None
+
     model_config = SettingsConfigDict(env_file=".env", extra='allow')
 
 
