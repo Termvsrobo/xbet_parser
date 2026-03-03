@@ -264,7 +264,8 @@ def test_get_file_response(data, target, file_name):
 @pytest.mark.parametrize(
     'target,file_name',
     [
-        ('/hockey_24', 'test2')
+        ('/hockey_24', 'test2'),
+        ('/football_total', 'test3')
     ]
 )
 @pytest.mark.asyncio
@@ -287,6 +288,8 @@ async def test_get_file_response_merge_cells(target, file_name):
                     '8': 'qwerqwer',
                     '9': '[poipi]',
                     '10': 'zxcvzxcv',
+                    '11': random.uniform(0.2, 10.0),
+                    '12': random.uniform(0.2, 10.0),
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
                     'Количество матчей': random.randint(1, 10),
@@ -310,6 +313,8 @@ async def test_get_file_response_merge_cells(target, file_name):
                     '8': np.nan,
                     '9': np.nan,
                     '10': np.nan,
+                    '11': np.nan,
+                    '12': np.nan,
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
                     'Количество матчей': sym,
@@ -333,6 +338,8 @@ async def test_get_file_response_merge_cells(target, file_name):
                     '8': np.nan,
                     '9': np.nan,
                     '10': np.nan,
+                    '11': np.nan,
+                    '12': np.nan,
                     'index': i,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
                     **{
@@ -439,7 +446,7 @@ def test_user_filters():
         (
             '',
             Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
-        )
+        ),
     ]
 )
 @pytest.mark.asyncio

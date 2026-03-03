@@ -382,13 +382,23 @@ class FHBParser(Parser):
                         split_column = value.index('Количество матчей') + 1
                         break
 
+                columns_by_number = list(
+                    filter(
+                        lambda x: sheet.cell(start_row-1, x).value in (11, 12),
+                        range(1, link_column)
+                    )
+                )
+                _10 = start_column
+                for i in filter(lambda x: sheet.cell(start_row-1, x).value in (10,), range(1, link_column)):
+                    _10 = i
+
                 max_rows = start_row
                 for row in range(start_row + 1, sheet.max_row + 1):
                     if sheet.cell(row=row, column=start_column).value is None:
                         max_rows = row
                         break
 
-                for col in range(start_column, split_column):
+                for col in range(start_column, _10 + 1):
                     first_row = start_row
                     end_row = first_row + len(self.user_filters.root) + 3 + self.count_empty_rows - 1
                     while end_row <= max_rows:
@@ -439,7 +449,8 @@ class FHBParser(Parser):
                             sheet.cell(row, link_column).style = "Hyperlink"
 
                 # заполнение формул
-                for fn_col in range(split_column + 1, link_column):
+                columns = sorted(set(columns_by_number + list(range(split_column + 1, link_column))))
+                for fn_col in columns:
                     for row in range(start_row, max_rows + 1):
                         if sheet.cell(row, split_column).value == '%':
                             average_columns = ','.join([
@@ -782,6 +793,10 @@ class FHBParser(Parser):
                                                 for column_name, column_value in h_d_r.items():
                                                     if column_name in columns:
                                                         copy_data_match[column_name] = column_value
+                                            for _column in ('11', '12'):
+                                                _v = df_match[_column].mean()
+                                                _v *= 10
+                                                copy_data_match[_column] = (_v - _v % 5) / 10
                                             count_rows, _ = df_match.shape
                                             copy_data_match['Количество матчей'] = count_rows
                                             copy_data_match['index'] = index
@@ -854,6 +869,10 @@ class FHBParser(Parser):
                                         for column_name, column_value in h_d_r.items():
                                             if column_name in columns:
                                                 copy_data_match[column_name] = column_value
+                                    for _column in ('11', '12'):
+                                        _v = df_match[_column].mean()
+                                        _v *= 10
+                                        copy_data_match[_column] = (_v - _v % 5) / 10
                                     count_rows, _ = df_match.shape
                                     copy_data_match['Количество матчей'] = count_rows
                                     copy_data_match['index'] = index
