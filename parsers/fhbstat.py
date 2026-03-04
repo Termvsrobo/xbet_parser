@@ -811,7 +811,7 @@ class FHBParser(Parser):
                                                 if _column in df_match.columns:
                                                     _v = df_match[_column].mean()
                                                     _v *= 10
-                                                    copy_data_match[_column] = (_v - _v % 5) / 10
+                                                    copy_data_match[_column] = (_v - _v % 1) / 10
                                             count_rows, _ = df_match.shape
                                             copy_data_match['Количество матчей'] = count_rows
                                             copy_data_match['index'] = index
@@ -841,7 +841,8 @@ class FHBParser(Parser):
                                                             fragment
                                                         ))
                                                     )
-                                                }
+                                                },
+                                                **{str(i): data_match.get(str(i), np.nan) for i in range(11)}
                                             }
                                         )
                                 else:
@@ -888,7 +889,7 @@ class FHBParser(Parser):
                                         if _column in df_match.columns:
                                             _v = df_match[_column].mean()
                                             _v *= 10
-                                            copy_data_match[_column] = (_v - _v % 5) / 10
+                                            copy_data_match[_column] = (_v - _v % 1) / 10
                                     count_rows, _ = df_match.shape
                                     copy_data_match['Количество матчей'] = count_rows
                                     copy_data_match['index'] = index
