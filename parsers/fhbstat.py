@@ -318,14 +318,20 @@ class FHBParser(Parser):
     @classmethod
     def get_excel_template(cls, path):
         templates = {
-            '/football': 'ШАБЛОН Эксель Футбол Исход.xlsx',
-            '/football_total': 'ШАБЛОН Эксель Футбол Тотал.xlsx',
-            '/football_24': 'ШАБЛОН Эксель Футбол 24.xlsx',
-            '/hockey': 'ШАБЛОН Эксель Хоккей Исход.xlsx',
-            '/hockey_total': 'ШАБЛОН Эксель Хоккей Тотал.xlsx',
-            '/hockey_24': 'ШАБЛОН Эксель Хоккей 24.xlsx',
+            # '/football': ('ШАБЛОН Эксель Футбол Исход.xlsx', 'Статистика'),
+            # '/hockey': ('ШАБЛОН Эксель Хоккей Исход.xlsx', 'Статистика'),
+            # '/football_24': ('ШАБЛОН Эксель Футбол 24.xlsx', 'Статистика'),
+            # '/hockey_24': ('ШАБЛОН Эксель Хоккей 24.xlsx', 'Статистика'),
+            '/football_total': ('ШАБЛОН Эксель Футбол Тотал.xlsx', 'Статистика'),
+            '/hockey_total': ('ШАБЛОН Эксель Хоккей Тотал.xlsx', 'Статистика'),
+            '/football': ('templates.xlsx', 'Футбол исход', 0),
+            '/hockey': ('templates.xlsx', 'Хоккей исход', 2),
+            '/football_24': ('templates.xlsx', 'Футбол 24', 1),
+            '/hockey_24': ('templates.xlsx', 'Хоккей 24', 3),
+            # '/football_total': ('templates.xlsx', 'Статистика'),
+            # '/hockey_total': ('templates.xlsx', 'Статистика'),
         }
-        return templates.get(path)
+        return templates.get(path, (None, None, None))
 
     def get_file_response(self, df_data, target_path):
         result = None
@@ -354,42 +360,49 @@ class FHBParser(Parser):
                 full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
             full_df = full_df.reset_index(drop=True)
 
-            template_name = self.get_excel_template(target_path)
-            if template_name:
+            template_name, sheet_name, tpl_id = self.get_excel_template(target_path)
+            if all((template_name, sheet_name, tpl_id is not None)):
                 fname = Path(__file__).parent.parent / Path('excel_templates') / Path(template_name)
                 writer = BookWriter(fname)
                 writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 
                 data = dict()
                 data['rows'] = df.to_dict('records')
-                payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика',  'ctx': data}
+                payload0 = {'tpl_idx': tpl_id, 'sheet_name': sheet_name,  'ctx': data}
 
                 payloads = [payload0]
                 writer.render_book2(payloads=payloads)
 
                 workbook = writer.workbook
-                sheet = workbook.active
+                sheet = workbook[sheet_name]
                 start_row = None
                 start_column = None
                 split_column = None
                 link_column = None
                 for i, value in enumerate(sheet.values):
-                    if 'Ссылка' in value:
-                        link_column = value.index('Ссылка') + 1
-                    if '№' in value and 'Количество матчей' in value:
+                    if all(map(lambda x: x is None, value)):
+                        continue
+                    link_name = 'ссылка'.upper()
+                    if link_name in value:
+                        link_column = value.index(link_name) + 1
+                    count_matches_name = 'Количество\nматчей'
+                    if '№' in value and count_matches_name in value:
                         start_row = i + 4
                         start_column = value.index('№') + 1
-                        split_column = value.index('Количество матчей') + 1
+                        split_column = value.index(count_matches_name) + 1
                         break
 
+                delta = 1
+                if template_name == 'templates.xlsx':
+                    delta = 2
                 columns_by_number = list(
                     filter(
-                        lambda x: sheet.cell(start_row-1, x).value in (11, 12),
+                        lambda x: sheet.cell(start_row-delta, x).value in (11, 12),
                         range(1, link_column)
                     )
                 )
                 _10 = start_column
-                for i in filter(lambda x: sheet.cell(start_row-1, x).value in (10,), range(1, link_column)):
+                for i in filter(lambda x: sheet.cell(start_row-delta, x).value in (10,), range(1, link_column)):
                     _10 = i
 
                 max_rows = start_row

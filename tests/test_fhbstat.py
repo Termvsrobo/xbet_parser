@@ -265,7 +265,9 @@ def test_get_file_response(data, target, file_name):
     'target,file_name',
     [
         ('/hockey_24', 'test2'),
-        ('/football_total', 'test3')
+        ('/football_24', 'test3'),
+        ('/football', 'test4'),
+        ('/hockey', 'test5'),
     ]
 )
 @pytest.mark.asyncio
