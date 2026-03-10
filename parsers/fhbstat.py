@@ -318,18 +318,12 @@ class FHBParser(Parser):
     @classmethod
     def get_excel_template(cls, path):
         templates = {
-            # '/football': ('ШАБЛОН Эксель Футбол Исход.xlsx', 'Статистика'),
-            # '/hockey': ('ШАБЛОН Эксель Хоккей Исход.xlsx', 'Статистика'),
-            # '/football_24': ('ШАБЛОН Эксель Футбол 24.xlsx', 'Статистика'),
-            # '/hockey_24': ('ШАБЛОН Эксель Хоккей 24.xlsx', 'Статистика'),
-            '/football_total': ('ШАБЛОН Эксель Футбол Тотал.xlsx', 'Статистика'),
-            '/hockey_total': ('ШАБЛОН Эксель Хоккей Тотал.xlsx', 'Статистика'),
             '/football': ('templates.xlsx', 'Футбол исход', 0),
-            '/hockey': ('templates.xlsx', 'Хоккей исход', 2),
             '/football_24': ('templates.xlsx', 'Футбол 24', 1),
+            '/hockey': ('templates.xlsx', 'Хоккей исход', 2),
             '/hockey_24': ('templates.xlsx', 'Хоккей 24', 3),
-            # '/football_total': ('templates.xlsx', 'Статистика'),
-            # '/hockey_total': ('templates.xlsx', 'Статистика'),
+            '/football_total': ('templates.xlsx', 'Футбол тотал', 4),
+            '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
         }
         return templates.get(path, (None, None, None))
 
@@ -385,7 +379,7 @@ class FHBParser(Parser):
                     link_name = 'ссылка'.upper()
                     if link_name in value:
                         link_column = value.index(link_name) + 1
-                    count_matches_name = 'Количество\nматчей'
+                    count_matches_name = 'Количество матчей'
                     if '№' in value and count_matches_name in value:
                         start_row = i + 4
                         start_column = value.index('№') + 1
@@ -474,12 +468,12 @@ class FHBParser(Parser):
                                 f'{sheet.cell(row-1, split_column).coordinate}'
                             )
                             sheet.cell(row, fn_col).value = (
-                                f'=SUM({average_columns})/SUM({sum_count_matches})'
+                                f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),2)'
                             )
                         elif sheet.cell(row, split_column).value == 'мо':
                             sheet.cell(row, fn_col).value = (
-                                f'=({sheet.cell(row - 2, fn_col).coordinate}/100*'
-                                f'{sheet.cell(row - 1, fn_col).coordinate})-1'
+                                f'=ROUNDDOWN(({sheet.cell(row - 2, fn_col).coordinate}/100*'
+                                f'{sheet.cell(row - 1, fn_col).coordinate})-1,2)'
                             )
 
                 for fn_col in columns_by_number:

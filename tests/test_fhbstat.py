@@ -264,10 +264,12 @@ def test_get_file_response(data, target, file_name):
 @pytest.mark.parametrize(
     'target,file_name',
     [
-        ('/hockey_24', 'test2'),
-        ('/football_24', 'test3'),
-        ('/football', 'test4'),
-        ('/hockey', 'test5'),
+        ('/hockey_24', 'test1'),
+        ('/football_24', 'test2'),
+        ('/football', 'test3'),
+        ('/hockey', 'test4'),
+        ('/football_total', 'test5'),
+        ('/hockey_total', 'test6'),
     ]
 )
 @pytest.mark.asyncio
