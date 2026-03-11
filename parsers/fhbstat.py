@@ -1,6 +1,7 @@
 import json
+import operator
 import re
-from asyncio import sleep
+from asyncio import sleep, to_thread
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from copy import copy
@@ -317,14 +318,14 @@ class FHBParser(Parser):
     @classmethod
     def get_excel_template(cls, path):
         templates = {
-            '/football': 'ШАБЛОН Эксель Футбол Исход.xlsx',
-            '/football_total': 'ШАБЛОН Эксель Футбол Тотал.xlsx',
-            '/football_24': 'ШАБЛОН Эксель Футбол 24.xlsx',
-            '/hockey': 'ШАБЛОН Эксель Хоккей Исход.xlsx',
-            '/hockey_total': 'ШАБЛОН Эксель Хоккей Тотал.xlsx',
-            '/hockey_24': 'ШАБЛОН Эксель Хоккей 24.xlsx',
+            '/football': ('templates.xlsx', 'Футбол исход', 0),
+            '/football_24': ('templates.xlsx', 'Футбол 24', 1),
+            '/hockey': ('templates.xlsx', 'Хоккей исход', 2),
+            '/hockey_24': ('templates.xlsx', 'Хоккей 24', 3),
+            '/football_total': ('templates.xlsx', 'Футбол тотал', 4),
+            '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
         }
-        return templates.get(path)
+        return templates.get(path, (None, None, None))
 
     def get_file_response(self, df_data, target_path):
         result = None
@@ -353,33 +354,50 @@ class FHBParser(Parser):
                 full_df.to_excel('files/debug.xlsx', index=False, columns=columns)
             full_df = full_df.reset_index(drop=True)
 
-            template_name = self.get_excel_template(target_path)
-            if template_name:
+            template_name, sheet_name, tpl_id = self.get_excel_template(target_path)
+            if all((template_name, sheet_name, tpl_id is not None)):
                 fname = Path(__file__).parent.parent / Path('excel_templates') / Path(template_name)
                 writer = BookWriter(fname)
                 writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 
                 data = dict()
                 data['rows'] = df.to_dict('records')
-                payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика',  'ctx': data}
+                payload0 = {'tpl_idx': tpl_id, 'sheet_name': sheet_name,  'ctx': data}
 
                 payloads = [payload0]
                 writer.render_book2(payloads=payloads)
 
                 workbook = writer.workbook
-                sheet = workbook.active
+                sheet = workbook[sheet_name]
                 start_row = None
                 start_column = None
                 split_column = None
                 link_column = None
                 for i, value in enumerate(sheet.values):
-                    if 'Ссылка' in value:
-                        link_column = value.index('Ссылка') + 1
-                    if '№' in value and 'Количество матчей' in value:
+                    if all(map(lambda x: x is None, value)):
+                        continue
+                    link_name = 'ссылка'.upper()
+                    if link_name in value:
+                        link_column = value.index(link_name) + 1
+                    count_matches_name = 'Количество матчей'
+                    if '№' in value and count_matches_name in value:
                         start_row = i + 4
                         start_column = value.index('№') + 1
-                        split_column = value.index('Количество матчей') + 1
+                        split_column = value.index(count_matches_name) + 1
                         break
+
+                delta = 1
+                if template_name == 'templates.xlsx':
+                    delta = 2
+                columns_by_number = list(
+                    filter(
+                        lambda x: sheet.cell(start_row-delta, x).value in (11, 12),
+                        range(1, link_column)
+                    )
+                )
+                _10 = start_column
+                for i in filter(lambda x: sheet.cell(start_row-delta, x).value in (10,), range(1, link_column)):
+                    _10 = i
 
                 max_rows = start_row
                 for row in range(start_row + 1, sheet.max_row + 1):
@@ -387,7 +405,7 @@ class FHBParser(Parser):
                         max_rows = row
                         break
 
-                for col in range(start_column, split_column):
+                for col in range(start_column, _10 + 1):
                     first_row = start_row
                     end_row = first_row + len(self.user_filters.root) + 3 + self.count_empty_rows - 1
                     while end_row <= max_rows:
@@ -437,6 +455,42 @@ class FHBParser(Parser):
                             sheet.cell(row, link_column).hyperlink = value
                             sheet.cell(row, link_column).style = "Hyperlink"
 
+                # заполнение формул
+                for fn_col in range(split_column + 1, link_column):
+                    for row in range(start_row, max_rows + 1):
+                        if sheet.cell(row, split_column).value == '%':
+                            average_columns = ','.join([
+                                f'{sheet.cell(_row, fn_col).coordinate}*{sheet.cell(_row, split_column).coordinate}'
+                                for _row in range(row - len(self.user_filters.root), row)
+                            ])
+                            sum_count_matches = (
+                                f'{sheet.cell(row - len(self.user_filters.root), split_column).coordinate}:'
+                                f'{sheet.cell(row-1, split_column).coordinate}'
+                            )
+                            sheet.cell(row, fn_col).value = (
+                                f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),2)'
+                            )
+                        elif sheet.cell(row, split_column).value == 'мо':
+                            sheet.cell(row, fn_col).value = (
+                                f'=ROUNDDOWN(({sheet.cell(row - 2, fn_col).coordinate}/100*'
+                                f'{sheet.cell(row - 1, fn_col).coordinate})-1,2)'
+                            )
+
+                for fn_col in columns_by_number:
+                    for row in range(start_row, max_rows + 1):
+                        if sheet.cell(row, split_column).value == '%':
+                            average_columns = ','.join([
+                                f'{sheet.cell(_row, fn_col).coordinate}*{sheet.cell(_row, split_column).coordinate}'
+                                for _row in range(row - len(self.user_filters.root), row)
+                            ])
+                            sum_count_matches = (
+                                f'{sheet.cell(row - len(self.user_filters.root), split_column).coordinate}:'
+                                f'{sheet.cell(row-1, split_column).coordinate}'
+                            )
+                            sheet.cell(row, fn_col).value = (
+                                f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),1)'
+                            )
+
                 writer.save(self.path)
 
                 result = FileResponse(
@@ -448,6 +502,9 @@ class FHBParser(Parser):
         else:
             result = PlainTextResponse('Не собрали данных.')
         return result
+
+    async def async_get_file_response(self, *args, **kwargs):
+        return await to_thread(self.get_file_response, *args, **kwargs)
 
     @classmethod
     def get_head_data(cls, content):
@@ -530,6 +587,28 @@ class FHBParser(Parser):
             df = pd.DataFrame()
         return df
 
+    @classmethod
+    def get_formula(cls):
+        formulas = {
+            '32': {'left_column': '11', 'right_column': '12', 'op': operator.gt},
+            '33': {'left_column': '11', 'right_column': '12', 'op': operator.eq},
+            '34': {'left_column': '11', 'right_column': '12', 'op': operator.lt},
+            '38': {'left_column': '11', 'right_column': '12', 'op': operator.gt},
+            '39': {'left_column': '11', 'right_column': '12', 'op': operator.lt},
+        }
+        return formulas
+
+    @classmethod
+    def apply_formula(cls, row: Dict):
+        return
+
+    @classmethod
+    def get_match_coefficients(cls, df: pd.DataFrame) -> Dict[str, float]:
+        _df = df.copy()
+        if not _df.empty:
+            for column, value in cls.get_formula().items():
+                _df.loc[:, column] = _df.apply(cls.apply_formula, axis=1)
+
     def get_field_type(self, value):
         if value == 4:
             return FieldType.TIME
@@ -608,17 +687,20 @@ class FHBParser(Parser):
         msg = f'Открываем {self.url}'
         self.status = msg
 
+        transport = httpx.AsyncHTTPTransport(retries=5)
         async with httpx.AsyncClient(
             follow_redirects=True,
             headers={
                 'User-Agent': self._user_agent
-            }
+            },
+            transport=transport,
         ) as client:
             async with self.page_client(client=client) as logged_client:
                 if logged_client is not None:
                     dfs = []
                     result_df_list = []
                     copy_target_urls = self.target_urls.copy()
+                    target_path = None
                     for target_url in copy_target_urls.values():
                         self.status = f'Обрабатываем ссылку {target_url}'
                         _target_url, query_params, target_path = self.get_url_params(target_url)
@@ -732,6 +814,11 @@ class FHBParser(Parser):
                                                 for column_name, column_value in h_d_r.items():
                                                     if column_name in columns:
                                                         copy_data_match[column_name] = column_value
+                                            for _column in ('11', '12'):
+                                                if _column in df_match.columns:
+                                                    _v = df_match[_column].mean()
+                                                    _v *= 10
+                                                    copy_data_match[_column] = (_v - _v % 1) / 10
                                             count_rows, _ = df_match.shape
                                             copy_data_match['Количество матчей'] = count_rows
                                             copy_data_match['index'] = index
@@ -761,7 +848,8 @@ class FHBParser(Parser):
                                                             fragment
                                                         ))
                                                     )
-                                                }
+                                                },
+                                                **{str(i): data_match.get(str(i), np.nan) for i in range(11)}
                                             }
                                         )
                                 else:
@@ -804,6 +892,11 @@ class FHBParser(Parser):
                                         for column_name, column_value in h_d_r.items():
                                             if column_name in columns:
                                                 copy_data_match[column_name] = column_value
+                                    for _column in ('11', '12'):
+                                        if _column in df_match.columns:
+                                            _v = df_match[_column].mean()
+                                            _v *= 10
+                                            copy_data_match[_column] = (_v - _v % 1) / 10
                                     count_rows, _ = df_match.shape
                                     copy_data_match['Количество матчей'] = count_rows
                                     copy_data_match['index'] = index
@@ -811,10 +904,8 @@ class FHBParser(Parser):
                                     local_match_result_df.append(copy_data_match)
                                 await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
-                            means = self.get_means(local_match_result_df)
-                            mathematical_expectation = self.get_mathematical_expectation(means, data_match)
                             result_df_list.append({
-                                **means,
+                                **{str(i): np.nan for i in self.columns},
                                 **{
                                     'index': index,
                                     'Количество матчей': '%'
@@ -831,7 +922,7 @@ class FHBParser(Parser):
                                 }
                             })
                             result_df_list.append({
-                                **mathematical_expectation,
+                                **{str(i): np.nan for i in self.columns},
                                 **{
                                     'index': index,
                                     'Количество матчей': 'мо'
@@ -843,5 +934,6 @@ class FHBParser(Parser):
                                     **{str(i): np.nan for i in self.columns},
                                     **{'index': index}
                                 })
-                    result = self.get_file_response(df_data=result_df_list, target_path=target_path)
+                    self.status = 'Генерируем excel файл'
+                    result = await self.async_get_file_response(df_data=result_df_list, target_path=target_path)
                     return result
