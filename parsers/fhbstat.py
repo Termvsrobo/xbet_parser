@@ -1,7 +1,7 @@
 import json
 import operator
 import re
-from asyncio import sleep, to_thread
+from asyncio import to_thread
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from copy import copy
@@ -11,7 +11,6 @@ from enum import IntEnum
 from functools import reduce
 from itertools import count
 from pathlib import Path
-from random import randint
 from typing import Annotated, Dict, List, Literal, Optional, Union
 from urllib.parse import parse_qs, unquote, urlencode, urlparse, urlunparse
 
@@ -327,7 +326,19 @@ class FHBParser(Parser):
         }
         return templates.get(path, (None, None, None))
 
-    def get_file_response(self, df_data, target_path):
+    @classmethod
+    def get_columns_by_target(cls, path):
+        columns = {
+            '/football': tuple(range(11, 16 + 1)),
+            '/football_24': tuple(range(11, 16 + 1)),
+            '/hockey': tuple(range(11, 18 + 1)),
+            '/hockey_24': tuple(range(11, 18 + 1)),
+            '/football_total': tuple(range(11, 16 + 1)),
+            '/hockey_total': tuple(range(11, 18 + 1)),
+        }
+        return columns.get(path)
+
+    def get_file_response(self, df_data, target_path) -> (FileResponse | PlainTextResponse):
         result = None
         if df_data:
             msg = f'Собрано данных: {len(df_data)}'
@@ -391,7 +402,7 @@ class FHBParser(Parser):
                     delta = 2
                 columns_by_number = list(
                     filter(
-                        lambda x: sheet.cell(start_row-delta, x).value in (11, 12),
+                        lambda x: sheet.cell(start_row-delta, x).value in self.get_columns_by_target(target_path),
                         range(1, link_column)
                     )
                 )
@@ -732,7 +743,7 @@ class FHBParser(Parser):
                                             dfs.append(df)
                                         else:
                                             break
-                                await sleep(randint(1, self.max_time_sleep_sec))
+                                # await sleep(randint(1, self.max_time_sleep_sec))
                         else:
                             response = await logged_client.get(
                                 _target_url,
@@ -814,7 +825,7 @@ class FHBParser(Parser):
                                                 for column_name, column_value in h_d_r.items():
                                                     if column_name in columns:
                                                         copy_data_match[column_name] = column_value
-                                            for _column in ('11', '12'):
+                                            for _column in list(map(str, self.get_columns_by_target(target_path))):
                                                 if _column in df_match.columns:
                                                     _v = df_match[_column].mean()
                                                     _v *= 10
@@ -827,8 +838,8 @@ class FHBParser(Parser):
                                                 local_match_result_df.append(copy_data_match)
                                                 data_exist = True
                                                 break
-                                            else:
-                                                await sleep(randint(1, self.max_time_sleep_sec))
+                                            # else:
+                                            #     await sleep(randint(1, self.max_time_sleep_sec))
                                         if data_exist:
                                             break
                                     if not data_exist:
@@ -892,7 +903,7 @@ class FHBParser(Parser):
                                         for column_name, column_value in h_d_r.items():
                                             if column_name in columns:
                                                 copy_data_match[column_name] = column_value
-                                    for _column in ('11', '12'):
+                                    for _column in list(map(str, self.get_columns_by_target(target_path))):
                                         if _column in df_match.columns:
                                             _v = df_match[_column].mean()
                                             _v *= 10
@@ -902,7 +913,7 @@ class FHBParser(Parser):
                                     copy_data_match['index'] = index
                                     copy_data_match['url'] = unquote(page_url)
                                     local_match_result_df.append(copy_data_match)
-                                await sleep(randint(1, self.max_time_sleep_sec))
+                                # await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
                             result_df_list.append({
                                 **{str(i): np.nan for i in self.columns},
