@@ -151,6 +151,16 @@ class FHBParser(Parser):
         self.from_time: str = ''
         self.to_time: str = ''
         self.user_filters: Optional[Filters] = Filters()
+        self._min_count_matches: int = 1
+
+    @property
+    def min_count_matches(self):
+        return int(self._min_count_matches)
+
+    @min_count_matches.setter
+    def min_count_matches(self, value):
+        if value >= 1:
+            self._min_count_matches = int(value)
 
     @property
     def email(self):
@@ -631,49 +641,6 @@ class FHBParser(Parser):
             return FieldType.STR
 
     @classmethod
-    def get_means(cls, list_values: List[Dict[str, float]]):
-        result = dict()
-        if list_values:
-            keys = set(reduce(lambda x, y: x + y, [list(lv.keys()) for lv in list_values]))
-        else:
-            keys = set()
-        keys = set(
-            filter(
-                lambda x: (
-                    x not in ('index', 'dt', 'url')
-                    and (x == 'Количество матчей' or int(x) >= cls.digits_columns_start)
-                ),
-                keys
-            )
-        )
-        res = {key: np.array([d.get(key, np.nan) for d in list_values]) for key in keys}
-        for k, v in res.items():
-            res[k] = v.astype('float')
-        if 'Количество матчей' in res:
-            count_matches = res.pop('Количество матчей')
-            for key, value in res.items():
-                if np.nansum(count_matches) > 0:
-                    result[key] = np.nansum(value * count_matches) / np.nansum(count_matches)
-                    result[key] = result[key].round(4)
-                else:
-                    result[key] = np.nan
-        else:
-            for key, value in res.items():
-                result[key] = np.nan
-        return result
-
-    @classmethod
-    def get_mathematical_expectation(cls, data_means, data_match):
-        keys = set(list(data_means.keys()) + list(data_match.keys()))
-        result = dict()
-        for key in keys:
-            key_mean = data_means.get(key, 0)
-            key_match = data_match.get(key, 0)
-            if key_mean and key_match:
-                result[key] = (key_mean / 100 * key_match) - 1
-        return result
-
-    @classmethod
     def filter_df_by_time(cls, df: pd.DataFrame, from_time: str, to_time: str) -> pd.DataFrame:
         _df = df
         if not df.empty:
@@ -688,10 +655,76 @@ class FHBParser(Parser):
         return _df
 
     def get_url_params(self, url):
+        """возвращает целевой URL, параметры запроса и путь"""
+
         scheme, domain, path, params, query, fragment = urlparse(url)
         query_params = parse_qs(query)
         target_url = urlunparse((scheme, domain, path, params, None, fragment))
         return target_url, query_params, path
+
+    async def _parse_page_by_filter(
+        self,
+        logged_client,
+        browser,
+        index,
+        data_match,
+        filters_data,
+        scheme,
+        domain,
+        path,
+        params,
+        fragment
+    ):
+        page_url = urlunparse((
+            scheme, domain, path, params, urlencode(filters_data), fragment
+        ))
+        cookies = [
+            {
+                'name': key,
+                'value': value,
+                'domain': 'fhbstat.com',
+                'path': '/'
+            }
+            for key, value in logged_client.cookies.items()
+        ]
+        await browser.add_cookies(cookies)
+        page = await browser.new_page()
+        await page.set_extra_http_headers({
+            "User-Agent": self._user_agent
+        })
+        await page.goto(page_url)
+        await page.wait_for_load_state()
+        page_content = await page.content()
+        df_match = self.parse_content(page_content)
+        if not df_match.empty:
+            df_match = df_match.loc[
+                df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
+            ]
+        head_df = self.parse_head_table(page_content)
+        await page.close()
+        columns = list(
+            filter(
+                lambda x: int(x) >= self.digits_columns_start,
+                head_df.columns[:-1]
+            )
+        )
+        head_df_records = head_df.to_dict(orient='records')
+        copy_data_match = data_match.copy()
+        for h_d_r in head_df_records:
+            for column_name, column_value in h_d_r.items():
+                if column_name in columns:
+                    copy_data_match[column_name] = column_value
+        for _column in list(map(str, self.get_columns_by_target(target_path))):
+            if _column in df_match.columns:
+                _v = df_match[_column].mean()
+                _v *= 10
+                copy_data_match[_column] = (_v - _v % 1) / 10
+        count_rows, _ = df_match.shape
+        copy_data_match['Количество матчей'] = count_rows
+        copy_data_match['index'] = index
+        copy_data_match['url'] = unquote(page_url)
+
+        return copy_data_match
 
     async def parse(self, browser):
         result = None
@@ -743,7 +776,6 @@ class FHBParser(Parser):
                                             dfs.append(df)
                                         else:
                                             break
-                                # await sleep(randint(1, self.max_time_sleep_sec))
                         else:
                             response = await logged_client.get(
                                 _target_url,
@@ -786,60 +818,22 @@ class FHBParser(Parser):
                                         data_exist = False
                                         for next_value in priority_filter.next_value(value_match):
                                             _filters_data[str(priority_filter.column)] = next_value
-                                            page_url = urlunparse((
-                                                scheme, domain, path, params, urlencode(_filters_data), fragment
-                                            ))
-                                            cookies = [
-                                                {
-                                                    'name': key,
-                                                    'value': value,
-                                                    'domain': 'fhbstat.com',
-                                                    'path': '/'
-                                                }
-                                                for key, value in logged_client.cookies.items()
-                                            ]
-                                            await browser.add_cookies(cookies)
-                                            page = await browser.new_page()
-                                            await page.set_extra_http_headers({
-                                                "User-Agent": self._user_agent
-                                            })
-                                            await page.goto(page_url)
-                                            await page.wait_for_load_state()
-                                            page_content = await page.content()
-                                            df_match = self.parse_content(page_content)
-                                            if not df_match.empty:
-                                                df_match = df_match.loc[
-                                                    df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
-                                                ]
-                                            head_df = self.parse_head_table(page_content)
-                                            await page.close()
-                                            columns = list(
-                                                filter(
-                                                    lambda x: int(x) >= self.digits_columns_start,
-                                                    head_df.columns[:-1]
-                                                )
+                                            copy_data_match = await self._parse_page_by_filter(
+                                                logged_client,
+                                                browser,
+                                                index,
+                                                data_match,
+                                                _filters_data,
+                                                scheme,
+                                                domain,
+                                                path,
+                                                params,
+                                                fragment
                                             )
-                                            head_df_records = head_df.to_dict(orient='records')
-                                            copy_data_match = data_match.copy()
-                                            for h_d_r in head_df_records:
-                                                for column_name, column_value in h_d_r.items():
-                                                    if column_name in columns:
-                                                        copy_data_match[column_name] = column_value
-                                            for _column in list(map(str, self.get_columns_by_target(target_path))):
-                                                if _column in df_match.columns:
-                                                    _v = df_match[_column].mean()
-                                                    _v *= 10
-                                                    copy_data_match[_column] = (_v - _v % 1) / 10
-                                            count_rows, _ = df_match.shape
-                                            copy_data_match['Количество матчей'] = count_rows
-                                            copy_data_match['index'] = index
-                                            copy_data_match['url'] = unquote(page_url)
-                                            if count_rows:
+                                            if copy_data_match['Количество матчей'] >= self.min_count_matches:
                                                 local_match_result_df.append(copy_data_match)
                                                 data_exist = True
                                                 break
-                                            # else:
-                                            #     await sleep(randint(1, self.max_time_sleep_sec))
                                         if data_exist:
                                             break
                                     if not data_exist:
@@ -864,56 +858,19 @@ class FHBParser(Parser):
                                             }
                                         )
                                 else:
-                                    page_url = urlunparse((
-                                        scheme, domain, path, params, urlencode(filters_data), fragment
-                                    ))
-                                    cookies = [
-                                        {
-                                            'name': key,
-                                            'value': value,
-                                            'domain': 'fhbstat.com',
-                                            'path': '/'
-                                        }
-                                        for key, value in logged_client.cookies.items()
-                                    ]
-                                    await browser.add_cookies(cookies)
-                                    page = await browser.new_page()
-                                    await page.set_extra_http_headers({
-                                        "User-Agent": self._user_agent
-                                    })
-                                    await page.goto(page_url)
-                                    await page.wait_for_load_state()
-                                    page_content = await page.content()
-                                    df_match = self.parse_content(page_content)
-                                    if not df_match.empty:
-                                        df_match = df_match.loc[
-                                            df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
-                                        ]
-                                    head_df = self.parse_head_table(page_content)
-                                    await page.close()
-                                    columns = list(
-                                        filter(
-                                            lambda x: int(x) >= self.digits_columns_start,
-                                            head_df.columns[:-1]
-                                        )
+                                    copy_data_match = await self._parse_page_by_filter(
+                                        logged_client,
+                                        browser,
+                                        index,
+                                        data_match,
+                                        filters_data,
+                                        scheme,
+                                        domain,
+                                        path,
+                                        params,
+                                        fragment
                                     )
-                                    head_df_records = head_df.to_dict(orient='records')
-                                    copy_data_match = data_match.copy()
-                                    for h_d_r in head_df_records:
-                                        for column_name, column_value in h_d_r.items():
-                                            if column_name in columns:
-                                                copy_data_match[column_name] = column_value
-                                    for _column in list(map(str, self.get_columns_by_target(target_path))):
-                                        if _column in df_match.columns:
-                                            _v = df_match[_column].mean()
-                                            _v *= 10
-                                            copy_data_match[_column] = (_v - _v % 1) / 10
-                                    count_rows, _ = df_match.shape
-                                    copy_data_match['Количество матчей'] = count_rows
-                                    copy_data_match['index'] = index
-                                    copy_data_match['url'] = unquote(page_url)
                                     local_match_result_df.append(copy_data_match)
-                                # await sleep(randint(1, self.max_time_sleep_sec))
                             result_df_list += local_match_result_df
                             result_df_list.append({
                                 **{str(i): np.nan for i in self.columns},
