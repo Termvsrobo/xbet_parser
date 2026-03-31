@@ -673,7 +673,8 @@ class FHBParser(Parser):
         domain,
         path,
         params,
-        fragment
+        fragment,
+        target_path
     ):
         page_url = urlunparse((
             scheme, domain, path, params, urlencode(filters_data), fragment
@@ -828,7 +829,8 @@ class FHBParser(Parser):
                                                 domain,
                                                 path,
                                                 params,
-                                                fragment
+                                                fragment,
+                                                target_path
                                             )
                                             if copy_data_match['Количество матчей'] >= self.min_count_matches:
                                                 local_match_result_df.append(copy_data_match)
@@ -868,7 +870,8 @@ class FHBParser(Parser):
                                         domain,
                                         path,
                                         params,
-                                        fragment
+                                        fragment,
+                                        target_path
                                     )
                                     local_match_result_df.append(copy_data_match)
                             result_df_list += local_match_result_df
