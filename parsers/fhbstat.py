@@ -8,7 +8,6 @@ from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from enum import IntEnum
-from functools import reduce
 from itertools import count
 from pathlib import Path
 from typing import Annotated, Dict, List, Literal, Optional, Union
@@ -675,7 +674,7 @@ class FHBParser(Parser):
         params,
         fragment,
         target_path
-    ):
+    ) -> Dict:
         page_url = urlunparse((
             scheme, domain, path, params, urlencode(filters_data), fragment
         ))
@@ -814,6 +813,7 @@ class FHBParser(Parser):
                                 )
                                 if priority_queues:
                                     _filters_data = filters_data.copy()
+                                    copy_data_match = dict()
                                     for priority_filter in priority_queues:
                                         value_match = data_match.get(str(priority_filter.column))
                                         data_exist = False
@@ -839,26 +839,29 @@ class FHBParser(Parser):
                                         if data_exist:
                                             break
                                     if not data_exist:
-                                        local_match_result_df.append(
-                                            {
-                                                **{str(i): np.nan for i in self.columns},
-                                                **{
-                                                    'index': index,
-                                                    'Количество матчей': 0,
-                                                    'url': unquote(
-                                                        urlunparse((
-                                                            scheme,
-                                                            domain,
-                                                            path,
-                                                            params,
-                                                            urlencode(filters_data),
-                                                            fragment
-                                                        ))
-                                                    )
-                                                },
-                                                **{str(i): data_match.get(str(i), np.nan) for i in range(11)}
-                                            }
-                                        )
+                                        if copy_data_match.get('Количество матчей'):
+                                            local_match_result_df.append(copy_data_match)
+                                        else:
+                                            local_match_result_df.append(
+                                                {
+                                                    **{str(i): np.nan for i in self.columns},
+                                                    **{
+                                                        'index': index,
+                                                        'Количество матчей': 0,
+                                                        'url': unquote(
+                                                            urlunparse((
+                                                                scheme,
+                                                                domain,
+                                                                path,
+                                                                params,
+                                                                urlencode(filters_data),
+                                                                fragment
+                                                            ))
+                                                        )
+                                                    },
+                                                    **{str(i): data_match.get(str(i), np.nan) for i in range(11)}
+                                                }
+                                            )
                                 else:
                                     copy_data_match = await self._parse_page_by_filter(
                                         logged_client,
