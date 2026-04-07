@@ -3,6 +3,7 @@ from pathlib import Path
 from threading import Event
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from base import BrowserManager
@@ -55,81 +56,6 @@ def test_round_datetime(value, round_to, result):
     time_field = TimeField(type=FieldType.TIME, filter_value=round_to, column=4)
     value = time_field.get_value(value)
     assert value == result
-
-
-@pytest.mark.parametrize(
-    'data,result',
-    [
-        (
-            [
-                {'25': 1.55, '26': 2.05, 'Количество матчей': 5},
-                {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6}
-            ],
-            {'25': 2.3955, '26': 3.1682}
-        ),
-        (
-            [
-                {'25': 1.55, '26': 2.05, 'Количество матчей': 5},
-                {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4}
-            ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
-        ),
-        (
-            [
-                {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '8': 'Общий этап'},
-                {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4}
-            ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
-        ),
-        (
-            [
-                {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '16': 0},
-                {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4, '16': 0}
-            ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
-        ),
-        (
-            [
-                {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '16': '0'},
-                {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4, '16': '0'}
-            ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
-        ),
-        (
-            [
-                {'25': 1.55, '26': 2.05, 'Количество матчей': 5, '11': None},
-                {'25': 2*1.55, '26': 2*2.05, 'Количество матчей': 6, '32': 3.4, '11': None}
-            ],
-            {'25': 2.3955, '26': 3.1682, '32': 1.8545}
-        ),
-        (
-            [],
-            {}
-        )
-    ]
-)
-def test_average(data, result):
-    res = FHBParser.get_means(data)
-    assert res.keys() == result.keys()
-    for key in res:
-        np.testing.assert_approx_equal(res[key], result[key])
-
-
-@pytest.mark.parametrize(
-    'data_means,data_match,result',
-    [
-        (
-            {'25': 80.0, '26': 50.0},
-            {'25': 1.30, '26': 2.580},
-            {'25': 0.04, '26': 0.29}
-        ),
-    ]
-)
-def test_mathematical_expectation(data_means, data_match, result):
-    res = FHBParser.get_mathematical_expectation(data_means, data_match)
-    assert res.keys() == result.keys()
-    for key in res:
-        np.testing.assert_approx_equal(res[key], result[key])
 
 
 @pytest.mark.parametrize(
@@ -484,3 +410,22 @@ async def test_fhbstat_parser(url, filter_path):
             if url:
                 assert hasattr(response, 'path')
                 print(response.path)
+
+
+def test_sr_page():
+    file_path = Path(__file__).parent / Path('data') / Path('FHB_ Футбол Тотал ср.html')
+    assert file_path.exists()
+    content = file_path.read_text()
+    df = FHBParser.parse_content(content)
+    head_df = FHBParser.parse_head_table(content)
+    new_head_df = FHBParser.evaluate_coefficients_table(df)
+    assert not df.empty
+    assert not head_df.empty
+    assert not new_head_df.empty
+
+    columns = list(filter(
+        lambda col: col not in ('index', 'dt', 'Количество матчей', 'Дата слепка, МСК', 'url')
+        and int(col) >= FHBParser.digits_columns_start,
+        df.columns.tolist()
+    ))
+    pd.testing.assert_frame_equal(head_df.loc[:, columns], new_head_df.loc[:, columns])

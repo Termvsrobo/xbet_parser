@@ -138,6 +138,8 @@ class FHBParser(Parser):
     datetime_round: str = '00:00'
     count_empty_rows: int = 4
     digits_columns_start: int = 25
+    enable_passability: bool
+    evaluate_passability: bool
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,6 +153,8 @@ class FHBParser(Parser):
         self.to_time: str = ''
         self.user_filters: Optional[Filters] = Filters()
         self._min_count_matches: int = 1
+        self.enable_passability = False
+        self.evaluate_passability = False
 
     @property
     def min_count_matches(self):
@@ -436,9 +440,13 @@ class FHBParser(Parser):
                                 start_row=first_row,
                                 end_row=end_row
                             )
-                            max_column = sheet.max_column
-                            if link_column:
-                                max_column -= 1
+                            dimensions = list(filter(lambda x: x.hidden is False, sheet.column_dimensions.values()))
+                            last_dim = dimensions[-2]
+                            if dimensions[-1].min <= link_column <= dimensions[-1].max:
+                                last_dim = dimensions[-2]
+                            else:
+                                last_dim = dimensions[-1]
+                            max_column = last_dim.max
                             cell_range = CellRange(
                                 min_col=col,
                                 max_col=max_column,
@@ -451,13 +459,14 @@ class FHBParser(Parser):
                                     _cell = sheet.cell(cell[0], cell[1])
                                     other_sides = filter(lambda _side: _side != side, sides)
                                     old_border = copy(_cell.border)
-                                    _cell.border = Border(
+                                    _border = Border(
                                         **{side: Side(border_style='thick')},
                                         **{
                                             other_side: getattr(old_border, other_side)
                                             for other_side in other_sides
                                         }
                                     )
+                                    _cell.border = _border
                         else:
                             sheet.merge_cells(
                                 start_column=col,
@@ -568,6 +577,74 @@ class FHBParser(Parser):
         else:
             df = pd.DataFrame()
         return df
+
+    @classmethod
+    def evaluate_coefficients_table(cls, df):
+        head_df = pd.DataFrame(columns=df.columns).astype(np.float64)
+        head_df.loc[0, '32'] = round((df['11'] > df['12']).mean() * 100, 1)
+        head_df.loc[0, '33'] = round((df['11'] == df['12']).mean() * 100, 1)
+        head_df.loc[0, '34'] = round((df['11'] < df['12']).mean() * 100, 1)
+
+        _df = df.copy()
+        _df = _df.drop(_df[(_df['11'] == _df['12'])].index)
+        head_df.loc[0, '38'] = round((_df['11'] > _df['12']).mean() * 100, 1)
+        head_df.loc[0, '39'] = round((_df['11'] < _df['12']).mean() * 100, 1)
+
+        head_df.loc[0, '91'] = round((df['11'] + df['12'] < 1.5).mean() * 100, 1)
+        head_df.loc[0, '92'] = round((df['11'] + df['12'] < 2.5).mean() * 100, 1)
+        head_df.loc[0, '93'] = round((df['11'] + df['12'] < 3.5).mean() * 100, 1)
+
+        head_df.loc[0, '94'] = round((df['11'] + df['12'] > 1.5).mean() * 100, 1)
+        head_df.loc[0, '95'] = round((df['11'] + df['12'] > 2.5).mean() * 100, 1)
+        head_df.loc[0, '96'] = round((df['11'] + df['12'] > 3.5).mean() * 100, 1)
+
+        head_df.loc[0, '97'] = round((df['13'] + df['14'] < 0.5).mean() * 100, 1)
+        head_df.loc[0, '98'] = round((df['13'] + df['14'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '99'] = round((df['13'] + df['14'] > 0.5).mean() * 100, 1)
+        head_df.loc[0, '100'] = round((df['13'] + df['14'] > 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '101'] = round((df['15'] + df['16'] < 0.5).mean() * 100, 1)
+        head_df.loc[0, '102'] = round((df['15'] + df['16'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '103'] = round((df['15'] + df['16'] > 0.5).mean() * 100, 1)
+        head_df.loc[0, '104'] = round((df['15'] + df['16'] > 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '105'] = round((df['11'] < 1).mean() * 100, 1)
+        head_df.loc[0, '106'] = round((df['11'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '107'] = round((df['11'] >= 1).mean() * 100, 1)
+        head_df.loc[0, '108'] = round((df['11'] > 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '109'] = round((df['12'] < 1).mean() * 100, 1)
+        head_df.loc[0, '110'] = round((df['12'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '111'] = round((df['12'] >= 1).mean() * 100, 1)
+        head_df.loc[0, '112'] = round((df['12'] > 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '113'] = round(
+            ((df['11'] > 0.5) & (df['12'] > 0.5)).mean() * 100, 1
+        )
+        head_df.loc[0, '114'] = round(
+            ((df['11'] < 0.5) | (df['12'] < 0.5)).mean() * 100, 1
+        )
+
+        head_df.loc[0, '115'] = round(
+            ((df['13'] > 0.5) & (df['14'] > 0.5)).mean() * 100, 1
+        )
+        head_df.loc[0, '116'] = round(
+            ((df['15'] > 0.5) & (df['16'] > 0.5)).mean() * 100, 1
+        )
+
+        head_df.loc[0, '117'] = round((df['11'] >= 0.5).mean() * 100, 1)
+        head_df.loc[0, '118'] = round((df['12'] >= 0.5).mean() * 100, 1)
+
+        head_df.loc[0, '119'] = round((df['13'] >= 0.5).mean() * 100, 1)
+        head_df.loc[0, '120'] = round((df['14'] >= 0.5).mean() * 100, 1)
+
+        head_df.loc[0, '121'] = round((df['15'] >= 0.5).mean() * 100, 1)
+        head_df.loc[0, '122'] = round((df['16'] >= 0.5).mean() * 100, 1)
+        return head_df
 
     @classmethod
     def parse_content(cls, content):
@@ -700,7 +777,10 @@ class FHBParser(Parser):
             df_match = df_match.loc[
                 df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
             ]
-        head_df = self.parse_head_table(page_content)
+        if self.evaluate_passability:
+            head_df = self.evaluate_coefficients_table(df_match)
+        else:
+            head_df = self.parse_head_table(page_content)
         await page.close()
         columns = list(
             filter(
@@ -803,6 +883,11 @@ class FHBParser(Parser):
                                 for _filter in user_filter.filters:
                                     value_match = data_match.get(str(_filter.column))
                                     filters_data[str(_filter.column)] = _filter.get_value(value_match)
+                                if any([
+                                    digit in data_match.get('9', '') or digit in data_match.get('10', '')
+                                    for digit in '0123456789'
+                                ]):
+                                    filters_data['м_2_топ'] = '1'
                                 scheme, domain, path, params, _, fragment = urlparse(_target_url)
                                 priority_queues = sorted(
                                     filter(
