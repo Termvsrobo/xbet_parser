@@ -457,6 +457,14 @@ def test_user_filters():
             '',
             Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
         ),
+        (
+            'https://fhbstat.com/hockey_24?1=3&2=04&3=2026&50=1.',
+            Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
+        ),
+        (
+            'https://fhbstat.com/hockey_24?1=4&2=04&3=2026&50=1.',
+            Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
+        ),
     ]
 )
 @pytest.mark.asyncio

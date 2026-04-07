@@ -258,6 +258,9 @@ async def fhbstat_page():
     with ui.row():
         ui.input('Email').bind_value(fhbstat_parser, 'email')
         ui.input('Пароль', password=True, password_toggle_button=True).bind_value(fhbstat_parser, 'password')
+        ui.number('Минимальное количество матчей', min=1, precision=0, step=1).bind_value(
+            fhbstat_parser, 'min_count_matches'
+        )
     with ui.row():
         ui.input('Название файла (без расширения)').bind_value(fhbstat_parser, 'file_name')
     filters()

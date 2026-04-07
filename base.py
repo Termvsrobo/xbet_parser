@@ -34,7 +34,7 @@ class ParserBase(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def parse(self):
+    async def parse(self, browser):
         raise NotImplementedError()
 
     @abstractmethod
@@ -321,7 +321,7 @@ class Parser(ParserBase):
         else:
             return 'Осталось -- сек.'
 
-    def get_file_response(self, df_data):
+    def get_file_response(self, df_data, *args, **kwargs):
         result = None
         if df_data:
             msg = f'Собрано данных: {len(df_data)}'
