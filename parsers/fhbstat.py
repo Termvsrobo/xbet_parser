@@ -69,7 +69,7 @@ class FloatField(BaseFilterField):
 
     def get_value(self, value, filter_value: Optional[str] = None):
         _filter_value = filter_value or self.filter_value
-        exp = Decimal(_filter_value).as_tuple().exponent * -1
+        exp = max(Decimal(_filter_value).as_tuple().exponent * -1, 1)
         adjust_value = 10 ** (-1 * (exp + 2))
         _value = Decimal(value + adjust_value).quantize(Decimal(_filter_value), rounding=ROUND_DOWN)
         _value = float(_value)
@@ -883,11 +883,11 @@ class FHBParser(Parser):
                                 for _filter in user_filter.filters:
                                     value_match = data_match.get(str(_filter.column))
                                     filters_data[str(_filter.column)] = _filter.get_value(value_match)
-                                if any([
-                                    digit in data_match.get('9', '') or digit in data_match.get('10', '')
-                                    for digit in '0123456789'
-                                ]):
-                                    filters_data['м_2_топ'] = '1'
+                                # if any([
+                                #     digit in data_match.get('9', '') or digit in data_match.get('10', '')
+                                #     for digit in '0123456789'
+                                # ]):
+                                #     filters_data['м_2_топ'] = '1'
                                 scheme, domain, path, params, _, fragment = urlparse(_target_url)
                                 priority_queues = sorted(
                                     filter(
