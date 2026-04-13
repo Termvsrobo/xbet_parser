@@ -755,7 +755,6 @@ class FHBParser(Parser):
         page_url = urlunparse((
             scheme, domain, path, params, urlencode(filters_data), fragment
         ))
-        new_page_url = page_url
         cookies = [
             {
                 'name': key,
@@ -774,22 +773,23 @@ class FHBParser(Parser):
         await page.wait_for_load_state()
         page_content = await page.content()
         df_match = self.parse_content(page_content)
-        is_football = target_path.startswith('/football')
-        if is_football:
-            for command_name_column in ('9', '10'):
-                if command_name_column in filters_data:
-                    if df_match[command_name_column].nunique() > 1:
-                        _filters_data = filters_data.copy()
-                        _filters_data.update(м_2_топ='1')
-                        new_page_url = urlunparse((
-                            scheme, domain, path, params, urlencode(_filters_data), fragment
-                        ))
-                        break
-        if new_page_url != page_url:
-            await page.goto(new_page_url)
-            await page.wait_for_load_state()
-            page_content = await page.content()
-            df_match = self.parse_content(page_content)
+        # new_page_url = page_url
+        # is_football = target_path.startswith('/football')
+        # if is_football:
+        #     for command_name_column in ('9', '10'):
+        #         if command_name_column in filters_data:
+        #             if df_match[command_name_column].nunique() > 1:
+        #                 _filters_data = filters_data.copy()
+        #                 _filters_data.update(м_2_топ='1')
+        #                 new_page_url = urlunparse((
+        #                     scheme, domain, path, params, urlencode(_filters_data), fragment
+        #                 ))
+        #                 break
+        # if new_page_url != page_url:
+        #     await page.goto(new_page_url)
+        #     await page.wait_for_load_state()
+        #     page_content = await page.content()
+        #     df_match = self.parse_content(page_content)
         if not df_match.empty:
             df_match = df_match.loc[
                 df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
