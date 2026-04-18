@@ -24,6 +24,7 @@ from openpyxl.worksheet.cell_range import CellRange
 from pydantic import (BaseModel, Discriminator, Field, PositiveInt, RootModel,
                       Tag, TypeAdapter)
 from xlsxtpl.writerx import BookWriter
+from tqdm import tqdm
 
 from base import Parser
 from config import settings
@@ -197,6 +198,11 @@ class FHBParser(Parser):
     @property
     def columns(self):
         return list(range(1, self.count_columns))
+
+    def clear_filters(self):
+        self.user_filters.root.clear()
+        self.target_urls.clear()
+        self.evaluate_passability = False
 
     def get_filter_id(self):
         result = 1
@@ -610,17 +616,21 @@ class FHBParser(Parser):
         head_df.loc[0, '103'] = round((df['15'] + df['16'] > 0.5).mean() * 100, 1)
         head_df.loc[0, '104'] = round((df['15'] + df['16'] > 1.5).mean() * 100, 1)
 
-        head_df.loc[0, '105'] = round((df['11'] < 1).mean() * 100, 1)
-        head_df.loc[0, '106'] = round((df['11'] < 1.5).mean() * 100, 1)
+        _df = df.copy()
+        _df = _df.drop(_df[(_df['11'] == 1)].index)
+        head_df.loc[0, '105'] = round((_df['11'] < 1).mean() * 100, 1)
+        head_df.loc[0, '106'] = round((_df['11'] < 1.5).mean() * 100, 1)
 
-        head_df.loc[0, '107'] = round((df['11'] >= 1).mean() * 100, 1)
-        head_df.loc[0, '108'] = round((df['11'] > 1.5).mean() * 100, 1)
+        head_df.loc[0, '107'] = round((_df['11'] > 1).mean() * 100, 1)
+        head_df.loc[0, '108'] = round((_df['11'] > 1.5).mean() * 100, 1)
 
-        head_df.loc[0, '109'] = round((df['12'] < 1).mean() * 100, 1)
-        head_df.loc[0, '110'] = round((df['12'] < 1.5).mean() * 100, 1)
+        _df = df.copy()
+        _df = _df.drop(_df[(_df['12'] == 1)].index)
+        head_df.loc[0, '109'] = round((_df['12'] < 1).mean() * 100, 1)
+        head_df.loc[0, '110'] = round((_df).mean() * 100, 1)
 
-        head_df.loc[0, '111'] = round((df['12'] >= 1).mean() * 100, 1)
-        head_df.loc[0, '112'] = round((df['12'] > 1.5).mean() * 100, 1)
+        head_df.loc[0, '111'] = round((_df['12'] > 1).mean() * 100, 1)
+        head_df.loc[0, '112'] = round((_df['12'] > 1.5).mean() * 100, 1)
 
         head_df.loc[0, '113'] = round(
             ((df['11'] > 0.5) & (df['12'] > 0.5)).mean() * 100, 1
@@ -822,6 +832,64 @@ class FHBParser(Parser):
         copy_data_match['url'] = unquote(page_url)
 
         return copy_data_match
+
+    def get_last_page(self, content) -> Optional[int]:
+        last_page = None
+        soup = BeautifulSoup(content, 'lxml')
+        page_items = soup.find_all(lambda tag: tag.name == 'a' and 'data-pagination' in tag.attrs)
+        if page_items:
+            last_page = max(map(lambda x: int(x.attrs.get('data-pagination')), page_items))
+        return last_page
+
+    async def get_db(self):
+        result = None
+        msg = f'Открываем {self.url}'
+        self.status = msg
+
+        transport = httpx.AsyncHTTPTransport(retries=5)
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            headers={
+                'User-Agent': self._user_agent
+            },
+            transport=transport,
+        ) as client:
+            async with self.page_client(client=client) as logged_client:
+                if logged_client is not None:
+                    _url = 'https://fhbstat.com/football_24'
+                    last_page = None
+                    total_df = None
+                    dfs = []
+                    _target_url, query_params, target_path = self.get_url_params(_url)
+                    for key, value in query_params.items():
+                        if isinstance(value, (list, tuple)) and len(value) == 1:
+                            query_params[key] = value[0]
+                    for year in tqdm(range(2020, 2026)):
+                        query_params.update({'3': year})
+                        response = await logged_client.get(
+                            _target_url,
+                            params=query_params
+                        )
+                        if response.status_code == 200:
+                            last_page = self.get_last_page(response.content)
+                            _df = self.parse_content(response.content)
+                            if not _df.empty:
+                                dfs.append(_df)
+                        if last_page:
+                            for page in tqdm(range(2, last_page + 1)):
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params={**query_params, **{'page': page}}
+                                )
+                                _df = self.parse_content(response.content)
+                                if not _df.empty:
+                                    dfs.append(_df)
+                    if dfs:
+                        total_df = pd.concat(dfs)
+                        prefix = target_path.replace('/', '')
+                        total_df.to_excel(f'{prefix}_total_db.xlsx', index=False)
+                        result = total_df
+            return result
 
     async def parse(self, browser):
         result = None

@@ -433,3 +433,13 @@ def test_sr_page():
         df.columns.tolist()
     ))
     pd.testing.assert_frame_equal(head_df.loc[:, columns], new_head_df.loc[:, columns])
+
+
+@pytest.mark.asyncio
+async def test_get_db():
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+    fhbstat_parser.email = settings.TEST_FHBSTAT_USERNAME
+    fhbstat_parser.password = settings.TEST_FHBSTAT_PASSWORD
+    response = await fhbstat_parser.get_db()
+    assert not response.empty

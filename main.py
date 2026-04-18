@@ -174,8 +174,7 @@ async def fhbstat_page():
             link.refresh()
 
     def clear_filters(element):
-        fhbstat_parser.user_filters.root.clear()
-        fhbstat_parser.target_urls.clear()
+        fhbstat_parser.clear_filters()
         filters.refresh()
 
     @ui.refreshable
