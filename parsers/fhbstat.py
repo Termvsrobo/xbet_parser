@@ -23,8 +23,8 @@ from openpyxl.styles import Border, Side
 from openpyxl.worksheet.cell_range import CellRange
 from pydantic import (BaseModel, Discriminator, Field, PositiveInt, RootModel,
                       Tag, TypeAdapter)
-from xlsxtpl.writerx import BookWriter
 from tqdm import tqdm
+from xlsxtpl.writerx import BookWriter
 
 from base import Parser
 from config import settings
