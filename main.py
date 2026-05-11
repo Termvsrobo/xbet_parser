@@ -170,11 +170,11 @@ async def fhbstat_page():
     def add_target_url(element):
         if element.value:
             fhbstat_parser.target_urls[element.sender.props['link_id']] = element.value
+            fhbstat_parser.enable_passability = 'football_total' in element.value
             link.refresh()
 
     def clear_filters(element):
-        fhbstat_parser.user_filters.root.clear()
-        fhbstat_parser.target_urls.clear()
+        fhbstat_parser.clear_filters()
         filters.refresh()
 
     @ui.refreshable
@@ -187,6 +187,11 @@ async def fhbstat_page():
             for i in range(1):
                 with ui.row():
                     ui.input('Ссылка:', on_change=add_target_url).props(f'link_id={i}')
+        passability = ui.checkbox('Считать проходимость самим').bind_value(fhbstat_parser, 'evaluate_passability')
+        if fhbstat_parser.enable_passability:
+            passability.enable()
+        else:
+            passability.disable()
 
     @ui.refreshable
     def filters():

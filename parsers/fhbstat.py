@@ -23,6 +23,7 @@ from openpyxl.styles import Border, Side
 from openpyxl.worksheet.cell_range import CellRange
 from pydantic import (BaseModel, Discriminator, Field, PositiveInt, RootModel,
                       Tag, TypeAdapter)
+from tqdm import tqdm
 from xlsxtpl.writerx import BookWriter
 
 from base import Parser
@@ -69,7 +70,7 @@ class FloatField(BaseFilterField):
 
     def get_value(self, value, filter_value: Optional[str] = None):
         _filter_value = filter_value or self.filter_value
-        exp = Decimal(_filter_value).as_tuple().exponent * -1
+        exp = max(Decimal(_filter_value).as_tuple().exponent * -1, 1)
         adjust_value = 10 ** (-1 * (exp + 2))
         _value = Decimal(value + adjust_value).quantize(Decimal(_filter_value), rounding=ROUND_DOWN)
         _value = float(_value)
@@ -138,6 +139,8 @@ class FHBParser(Parser):
     datetime_round: str = '00:00'
     count_empty_rows: int = 4
     digits_columns_start: int = 25
+    enable_passability: bool
+    evaluate_passability: bool
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -151,6 +154,8 @@ class FHBParser(Parser):
         self.to_time: str = ''
         self.user_filters: Optional[Filters] = Filters()
         self._min_count_matches: int = 1
+        self.enable_passability = False
+        self.evaluate_passability = False
 
     @property
     def min_count_matches(self):
@@ -193,6 +198,11 @@ class FHBParser(Parser):
     @property
     def columns(self):
         return list(range(1, self.count_columns))
+
+    def clear_filters(self):
+        self.user_filters.root.clear()
+        self.target_urls.clear()
+        self.evaluate_passability = False
 
     def get_filter_id(self):
         result = 1
@@ -436,9 +446,13 @@ class FHBParser(Parser):
                                 start_row=first_row,
                                 end_row=end_row
                             )
-                            max_column = sheet.max_column
-                            if link_column:
-                                max_column -= 1
+                            dimensions = list(filter(lambda x: x.hidden is False, sheet.column_dimensions.values()))
+                            last_dim = dimensions[-2]
+                            if dimensions[-1].min <= link_column <= dimensions[-1].max:
+                                last_dim = dimensions[-2]
+                            else:
+                                last_dim = dimensions[-1]
+                            max_column = last_dim.max
                             cell_range = CellRange(
                                 min_col=col,
                                 max_col=max_column,
@@ -451,13 +465,14 @@ class FHBParser(Parser):
                                     _cell = sheet.cell(cell[0], cell[1])
                                     other_sides = filter(lambda _side: _side != side, sides)
                                     old_border = copy(_cell.border)
-                                    _cell.border = Border(
+                                    _border = Border(
                                         **{side: Side(border_style='thick')},
                                         **{
                                             other_side: getattr(old_border, other_side)
                                             for other_side in other_sides
                                         }
                                     )
+                                    _cell.border = _border
                         else:
                             sheet.merge_cells(
                                 start_column=col,
@@ -570,6 +585,78 @@ class FHBParser(Parser):
         return df
 
     @classmethod
+    def evaluate_coefficients_table(cls, df):
+        head_df = pd.DataFrame(columns=df.columns).astype(np.float64)
+        head_df.loc[0, '32'] = round((df['11'] > df['12']).mean() * 100, 1)
+        head_df.loc[0, '33'] = round((df['11'] == df['12']).mean() * 100, 1)
+        head_df.loc[0, '34'] = round((df['11'] < df['12']).mean() * 100, 1)
+
+        _df = df.copy()
+        _df = _df.drop(_df[(_df['11'] == _df['12'])].index)
+        head_df.loc[0, '38'] = round((_df['11'] > _df['12']).mean() * 100, 1)
+        head_df.loc[0, '39'] = round((_df['11'] < _df['12']).mean() * 100, 1)
+
+        head_df.loc[0, '91'] = round((df['11'] + df['12'] < 1.5).mean() * 100, 1)
+        head_df.loc[0, '92'] = round((df['11'] + df['12'] < 2.5).mean() * 100, 1)
+        head_df.loc[0, '93'] = round((df['11'] + df['12'] < 3.5).mean() * 100, 1)
+
+        head_df.loc[0, '94'] = round((df['11'] + df['12'] > 1.5).mean() * 100, 1)
+        head_df.loc[0, '95'] = round((df['11'] + df['12'] > 2.5).mean() * 100, 1)
+        head_df.loc[0, '96'] = round((df['11'] + df['12'] > 3.5).mean() * 100, 1)
+
+        head_df.loc[0, '97'] = round((df['13'] + df['14'] < 0.5).mean() * 100, 1)
+        head_df.loc[0, '98'] = round((df['13'] + df['14'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '99'] = round((df['13'] + df['14'] > 0.5).mean() * 100, 1)
+        head_df.loc[0, '100'] = round((df['13'] + df['14'] > 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '101'] = round((df['15'] + df['16'] < 0.5).mean() * 100, 1)
+        head_df.loc[0, '102'] = round((df['15'] + df['16'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '103'] = round((df['15'] + df['16'] > 0.5).mean() * 100, 1)
+        head_df.loc[0, '104'] = round((df['15'] + df['16'] > 1.5).mean() * 100, 1)
+
+        _df = df.copy()
+        _df = _df.drop(_df[(_df['11'] == 1)].index)
+        head_df.loc[0, '105'] = round((_df['11'] < 1).mean() * 100, 1)
+        head_df.loc[0, '106'] = round((_df['11'] < 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '107'] = round((_df['11'] > 1).mean() * 100, 1)
+        head_df.loc[0, '108'] = round((_df['11'] > 1.5).mean() * 100, 1)
+
+        _df = df.copy()
+        _df = _df.drop(_df[(_df['12'] == 1)].index)
+        head_df.loc[0, '109'] = round((_df['12'] < 1).mean() * 100, 1)
+        head_df.loc[0, '110'] = round((_df).mean() * 100, 1)
+
+        head_df.loc[0, '111'] = round((_df['12'] > 1).mean() * 100, 1)
+        head_df.loc[0, '112'] = round((_df['12'] > 1.5).mean() * 100, 1)
+
+        head_df.loc[0, '113'] = round(
+            ((df['11'] > 0.5) & (df['12'] > 0.5)).mean() * 100, 1
+        )
+        head_df.loc[0, '114'] = round(
+            ((df['11'] < 0.5) | (df['12'] < 0.5)).mean() * 100, 1
+        )
+
+        head_df.loc[0, '115'] = round(
+            ((df['13'] > 0.5) & (df['14'] > 0.5)).mean() * 100, 1
+        )
+        head_df.loc[0, '116'] = round(
+            ((df['15'] > 0.5) & (df['16'] > 0.5)).mean() * 100, 1
+        )
+
+        head_df.loc[0, '117'] = round((df['11'] >= 0.5).mean() * 100, 1)
+        head_df.loc[0, '118'] = round((df['12'] >= 0.5).mean() * 100, 1)
+
+        head_df.loc[0, '119'] = round((df['13'] >= 0.5).mean() * 100, 1)
+        head_df.loc[0, '120'] = round((df['14'] >= 0.5).mean() * 100, 1)
+
+        head_df.loc[0, '121'] = round((df['15'] >= 0.5).mean() * 100, 1)
+        head_df.loc[0, '122'] = round((df['16'] >= 0.5).mean() * 100, 1)
+        return head_df
+
+    @classmethod
     def parse_content(cls, content):
         table_rows, first_data_index, names = cls.get_head_data(content)
         if first_data_index:
@@ -673,7 +760,7 @@ class FHBParser(Parser):
         path,
         params,
         fragment,
-        target_path
+        target_path: str
     ) -> Dict:
         page_url = urlunparse((
             scheme, domain, path, params, urlencode(filters_data), fragment
@@ -696,11 +783,31 @@ class FHBParser(Parser):
         await page.wait_for_load_state()
         page_content = await page.content()
         df_match = self.parse_content(page_content)
+        # new_page_url = page_url
+        # is_football = target_path.startswith('/football')
+        # if is_football:
+        #     for command_name_column in ('9', '10'):
+        #         if command_name_column in filters_data:
+        #             if df_match[command_name_column].nunique() > 1:
+        #                 _filters_data = filters_data.copy()
+        #                 _filters_data.update(м_2_топ='1')
+        #                 new_page_url = urlunparse((
+        #                     scheme, domain, path, params, urlencode(_filters_data), fragment
+        #                 ))
+        #                 break
+        # if new_page_url != page_url:
+        #     await page.goto(new_page_url)
+        #     await page.wait_for_load_state()
+        #     page_content = await page.content()
+        #     df_match = self.parse_content(page_content)
         if not df_match.empty:
             df_match = df_match.loc[
                 df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
             ]
-        head_df = self.parse_head_table(page_content)
+        if self.evaluate_passability:
+            head_df = self.evaluate_coefficients_table(df_match)
+        else:
+            head_df = self.parse_head_table(page_content)
         await page.close()
         columns = list(
             filter(
@@ -725,6 +832,64 @@ class FHBParser(Parser):
         copy_data_match['url'] = unquote(page_url)
 
         return copy_data_match
+
+    def get_last_page(self, content) -> Optional[int]:
+        last_page = None
+        soup = BeautifulSoup(content, 'lxml')
+        page_items = soup.find_all(lambda tag: tag.name == 'a' and 'data-pagination' in tag.attrs)
+        if page_items:
+            last_page = max(map(lambda x: int(x.attrs.get('data-pagination')), page_items))
+        return last_page
+
+    async def get_db(self):
+        result = None
+        msg = f'Открываем {self.url}'
+        self.status = msg
+
+        transport = httpx.AsyncHTTPTransport(retries=5)
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            headers={
+                'User-Agent': self._user_agent
+            },
+            transport=transport,
+        ) as client:
+            async with self.page_client(client=client) as logged_client:
+                if logged_client is not None:
+                    _url = 'https://fhbstat.com/football_24'
+                    last_page = None
+                    total_df = None
+                    dfs = []
+                    _target_url, query_params, target_path = self.get_url_params(_url)
+                    for key, value in query_params.items():
+                        if isinstance(value, (list, tuple)) and len(value) == 1:
+                            query_params[key] = value[0]
+                    for year in tqdm(range(2020, 2026)):
+                        query_params.update({'3': year})
+                        response = await logged_client.get(
+                            _target_url,
+                            params=query_params
+                        )
+                        if response.status_code == 200:
+                            last_page = self.get_last_page(response.content)
+                            _df = self.parse_content(response.content)
+                            if not _df.empty:
+                                dfs.append(_df)
+                        if last_page:
+                            for page in tqdm(range(2, last_page + 1)):
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params={**query_params, **{'page': page}}
+                                )
+                                _df = self.parse_content(response.content)
+                                if not _df.empty:
+                                    dfs.append(_df)
+                    if dfs:
+                        total_df = pd.concat(dfs)
+                        prefix = target_path.replace('/', '')
+                        total_df.to_excel(f'{prefix}_total_db.xlsx', index=False)
+                        result = total_df
+            return result
 
     async def parse(self, browser):
         result = None
