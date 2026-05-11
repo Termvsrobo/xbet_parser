@@ -1,5 +1,4 @@
 import json
-import operator
 import re
 from asyncio import to_thread
 from collections import defaultdict
@@ -11,7 +10,8 @@ from enum import IntEnum
 from itertools import count
 from pathlib import Path
 from typing import Annotated, Dict, List, Literal, Optional, Union
-from urllib.parse import parse_qs, unquote, urlencode, urlparse, urlunparse
+from urllib.parse import (parse_qs, unquote, urlencode, urljoin, urlparse,
+                          urlunparse)
 
 import httpx
 import numpy as np
@@ -141,6 +141,12 @@ class FHBParser(Parser):
     digits_columns_start: int = 25
     enable_passability: bool
     evaluate_passability: bool
+    templates: Dict
+    desc_dict: Dict = {
+        'м_2_топ': 'ТОП Лиги',
+        'м_3_средн': 'Средние лиги',
+        'м_4_низш': 'Низшие лиги'
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -156,10 +162,22 @@ class FHBParser(Parser):
         self._min_count_matches: int = 1
         self.enable_passability = False
         self.evaluate_passability = False
+        self._templates = {
+            '/football': ('templates.xlsx', 'Футбол исход', 0),
+            '/football_24': ('templates.xlsx', 'Футбол 24', 1),
+            '/hockey': ('templates.xlsx', 'Хоккей исход', 2),
+            '/hockey_24': ('templates.xlsx', 'Хоккей 24', 3),
+            '/football_total': ('templates.xlsx', 'Футбол тотал', 4),
+            '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
+        }
 
     @property
     def min_count_matches(self):
         return int(self._min_count_matches)
+
+    @property
+    def templates(self) -> Dict:
+        return self._templates
 
     @min_count_matches.setter
     def min_count_matches(self, value):
@@ -335,15 +353,7 @@ class FHBParser(Parser):
 
     @classmethod
     def get_excel_template(cls, path):
-        templates = {
-            '/football': ('templates.xlsx', 'Футбол исход', 0),
-            '/football_24': ('templates.xlsx', 'Футбол 24', 1),
-            '/hockey': ('templates.xlsx', 'Хоккей исход', 2),
-            '/hockey_24': ('templates.xlsx', 'Хоккей 24', 3),
-            '/football_total': ('templates.xlsx', 'Футбол тотал', 4),
-            '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
-        }
-        return templates.get(path, (None, None, None))
+        return cls.templates.get(path, (None, None, None))
 
     @classmethod
     def get_columns_by_target(cls, path):
@@ -694,28 +704,6 @@ class FHBParser(Parser):
             df = pd.DataFrame()
         return df
 
-    @classmethod
-    def get_formula(cls):
-        formulas = {
-            '32': {'left_column': '11', 'right_column': '12', 'op': operator.gt},
-            '33': {'left_column': '11', 'right_column': '12', 'op': operator.eq},
-            '34': {'left_column': '11', 'right_column': '12', 'op': operator.lt},
-            '38': {'left_column': '11', 'right_column': '12', 'op': operator.gt},
-            '39': {'left_column': '11', 'right_column': '12', 'op': operator.lt},
-        }
-        return formulas
-
-    @classmethod
-    def apply_formula(cls, row: Dict):
-        return
-
-    @classmethod
-    def get_match_coefficients(cls, df: pd.DataFrame) -> Dict[str, float]:
-        _df = df.copy()
-        if not _df.empty:
-            for column, value in cls.get_formula().items():
-                _df.loc[:, column] = _df.apply(cls.apply_formula, axis=1)
-
     def get_field_type(self, value):
         if value == 4:
             return FieldType.TIME
@@ -740,13 +728,26 @@ class FHBParser(Parser):
                 _df = df[df['dt'].dt.time <= datetime.strptime(to_time, '%H:%M').time()]
         return _df
 
-    def get_url_params(self, url):
+    @classmethod
+    def get_url_params(cls, url):
         """возвращает целевой URL, параметры запроса и путь"""
 
         scheme, domain, path, params, query, fragment = urlparse(url)
         query_params = parse_qs(query)
+        for key, value in query_params.items():
+            if isinstance(value, (list, tuple)) and len(value) == 1:
+                query_params[key] = value[0]
         target_url = urlunparse((scheme, domain, path, params, None, fragment))
         return target_url, query_params, path
+
+    @classmethod
+    def get_link_description(cls, url):
+        _, query_params, _ = cls.get_url_params(url=url)
+
+        for tag, value in cls.desc_dict.items():
+            if tag in query_params:
+                return value
+        return ''
 
     async def _parse_page_by_filter(
         self,
@@ -783,23 +784,6 @@ class FHBParser(Parser):
         await page.wait_for_load_state()
         page_content = await page.content()
         df_match = self.parse_content(page_content)
-        # new_page_url = page_url
-        # is_football = target_path.startswith('/football')
-        # if is_football:
-        #     for command_name_column in ('9', '10'):
-        #         if command_name_column in filters_data:
-        #             if df_match[command_name_column].nunique() > 1:
-        #                 _filters_data = filters_data.copy()
-        #                 _filters_data.update(м_2_топ='1')
-        #                 new_page_url = urlunparse((
-        #                     scheme, domain, path, params, urlencode(_filters_data), fragment
-        #                 ))
-        #                 break
-        # if new_page_url != page_url:
-        #     await page.goto(new_page_url)
-        #     await page.wait_for_load_state()
-        #     page_content = await page.content()
-        #     df_match = self.parse_content(page_content)
         if not df_match.empty:
             df_match = df_match.loc[
                 df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
@@ -856,39 +840,41 @@ class FHBParser(Parser):
         ) as client:
             async with self.page_client(client=client) as logged_client:
                 if logged_client is not None:
-                    _url = 'https://fhbstat.com/football_24'
-                    last_page = None
-                    total_df = None
-                    dfs = []
-                    _target_url, query_params, target_path = self.get_url_params(_url)
-                    for key, value in query_params.items():
-                        if isinstance(value, (list, tuple)) and len(value) == 1:
-                            query_params[key] = value[0]
-                    for year in tqdm(range(2020, 2026)):
-                        query_params.update({'3': year})
-                        response = await logged_client.get(
-                            _target_url,
-                            params=query_params
-                        )
-                        if response.status_code == 200:
-                            last_page = self.get_last_page(response.content)
-                            _df = self.parse_content(response.content)
-                            if not _df.empty:
-                                dfs.append(_df)
-                        if last_page:
-                            for page in tqdm(range(2, last_page + 1)):
-                                response = await logged_client.get(
-                                    _target_url,
-                                    params={**query_params, **{'page': page}}
-                                )
+                    prefixes = list(filter(
+                        lambda x: not Path(f'{x.replace("/", "")}_total_db.xlsx').exists(),
+                        self.templates.keys()
+                    ))
+                    for path in prefixes:
+                        _url = urljoin(self.url, path)
+                        last_page = None
+                        total_df = None
+                        dfs = []
+                        _target_url, query_params, target_path = self.get_url_params(_url)
+                        for year in tqdm(range(2020, 2026)):
+                            query_params.update({'3': year})
+                            response = await logged_client.get(
+                                _target_url,
+                                params=query_params
+                            )
+                            if response.status_code == 200:
+                                last_page = self.get_last_page(response.content)
                                 _df = self.parse_content(response.content)
                                 if not _df.empty:
                                     dfs.append(_df)
-                    if dfs:
-                        total_df = pd.concat(dfs)
-                        prefix = target_path.replace('/', '')
-                        total_df.to_excel(f'{prefix}_total_db.xlsx', index=False)
-                        result = total_df
+                            if last_page:
+                                for page in tqdm(range(2, last_page + 1)):
+                                    response = await logged_client.get(
+                                        _target_url,
+                                        params={**query_params, **{'page': page}}
+                                    )
+                                    _df = self.parse_content(response.content)
+                                    if not _df.empty:
+                                        dfs.append(_df)
+                        if dfs:
+                            total_df = pd.concat(dfs)
+                            prefix = target_path.replace('/', '')
+                            total_df.to_excel(f'{prefix}_total_db.xlsx', index=False)
+                            result = total_df
             return result
 
     async def parse(self, browser):
@@ -913,9 +899,6 @@ class FHBParser(Parser):
                     for target_url in copy_target_urls.values():
                         self.status = f'Обрабатываем ссылку {target_url}'
                         _target_url, query_params, target_path = self.get_url_params(target_url)
-                        for key, value in query_params.items():
-                            if isinstance(value, (list, tuple)) and len(value) == 1:
-                                query_params[key] = value[0]
                         if 'page' not in query_params:
                             for page_number in count(1):
                                 if page_number == 1:
@@ -968,6 +951,9 @@ class FHBParser(Parser):
                                 for _filter in user_filter.filters:
                                     value_match = data_match.get(str(_filter.column))
                                     filters_data[str(_filter.column)] = _filter.get_value(value_match)
+                                for kk in self.desc_dict.keys():
+                                    if kk in query_params:
+                                        filters_data[kk] = '1'
                                 scheme, domain, path, params, _, fragment = urlparse(_target_url)
                                 priority_queues = sorted(
                                     filter(
