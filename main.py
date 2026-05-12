@@ -106,8 +106,9 @@ async def fhbstat_page():
         response = fhbstat_parser.download_filters()
         return response
 
-    def handle_upload(e):
-        fhbstat_parser.upload_filters(e)
+    async def handle_upload(e):
+        json_text_filters = await e.file.text()
+        fhbstat_parser.upload_filters(json_text_filters)
         filters.refresh()
         e.sender.reset()
         e.sender.delete()

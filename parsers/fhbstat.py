@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
-from nicegui.events import UploadEventArguments
 from openpyxl.styles import Border, Side
 from openpyxl.worksheet.cell_range import CellRange
 from pydantic import (BaseModel, Discriminator, Field, PositiveInt, RootModel,
@@ -287,8 +286,8 @@ class FHBParser(Parser):
     def download_filters(self):
         return JSONResponse(self.user_filters.model_dump())
 
-    def upload_filters(self, upload_file: UploadEventArguments):
-        data = json.load(upload_file.content)
+    def upload_filters(self, json_text_filters: str):
+        data = json.loads(json_text_filters)
         self.user_filters = self.user_filters.model_validate(data)
 
     def upload_filters_from_json(self, json_file: Path):
