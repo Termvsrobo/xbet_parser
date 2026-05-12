@@ -350,9 +350,8 @@ class FHBParser(Parser):
         finally:
             await self.logout(client=client)
 
-    @classmethod
-    def get_excel_template(cls, path):
-        return cls.templates.get(path, (None, None, None))
+    def get_excel_template(self, path):
+        return self.templates.get(path, (None, None, None))
 
     @classmethod
     def get_columns_by_target(cls, path):
