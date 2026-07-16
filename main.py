@@ -3,6 +3,7 @@ from typing import Optional
 
 from fastapi.responses import RedirectResponse
 from nicegui import app, ui
+from nicegui_tabulator import tabulator
 
 from base import BrowserManager
 from beta_baza import parse_bet_baza  # noqa:F401
@@ -105,8 +106,9 @@ async def fhbstat_page():
         response = fhbstat_parser.download_filters()
         return response
 
-    def handle_upload(e):
-        fhbstat_parser.upload_filters(e)
+    async def handle_upload(e):
+        json_text_filters = await e.file.text()
+        fhbstat_parser.upload_filters(json_text_filters)
         filters.refresh()
         e.sender.reset()
         e.sender.delete()
@@ -183,10 +185,12 @@ async def fhbstat_page():
             for key, value in fhbstat_parser.target_urls.items():
                 with ui.row():
                     ui.input('Ссылка:', value=value, on_change=add_target_url).props(f'link_id={int(key)}')
+                    ui.label(fhbstat_parser.get_link_description(value))
         else:
             for i in range(1):
                 with ui.row():
                     ui.input('Ссылка:', on_change=add_target_url).props(f'link_id={i}')
+                    ui.label('')
         passability = ui.checkbox('Считать проходимость самим').bind_value(fhbstat_parser, 'evaluate_passability')
         if fhbstat_parser.enable_passability:
             passability.enable()
@@ -294,6 +298,33 @@ async def fhbstat_page():
     ui.button('Загрузить фильтры из файла', on_click=upload())
 
 
+@ui.page('/table_data')
+async def table_data():
+    table_config = {
+        'data': [{'id': 1, 'name': 'test1', 'gc1': 15, 'gc2': 32}, {'id': 2, 'name': 'test2', 'gc1': 8, 'gc2': 25}],
+        'columns': [
+            {
+                'title': 'ID',
+                'field': 'id',
+                'hozAlign': 'center',
+                'headerHozAlign': 'center',
+                'columnHeaderVertAlign': 'bottom'
+            },
+            {'title': 'Name', 'field': 'name', 'hozAlign': 'center', 'headerHozAlign': 'center'},
+            {
+                'title': 'Group Columns',
+                'hozAlign': 'center',
+                'headerHozAlign': 'center',
+                'columns': [
+                    {'title': 'GC1', 'field': 'gc1', 'hozAlign': 'center', 'headerHozAlign': 'center'},
+                    {'title': 'GC2', 'field': 'gc2', 'hozAlign': 'center', 'headerHozAlign': 'center'},
+                ]
+            }
+        ]
+    }
+    tabulator(table_config)
+
+
 @ui.page('/login')
 def login(redirect_to: str = '/') -> Optional[RedirectResponse]:
     def try_login() -> None:  # local function to avoid passing username and password as arguments
@@ -312,12 +343,17 @@ def login(redirect_to: str = '/') -> Optional[RedirectResponse]:
     return None
 
 
-if __name__ in {"__main__", "__mp_main__"}:
+@ui.page('/')
+def page():
     ui.page_title('Parser bet')
     ui.link('Получить excel', '/parse_page', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)
     ui.link('Получить 1xlite', '/xlite_page', new_tab=True)
     ui.link('fhbstat', '/fhbstat_page', new_tab=True)
+    ui.link('Табличные данные', '/table_data', new_tab=True)
+
+
+if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
         show=False,
         port=settings.PORT,
