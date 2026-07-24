@@ -1,3 +1,4 @@
+import gettext
 import json
 import re
 from asyncio import to_thread
@@ -7,6 +8,7 @@ from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from enum import IntEnum
+from functools import partial
 from itertools import count
 from pathlib import Path
 from typing import Annotated, Dict, List, Literal, Optional, Union
@@ -16,6 +18,7 @@ from urllib.parse import (parse_qs, unquote, urlencode, urljoin, urlparse,
 import httpx
 import numpy as np
 import pandas as pd
+import pycountry as pc
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from openpyxl.styles import Border, Side
@@ -168,6 +171,7 @@ class FHBParser(Parser):
             '/hockey_24': ('templates.xlsx', 'Хоккей 24', 3),
             '/football_total': ('templates.xlsx', 'Футбол тотал', 4),
             '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
+            '/football_60': ('templates.xlsx', 'Футбол 60', 6),
         }
 
     @property
@@ -362,6 +366,7 @@ class FHBParser(Parser):
             '/hockey_24': tuple(range(11, 18 + 1)),
             '/football_total': tuple(range(11, 16 + 1)),
             '/hockey_total': tuple(range(11, 18 + 1)),
+            '/football_60': tuple(range(11, 16 + 1)),
         }
         return columns.get(path)
 
@@ -839,7 +844,7 @@ class FHBParser(Parser):
             async with self.page_client(client=client) as logged_client:
                 if logged_client is not None:
                     prefixes = list(filter(
-                        lambda x: not Path(f'{x.replace("/", "")}_total_db.xlsx').exists(),
+                        lambda x: not Path(f'files/{x.replace("/", "")}_total_db.xlsx').exists(),
                         self.templates.keys()
                     ))
                     for path in prefixes:
@@ -848,7 +853,7 @@ class FHBParser(Parser):
                         total_df = None
                         dfs = []
                         _target_url, query_params, target_path = self.get_url_params(_url)
-                        for year in tqdm(range(2020, 2026)):
+                        for year in tqdm(range(2020, 2026), position=0, leave=False):
                             query_params.update({'3': year})
                             response = await logged_client.get(
                                 _target_url,
@@ -860,7 +865,7 @@ class FHBParser(Parser):
                                 if not _df.empty:
                                     dfs.append(_df)
                             if last_page:
-                                for page in tqdm(range(2, last_page + 1)):
+                                for page in tqdm(range(2, last_page + 1), position=1, leave=False):
                                     response = await logged_client.get(
                                         _target_url,
                                         params={**query_params, **{'page': page}}
@@ -871,7 +876,7 @@ class FHBParser(Parser):
                         if dfs:
                             total_df = pd.concat(dfs)
                             prefix = target_path.replace('/', '')
-                            total_df.to_excel(f'{prefix}_total_db.xlsx', index=False)
+                            total_df.to_excel(f'files/{prefix}_total_db.xlsx', index=False)
                             result = total_df
             return result
 
@@ -1060,3 +1065,81 @@ class FHBParser(Parser):
                     self.status = 'Генерируем excel файл'
                     result = await self.async_get_file_response(df_data=result_df_list, target_path=target_path)
                     return result
+
+    def move_name_columns(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        def handler_column_8(row, config: Dict = None):
+            from_column = config.get('from_column')
+            result = row.get(from_column, '')
+            rename_leagues = rename_leagues_country.get(row.get('7'), [])
+            for rename_data in filter(lambda x: x.get('older_name', '').lower() == result.lower(), rename_leagues):
+                result = rename_data.get('new_name', '')
+            leagues = leagues_country.get(row.get('7'), [])
+            leagues_lower = [league.lower() for league in leagues]
+            if pd.isna(result) or result.lower() not in leagues_lower:
+                if len(leagues) >= 1:
+                    result = leagues[0]  # возможно будет другая логика
+            return result
+
+        russian = gettext.translation("iso3166-1", pc.LOCALES_DIR, languages=["ru"])
+        russian.install()
+        df = input_df.copy()
+        new_columns_order = df.columns.tolist()
+        leagues = {}
+        fpath = Path(__file__).parent / Path('leagues.json')
+        with fpath.open('r') as f:
+            leagues = json.load(f)
+        leagues_country = {
+            league.get('label', ''): [child.get('label', '') for child in league.get('childs', [])]
+            for league in leagues
+            if league.get('label', '')
+        }
+        rename_fpath = Path(__file__).parent / Path('rename_leagues.json')
+        with rename_fpath.open('r') as f:
+            rename_leagues_country = json.load(f)
+        columns_to_move = [
+            {
+                'from_column': '6',
+                'to_column': '5.1',
+                'words': ['Европа', 'Азия', 'Австралия', 'Южная Америка', 'Африка', 'Северная Америка'],
+                'index': 'before',
+                'contains': False
+            },
+            {
+                'from_column': '7',
+                'to_column': 'from_7',
+                'words': [country for country in leagues_country.keys()],
+                'index': 'after',
+                'contains': False,
+                'exclude': True,
+            },
+            {
+                'from_column': '8',
+                'to_column': '8.1',
+                'func': handler_column_8,
+                'index': 'after',
+            }
+        ]
+        for data in columns_to_move:
+            column = data.get('from_column')
+            apply_func = data.get('func')
+            if apply_func:
+                df.loc[:, data['to_column']] = df.apply(partial(apply_func, config=data), axis=1)
+            else:
+                pattern = '|'.join(map(re.escape, data['words']))
+                if data['contains']:
+                    df.loc[df[column].str.contains(pattern, case=False, na=False), data['to_column']] = df[column]
+                    df.loc[df[column].str.contains(pattern, case=False, na=False), column] = np.nan
+                else:
+                    df.loc[~df[column].str.contains(pattern, case=False, na=False), data['to_column']] = df[column]
+                    df.loc[~df[column].str.contains(pattern, case=False, na=False), column] = np.nan
+            if not data.get('exclude'):
+                if data.get('index') == 'before':
+                    insert_index = new_columns_order.index(column)
+                elif data.get('index') == 'after':
+                    insert_index = new_columns_order.index(column) + 1
+                else:
+                    insert_index = None
+                if insert_index:
+                    new_columns_order.insert(insert_index, data['to_column'])
+        df = df.reindex(columns=new_columns_order)
+        return df

@@ -1,0 +1,5506 @@
+[
+    {
+        "uid": "div4410142",
+        "id": "4410142",
+        "treeIdPath": null,
+        "label": "Сборные",
+        "url": null,
+        "sport": null,
+        "region": "World",
+        "childs": [
+            {
+                "uid": "div590",
+                "id": "590",
+                "treeIdPath": null,
+                "label": "Чемпионат мира",
+                "url": "/su/stats/popular/5/590",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div614",
+                "id": "614",
+                "treeIdPath": null,
+                "label": "Чемпионат Европы",
+                "url": "/su/stats/popular/5/614",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div4690",
+                "id": "4690",
+                "treeIdPath": null,
+                "label": "Лига наций УЕФА",
+                "url": "/su/stats/popular/5/4690",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div173",
+                "id": "173",
+                "treeIdPath": null,
+                "label": "Кубок Африки",
+                "url": "/su/stats/popular/5/173",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div551",
+                "id": "551",
+                "treeIdPath": null,
+                "label": "Чемпионат мира до 20 лет",
+                "url": "/su/stats/popular/5/551",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div481",
+                "id": "481",
+                "treeIdPath": null,
+                "label": "Кубок Азии",
+                "url": "/su/stats/popular/5/481",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div472",
+                "id": "472",
+                "treeIdPath": null,
+                "label": "Кубок Америки",
+                "url": "/su/stats/popular/5/472",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5742",
+                "id": "5742",
+                "treeIdPath": null,
+                "label": "Лига наций CONCACAF",
+                "url": "/su/stats/popular/5/5742",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div540",
+                "id": "540",
+                "treeIdPath": null,
+                "label": "Чемпионат Европы до 21 года",
+                "url": "/su/stats/popular/5/540",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div407",
+                "id": "407",
+                "treeIdPath": null,
+                "label": "Чемпионат Европы до 19 лет",
+                "url": "/su/stats/popular/5/407",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1088",
+                "id": "1088",
+                "treeIdPath": null,
+                "label": "Олимпийские игры",
+                "url": "/su/stats/popular/5/1088",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div-551",
+                "id": "-551",
+                "treeIdPath": null,
+                "label": "Чемпионат Южной Америки до 20 лет",
+                "url": "/su/stats/popular/5/-551",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div556",
+                "id": "556",
+                "treeIdPath": null,
+                "label": "Золотой кубок CONCACAF",
+                "url": "/su/stats/popular/5/556",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6349",
+                "id": "6349",
+                "treeIdPath": null,
+                "label": "Панамериканские игры",
+                "url": "/su/stats/popular/5/6349",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5651",
+                "id": "5651",
+                "treeIdPath": null,
+                "label": "Азиатские игры",
+                "url": "/su/stats/popular/5/5651",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div295",
+                "id": "295",
+                "treeIdPath": null,
+                "label": "Межконтинентальный кубок",
+                "url": "/su/stats/popular/5/295",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3763",
+                "id": "3763",
+                "treeIdPath": null,
+                "label": "Кубок AFC до 23 лет",
+                "url": "/su/stats/popular/5/3763",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5729",
+                "id": "5729",
+                "treeIdPath": null,
+                "label": "Чемпионат Восточной Азии",
+                "url": "/su/stats/popular/5/5729",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5728",
+                "id": "5728",
+                "treeIdPath": null,
+                "label": "Чемпионат AFF",
+                "url": "/su/stats/popular/5/5728",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6810",
+                "id": "6810",
+                "treeIdPath": null,
+                "label": "Чемпионат AFF до 23 лет",
+                "url": "/su/stats/popular/5/6810",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2922",
+                "id": "2922",
+                "treeIdPath": null,
+                "label": "Чемпионат SAFF",
+                "url": "/su/stats/popular/5/2922",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2641",
+                "id": "2641",
+                "treeIdPath": null,
+                "label": "Чемпионат африканских наций",
+                "url": "/su/stats/popular/5/2641",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5988",
+                "id": "5988",
+                "treeIdPath": null,
+                "label": "Кубок африканских наций до 23 лет",
+                "url": "/su/stats/popular/5/5988",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3434",
+                "id": "3434",
+                "treeIdPath": null,
+                "label": "Кубок африканских наций до 20 лет",
+                "url": "/su/stats/popular/5/3434",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2964",
+                "id": "2964",
+                "treeIdPath": null,
+                "label": "Кубок COSAFA",
+                "url": "/su/stats/popular/5/2964",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2862",
+                "id": "2862",
+                "treeIdPath": null,
+                "label": "Кубок стран Персидского залива",
+                "url": "/su/stats/popular/5/2862",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3899",
+                "id": "3899",
+                "treeIdPath": null,
+                "label": "Игры Юго-Восточной Азии",
+                "url": "/su/stats/popular/5/3899",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3035",
+                "id": "3035",
+                "treeIdPath": null,
+                "label": "Чемпионат CONCACAF до 20 лет",
+                "url": "/su/stats/popular/5/3035",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div-3",
+                "id": "-3",
+                "treeIdPath": null,
+                "label": "Рейтинг сборных FIFA",
+                "url": "/su/stats/popular/5/-3",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5485",
+                "id": "5485",
+                "treeIdPath": null,
+                "label": "Чемпионат AFF до 19 лет",
+                "url": "/su/stats/popular/5/5485",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div4409575",
+        "id": "4409575",
+        "treeIdPath": null,
+        "label": "Клубы. Международные",
+        "url": null,
+        "sport": null,
+        "region": "World",
+        "childs": [
+            {
+                "uid": "div168",
+                "id": "168",
+                "treeIdPath": null,
+                "label": "Клубный чемпионат мира",
+                "url": "/su/stats/popular/5/168",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div-16",
+                "id": "-16",
+                "treeIdPath": null,
+                "label": "Лига чемпионов УЕФА",
+                "url": "/su/stats/popular/5/-16",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div865",
+                "id": "865",
+                "treeIdPath": null,
+                "label": "Лига Европы УЕФА",
+                "url": "/su/stats/popular/5/865",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6710",
+                "id": "6710",
+                "treeIdPath": null,
+                "label": "Лига конференций УЕФА",
+                "url": "/su/stats/popular/5/6710",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1005",
+                "id": "1005",
+                "treeIdPath": null,
+                "label": "Кубок AFC",
+                "url": "/su/stats/popular/5/1005",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div74",
+                "id": "74",
+                "treeIdPath": null,
+                "label": "Кубок Либертадорес",
+                "url": "/su/stats/popular/5/74",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div105",
+                "id": "105",
+                "treeIdPath": null,
+                "label": "Южноамериканский кубок",
+                "url": "/su/stats/popular/5/105",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div528",
+                "id": "528",
+                "treeIdPath": null,
+                "label": "Лига чемпионов AFC",
+                "url": "/su/stats/popular/5/528",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div7006",
+                "id": "7006",
+                "treeIdPath": null,
+                "label": "Лига чемпионов AFC 2",
+                "url": "/su/stats/popular/5/7006",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div538",
+                "id": "538",
+                "treeIdPath": null,
+                "label": "Кубок чемпионов CONCACAF",
+                "url": "/su/stats/popular/5/538",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2429",
+                "id": "2429",
+                "treeIdPath": null,
+                "label": "Юношеская лига УЕФА",
+                "url": "/su/stats/popular/5/2429",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div-5",
+                "id": "-5",
+                "treeIdPath": null,
+                "label": "Рейтинг клубов УЕФА",
+                "url": "/su/stats/popular/5/-5",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div-4",
+                "id": "-4",
+                "treeIdPath": null,
+                "label": "Рейтинг федераций УЕФА",
+                "url": "/su/stats/popular/5/-4",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5478",
+                "id": "5478",
+                "treeIdPath": null,
+                "label": "Кубок CECAFA среди клубов",
+                "url": "/su/stats/popular/5/5478",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5628",
+                "id": "5628",
+                "treeIdPath": null,
+                "label": "Кубок чемпионов арабских стран среди клубов",
+                "url": "/su/stats/popular/5/5628",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3000",
+                "id": "3000",
+                "treeIdPath": null,
+                "label": "Кубок конфедерации CAF",
+                "url": "/su/stats/popular/5/3000",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div529",
+                "id": "529",
+                "treeIdPath": null,
+                "label": "Лига чемпионов CAF",
+                "url": "/su/stats/popular/5/529",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div10898",
+        "id": "10898",
+        "treeIdPath": null,
+        "label": "Россия",
+        "url": null,
+        "sport": null,
+        "region": "Russia",
+        "childs": [
+            {
+                "uid": "div33",
+                "id": "33",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/33",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div186",
+                "id": "186",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/186",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div77",
+                "id": "77",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/77",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1731",
+                "id": "1731",
+                "treeIdPath": null,
+                "label": "Кубок ФНЛ",
+                "url": "/su/stats/popular/5/1731",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div557",
+                "id": "557",
+                "treeIdPath": null,
+                "label": "Молодежное первенство",
+                "url": "/su/stats/popular/5/557",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6924",
+                "id": "6924",
+                "treeIdPath": null,
+                "label": "2-я лига",
+                "url": "/su/stats/popular/5/6924",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div461",
+                "id": "461",
+                "treeIdPath": null,
+                "label": "2-я лига. Группа 1",
+                "url": "/su/stats/popular/5/461",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div330",
+                "id": "330",
+                "treeIdPath": null,
+                "label": "2-я лига. Группа 2",
+                "url": "/su/stats/popular/5/330",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div394",
+                "id": "394",
+                "treeIdPath": null,
+                "label": "2-я лига. Группа 3",
+                "url": "/su/stats/popular/5/394",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div400",
+                "id": "400",
+                "treeIdPath": null,
+                "label": "2-я лига. Группа 4",
+                "url": "/su/stats/popular/5/400",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div8727",
+        "id": "8727",
+        "treeIdPath": null,
+        "label": "Испания",
+        "url": null,
+        "sport": null,
+        "region": "Spain",
+        "childs": [
+            {
+                "uid": "div7",
+                "id": "7",
+                "treeIdPath": null,
+                "label": "Ла Лига",
+                "url": "/su/stats/popular/5/7",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div163",
+                "id": "163",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/163",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div65",
+                "id": "65",
+                "treeIdPath": null,
+                "label": "Сегунда",
+                "url": "/su/stats/popular/5/65",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1530",
+                "id": "1530",
+                "treeIdPath": null,
+                "label": "Примера дивизион де ла Федерасион",
+                "url": "/su/stats/popular/5/1530",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6754",
+                "id": "6754",
+                "treeIdPath": null,
+                "label": "Сегунда дивизион де ла Федерасион",
+                "url": "/su/stats/popular/5/6754",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1574",
+                "id": "1574",
+                "treeIdPath": null,
+                "label": "Кубок Федерации",
+                "url": "/su/stats/popular/5/1574",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div21517",
+        "id": "21517",
+        "treeIdPath": null,
+        "label": "Англия",
+        "url": null,
+        "sport": null,
+        "region": "England",
+        "childs": [
+            {
+                "uid": "div2",
+                "id": "2",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/2",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3",
+                "id": "3",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/3",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div93",
+                "id": "93",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/93",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div71",
+                "id": "71",
+                "treeIdPath": null,
+                "label": "Чемпионшип",
+                "url": "/su/stats/popular/5/71",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div351",
+                "id": "351",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/351",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div441",
+                "id": "441",
+                "treeIdPath": null,
+                "label": "Лига 2",
+                "url": "/su/stats/popular/5/441",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div536",
+                "id": "536",
+                "treeIdPath": null,
+                "label": "Национальная лига",
+                "url": "/su/stats/popular/5/536",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div994",
+                "id": "994",
+                "treeIdPath": null,
+                "label": "Северная национальная лига",
+                "url": "/su/stats/popular/5/994",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div995",
+                "id": "995",
+                "treeIdPath": null,
+                "label": "Южная национальная лига",
+                "url": "/su/stats/popular/5/995",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1154",
+                "id": "1154",
+                "treeIdPath": null,
+                "label": "Северная Премьер-лига. Премьер-дивизион",
+                "url": "/su/stats/popular/5/1154",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1153",
+                "id": "1153",
+                "treeIdPath": null,
+                "label": "Южная футбольная лига. Премьер-дивизион",
+                "url": "/su/stats/popular/5/1153",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1152",
+                "id": "1152",
+                "treeIdPath": null,
+                "label": "Истмийская лига. Премьер-дивизион",
+                "url": "/su/stats/popular/5/1152",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3228",
+                "id": "3228",
+                "treeIdPath": null,
+                "label": "Кубок Премьер-лиги",
+                "url": "/su/stats/popular/5/3228",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3116",
+                "id": "3116",
+                "treeIdPath": null,
+                "label": "Премьер-лига 2",
+                "url": "/su/stats/popular/5/3116",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div637",
+                "id": "637",
+                "treeIdPath": null,
+                "label": "Трофей EFL",
+                "url": "/su/stats/popular/5/637",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div975",
+                "id": "975",
+                "treeIdPath": null,
+                "label": "Трофей Футбольной ассоциации",
+                "url": "/su/stats/popular/5/975",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div22431",
+        "id": "22431",
+        "treeIdPath": null,
+        "label": "Италия",
+        "url": null,
+        "sport": null,
+        "region": "Italy",
+        "childs": [
+            {
+                "uid": "div6",
+                "id": "6",
+                "treeIdPath": null,
+                "label": "Серия A",
+                "url": "/su/stats/popular/5/6",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div128",
+                "id": "128",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/128",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div72",
+                "id": "72",
+                "treeIdPath": null,
+                "label": "Серия B",
+                "url": "/su/stats/popular/5/72",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2386",
+                "id": "2386",
+                "treeIdPath": null,
+                "label": "Серия C",
+                "url": "/su/stats/popular/5/2386",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1794",
+                "id": "1794",
+                "treeIdPath": null,
+                "label": "Кубок Серии C",
+                "url": "/su/stats/popular/5/1794",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1497",
+                "id": "1497",
+                "treeIdPath": null,
+                "label": "Примавера",
+                "url": "/su/stats/popular/5/1497",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div22430",
+        "id": "22430",
+        "treeIdPath": null,
+        "label": "Германия",
+        "url": null,
+        "sport": null,
+        "region": "Germany",
+        "childs": [
+            {
+                "uid": "div5",
+                "id": "5",
+                "treeIdPath": null,
+                "label": "Бундеслига",
+                "url": "/su/stats/popular/5/5",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div94",
+                "id": "94",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/94",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div32",
+                "id": "32",
+                "treeIdPath": null,
+                "label": "2-я бундеслига",
+                "url": "/su/stats/popular/5/32",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div772",
+                "id": "772",
+                "treeIdPath": null,
+                "label": "3-я лига",
+                "url": "/su/stats/popular/5/772",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2380",
+                "id": "2380",
+                "treeIdPath": null,
+                "label": "Региональная лига. Бавария",
+                "url": "/su/stats/popular/5/2380",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2385",
+                "id": "2385",
+                "treeIdPath": null,
+                "label": "Региональная лига. Запад",
+                "url": "/su/stats/popular/5/2385",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1560",
+                "id": "1560",
+                "treeIdPath": null,
+                "label": "Региональная лига. Север",
+                "url": "/su/stats/popular/5/1560",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2381",
+                "id": "2381",
+                "treeIdPath": null,
+                "label": "Региональная лига. Северо-Восток",
+                "url": "/su/stats/popular/5/2381",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2384",
+                "id": "2384",
+                "treeIdPath": null,
+                "label": "Региональная лига. Юго-Запад",
+                "url": "/su/stats/popular/5/2384",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div21532",
+        "id": "21532",
+        "treeIdPath": null,
+        "label": "Франция",
+        "url": null,
+        "sport": null,
+        "region": "France",
+        "childs": [
+            {
+                "uid": "div172",
+                "id": "172",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/172",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div60",
+                "id": "60",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/60",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div164",
+                "id": "164",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/164",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div66",
+                "id": "66",
+                "treeIdPath": null,
+                "label": "Лига 2",
+                "url": "/su/stats/popular/5/66",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div608",
+                "id": "608",
+                "treeIdPath": null,
+                "label": "Лига 3",
+                "url": "/su/stats/popular/5/608",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div189154",
+        "id": "189154",
+        "treeIdPath": null,
+        "label": "Австралия",
+        "url": null,
+        "sport": null,
+        "region": "Australia",
+        "childs": [
+            {
+                "uid": "div618",
+                "id": "618",
+                "treeIdPath": null,
+                "label": "A-лига",
+                "url": "/su/stats/popular/5/618",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2856",
+                "id": "2856",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/2856",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div756",
+                "id": "756",
+                "treeIdPath": null,
+                "label": "Национальная Премьер-лига. Виктория",
+                "url": "/su/stats/popular/5/756",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1862",
+                "id": "1862",
+                "treeIdPath": null,
+                "label": "Национальная Премьер-лига. Западная Австралия",
+                "url": "/su/stats/popular/5/1862",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1992",
+                "id": "1992",
+                "treeIdPath": null,
+                "label": "Национальная Премьер-лига. Квинсленд",
+                "url": "/su/stats/popular/5/1992",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1858",
+                "id": "1858",
+                "treeIdPath": null,
+                "label": "Национальная Премьер-лига. Новый Южный Уэльс",
+                "url": "/su/stats/popular/5/1858",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2743",
+                "id": "2743",
+                "treeIdPath": null,
+                "label": "Национальная Премьер-лига. Новый Южный Уэльс. Север",
+                "url": "/su/stats/popular/5/2743",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1777",
+                "id": "1777",
+                "treeIdPath": null,
+                "label": "Национальная Премьер-лига. Южная Австралия",
+                "url": "/su/stats/popular/5/1777",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div698",
+                "id": "698",
+                "treeIdPath": null,
+                "label": "Чемпионат",
+                "url": "/su/stats/popular/5/698",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div46712",
+        "id": "46712",
+        "treeIdPath": null,
+        "label": "Австрия",
+        "url": null,
+        "sport": null,
+        "region": "Austria",
+        "childs": [
+            {
+                "uid": "div15",
+                "id": "15",
+                "treeIdPath": null,
+                "label": "Бундеслига",
+                "url": "/su/stats/popular/5/15",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div192",
+                "id": "192",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/192",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5448",
+                "id": "5448",
+                "treeIdPath": null,
+                "label": "2-я лига",
+                "url": "/su/stats/popular/5/5448",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3075",
+                "id": "3075",
+                "treeIdPath": null,
+                "label": "Региональная лига. Восток",
+                "url": "/su/stats/popular/5/3075",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3073",
+                "id": "3073",
+                "treeIdPath": null,
+                "label": "Региональная лига. Запад",
+                "url": "/su/stats/popular/5/3073",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3074",
+                "id": "3074",
+                "treeIdPath": null,
+                "label": "Региональная лига. Центр",
+                "url": "/su/stats/popular/5/3074",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div398003",
+        "id": "398003",
+        "treeIdPath": null,
+        "label": "Азербайджан",
+        "url": null,
+        "sport": null,
+        "region": "Azerbaijan",
+        "childs": [
+            {
+                "uid": "div996",
+                "id": "996",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/996",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1004",
+                "id": "1004",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1004",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div544937",
+        "id": "544937",
+        "treeIdPath": null,
+        "label": "Алжир",
+        "url": null,
+        "sport": null,
+        "region": "Algeria",
+        "childs": [
+            {
+                "uid": "div949",
+                "id": "949",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/949",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1491",
+                "id": "1491",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1491",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div10802",
+        "id": "10802",
+        "treeIdPath": null,
+        "label": "Аргентина",
+        "url": null,
+        "sport": null,
+        "region": "Argentina",
+        "childs": [
+            {
+                "uid": "div14",
+                "id": "14",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/14",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1545",
+                "id": "1545",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1545",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6235",
+                "id": "6235",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/6235",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1019",
+                "id": "1019",
+                "treeIdPath": null,
+                "label": "Примера Насьональ",
+                "url": "/su/stats/popular/5/1019",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1546",
+                "id": "1546",
+                "treeIdPath": null,
+                "label": "Примера B Метрополитана",
+                "url": "/su/stats/popular/5/1546",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2198",
+                "id": "2198",
+                "treeIdPath": null,
+                "label": "Примера C Метрополитана",
+                "url": "/su/stats/popular/5/2198",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div443038",
+        "id": "443038",
+        "treeIdPath": null,
+        "label": "Армения",
+        "url": null,
+        "sport": null,
+        "region": "Armenia",
+        "childs": [
+            {
+                "uid": "div1066",
+                "id": "1066",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1066",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1067",
+                "id": "1067",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1067",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div980027",
+        "id": "980027",
+        "treeIdPath": null,
+        "label": "Бангладеш",
+        "url": null,
+        "sport": null,
+        "region": "Bangladesh",
+        "childs": [
+            {
+                "uid": "div1454",
+                "id": "1454",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1454",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div627932",
+        "id": "627932",
+        "treeIdPath": null,
+        "label": "Бахрейн",
+        "url": null,
+        "sport": null,
+        "region": "Bahrain",
+        "childs": [
+            {
+                "uid": "div1640",
+                "id": "1640",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1640",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1789",
+                "id": "1789",
+                "treeIdPath": null,
+                "label": "Кубок короля",
+                "url": "/su/stats/popular/5/1789",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div119373",
+        "id": "119373",
+        "treeIdPath": null,
+        "label": "Беларусь",
+        "url": null,
+        "sport": null,
+        "region": "Belarus",
+        "childs": [
+            {
+                "uid": "div396",
+                "id": "396",
+                "treeIdPath": null,
+                "label": "Высшая лига",
+                "url": "/su/stats/popular/5/396",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div397",
+                "id": "397",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/397",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div45835",
+        "id": "45835",
+        "treeIdPath": null,
+        "label": "Бельгия",
+        "url": null,
+        "sport": null,
+        "region": "Belgium",
+        "childs": [
+            {
+                "uid": "div9",
+                "id": "9",
+                "treeIdPath": null,
+                "label": "1-й дивизион A",
+                "url": "/su/stats/popular/5/9",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div113",
+                "id": "113",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/113",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1114",
+                "id": "1114",
+                "treeIdPath": null,
+                "label": "1-й дивизион B",
+                "url": "/su/stats/popular/5/1114",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div245918",
+        "id": "245918",
+        "treeIdPath": null,
+        "label": "Болгария",
+        "url": null,
+        "sport": null,
+        "region": "Bulgaria",
+        "childs": [
+            {
+                "uid": "div432",
+                "id": "432",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/432",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div695",
+                "id": "695",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/695",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1814",
+                "id": "1814",
+                "treeIdPath": null,
+                "label": "2-я лига",
+                "url": "/su/stats/popular/5/1814",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div339247",
+        "id": "339247",
+        "treeIdPath": null,
+        "label": "Боливия",
+        "url": null,
+        "sport": null,
+        "region": "Bolivia",
+        "childs": [
+            {
+                "uid": "div963",
+                "id": "963",
+                "treeIdPath": null,
+                "label": "Дивизион Професиональ",
+                "url": "/su/stats/popular/5/963",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div429817",
+        "id": "429817",
+        "treeIdPath": null,
+        "label": "Босния и Герцеговина",
+        "url": null,
+        "sport": null,
+        "region": "Bosnia and Herzegovina",
+        "childs": [
+            {
+                "uid": "div1070",
+                "id": "1070",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1070",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1071",
+                "id": "1071",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1071",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div21519",
+        "id": "21519",
+        "treeIdPath": null,
+        "label": "Бразилия",
+        "url": null,
+        "sport": null,
+        "region": "Brazil",
+        "childs": [
+            {
+                "uid": "div103",
+                "id": "103",
+                "treeIdPath": null,
+                "label": "Серия A",
+                "url": "/su/stats/popular/5/103",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div256",
+                "id": "256",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/256",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div993",
+                "id": "993",
+                "treeIdPath": null,
+                "label": "Серия B",
+                "url": "/su/stats/popular/5/993",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2253",
+                "id": "2253",
+                "treeIdPath": null,
+                "label": "Серия C",
+                "url": "/su/stats/popular/5/2253",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div75",
+                "id": "75",
+                "treeIdPath": null,
+                "label": "Паулиста. Серия А1",
+                "url": "/su/stats/popular/5/75",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1456",
+                "id": "1456",
+                "treeIdPath": null,
+                "label": "Гаушу. Серия A",
+                "url": "/su/stats/popular/5/1456",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div76",
+                "id": "76",
+                "treeIdPath": null,
+                "label": "Кариока. Серия A",
+                "url": "/su/stats/popular/5/76",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1457",
+                "id": "1457",
+                "treeIdPath": null,
+                "label": "Минейро. 1-й дивизион",
+                "url": "/su/stats/popular/5/1457",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1682",
+                "id": "1682",
+                "treeIdPath": null,
+                "label": "Северо-восточный кубок",
+                "url": "/su/stats/popular/5/1682",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div253855",
+        "id": "253855",
+        "treeIdPath": null,
+        "label": "Венгрия",
+        "url": null,
+        "sport": null,
+        "region": "Hungary",
+        "childs": [
+            {
+                "uid": "div421",
+                "id": "421",
+                "treeIdPath": null,
+                "label": "NB I",
+                "url": "/su/stats/popular/5/421",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div429",
+                "id": "429",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/429",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2412",
+                "id": "2412",
+                "treeIdPath": null,
+                "label": "NB II",
+                "url": "/su/stats/popular/5/2412",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div339954",
+        "id": "339954",
+        "treeIdPath": null,
+        "label": "Венесуэла",
+        "url": null,
+        "sport": null,
+        "region": "Venezuela",
+        "childs": [
+            {
+                "uid": "div965",
+                "id": "965",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/965",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2378",
+                "id": "2378",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/2378",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3061",
+                "id": "3061",
+                "treeIdPath": null,
+                "label": "Сегунда",
+                "url": "/su/stats/popular/5/3061",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div443364",
+        "id": "443364",
+        "treeIdPath": null,
+        "label": "Вьетнам",
+        "url": null,
+        "sport": null,
+        "region": "Vietnam",
+        "childs": [
+            {
+                "uid": "div1823",
+                "id": "1823",
+                "treeIdPath": null,
+                "label": "V-лига",
+                "url": "/su/stats/popular/5/1823",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1927",
+                "id": "1927",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1927",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2799",
+                "id": "2799",
+                "treeIdPath": null,
+                "label": "V-лига 2",
+                "url": "/su/stats/popular/5/2799",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div1705722",
+        "id": "1705722",
+        "treeIdPath": null,
+        "label": "Гамбия",
+        "url": null,
+        "sport": null,
+        "region": "Gambia",
+        "childs": [
+            {
+                "uid": "div2659",
+                "id": "2659",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/2659",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div1545522",
+        "id": "1545522",
+        "treeIdPath": null,
+        "label": "Гана",
+        "url": null,
+        "sport": null,
+        "region": "Ghana",
+        "childs": [
+            {
+                "uid": "div2539",
+                "id": "2539",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/2539",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div529811",
+        "id": "529811",
+        "treeIdPath": null,
+        "label": "Гватемала",
+        "url": null,
+        "sport": null,
+        "region": "Guatemala",
+        "childs": [
+            {
+                "uid": "div1561",
+                "id": "1561",
+                "treeIdPath": null,
+                "label": "Национальная лига",
+                "url": "/su/stats/popular/5/1561",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3935",
+                "id": "3935",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/3935",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div805408",
+        "id": "805408",
+        "treeIdPath": null,
+        "label": "Гондурас",
+        "url": null,
+        "sport": null,
+        "region": "Honduras",
+        "childs": [
+            {
+                "uid": "div1092",
+                "id": "1092",
+                "treeIdPath": null,
+                "label": "Национальная лига",
+                "url": "/su/stats/popular/5/1092",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div474435",
+        "id": "474435",
+        "treeIdPath": null,
+        "label": "Гонконг",
+        "url": null,
+        "sport": null,
+        "region": "Hong Kong",
+        "childs": [
+            {
+                "uid": "div4860",
+                "id": "4860",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/4860",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1562",
+                "id": "1562",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1562",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div46350",
+        "id": "46350",
+        "treeIdPath": null,
+        "label": "Греция",
+        "url": null,
+        "sport": null,
+        "region": "Greece",
+        "childs": [
+            {
+                "uid": "div12",
+                "id": "12",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/12",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div201",
+                "id": "201",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/201",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6460",
+                "id": "6460",
+                "treeIdPath": null,
+                "label": "Суперлига 2",
+                "url": "/su/stats/popular/5/6460",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div49327",
+        "id": "49327",
+        "treeIdPath": null,
+        "label": "Дания",
+        "url": null,
+        "sport": null,
+        "region": "Denmark",
+        "childs": [
+            {
+                "uid": "div18",
+                "id": "18",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/18",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div195",
+                "id": "195",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/195",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1039",
+                "id": "1039",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/1039",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3105",
+                "id": "3105",
+                "treeIdPath": null,
+                "label": "2-й дивизион",
+                "url": "/su/stats/popular/5/3105",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div4391250",
+        "id": "4391250",
+        "treeIdPath": null,
+        "label": "Доминиканская Республика",
+        "url": null,
+        "sport": null,
+        "region": "Dominican Republic",
+        "childs": [
+            {
+                "uid": "div2161",
+                "id": "2161",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/2161",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div350529",
+        "id": "350529",
+        "treeIdPath": null,
+        "label": "Египет",
+        "url": null,
+        "sport": null,
+        "region": "Egypt",
+        "childs": [
+            {
+                "uid": "div953",
+                "id": "953",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/953",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1046",
+                "id": "1046",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1046",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div345449",
+        "id": "345449",
+        "treeIdPath": null,
+        "label": "Израиль",
+        "url": null,
+        "sport": null,
+        "region": "Israel",
+        "childs": [
+            {
+                "uid": "div615",
+                "id": "615",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/615",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div959",
+                "id": "959",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/959",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1484",
+                "id": "1484",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/1484",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div950",
+                "id": "950",
+                "treeIdPath": null,
+                "label": "Лига Леумит",
+                "url": "/su/stats/popular/5/950",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1485",
+                "id": "1485",
+                "treeIdPath": null,
+                "label": "Кубок лиги Леумит",
+                "url": "/su/stats/popular/5/1485",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div341092",
+        "id": "341092",
+        "treeIdPath": null,
+        "label": "Индия",
+        "url": null,
+        "sport": null,
+        "region": "India",
+        "childs": [
+            {
+                "uid": "div2861",
+                "id": "2861",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/2861",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div943",
+                "id": "943",
+                "treeIdPath": null,
+                "label": "I-лига",
+                "url": "/su/stats/popular/5/943",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div370471",
+        "id": "370471",
+        "treeIdPath": null,
+        "label": "Индонезия",
+        "url": null,
+        "sport": null,
+        "region": "Indonesia",
+        "childs": [
+            {
+                "uid": "div1475",
+                "id": "1475",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/1475",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div598931",
+        "id": "598931",
+        "treeIdPath": null,
+        "label": "Иордания",
+        "url": null,
+        "sport": null,
+        "region": "Jordan",
+        "childs": [
+            {
+                "uid": "div1576",
+                "id": "1576",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1576",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3123",
+                "id": "3123",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/3123",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div350405",
+        "id": "350405",
+        "treeIdPath": null,
+        "label": "Иран",
+        "url": null,
+        "sport": null,
+        "region": "Iran",
+        "childs": [
+            {
+                "uid": "div944",
+                "id": "944",
+                "treeIdPath": null,
+                "label": "Про лига",
+                "url": "/su/stats/popular/5/944",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1013",
+                "id": "1013",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1013",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div46713",
+        "id": "46713",
+        "treeIdPath": null,
+        "label": "Ирландия",
+        "url": null,
+        "sport": null,
+        "region": "Republic of Ireland",
+        "childs": [
+            {
+                "uid": "div348",
+                "id": "348",
+                "treeIdPath": null,
+                "label": "Премьер-дивизион",
+                "url": "/su/stats/popular/5/348",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div354",
+                "id": "354",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/354",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div610",
+                "id": "610",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/610",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div226941",
+        "id": "226941",
+        "treeIdPath": null,
+        "label": "Исландия",
+        "url": null,
+        "sport": null,
+        "region": "Iceland",
+        "childs": [
+            {
+                "uid": "div401",
+                "id": "401",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/401",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div404",
+                "id": "404",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/404",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div973",
+                "id": "973",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/973",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div861",
+                "id": "861",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/861",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div355945",
+        "id": "355945",
+        "treeIdPath": null,
+        "label": "Казахстан",
+        "url": null,
+        "sport": null,
+        "region": "Kazakhstan",
+        "childs": [
+            {
+                "uid": "div517",
+                "id": "517",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/517",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div523",
+                "id": "523",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/523",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div535750",
+        "id": "535750",
+        "treeIdPath": null,
+        "label": "Катар",
+        "url": null,
+        "sport": null,
+        "region": "Qatar",
+        "childs": [
+            {
+                "uid": "div1061",
+                "id": "1061",
+                "treeIdPath": null,
+                "label": "Старз лига",
+                "url": "/su/stats/popular/5/1061",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div951",
+                "id": "951",
+                "treeIdPath": null,
+                "label": "Кубок Старз",
+                "url": "/su/stats/popular/5/951",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2150",
+                "id": "2150",
+                "treeIdPath": null,
+                "label": "Кубок Эмира",
+                "url": "/su/stats/popular/5/2150",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div849048",
+        "id": "849048",
+        "treeIdPath": null,
+        "label": "Кения",
+        "url": null,
+        "sport": null,
+        "region": "Kenya",
+        "childs": [
+            {
+                "uid": "div3025",
+                "id": "3025",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/3025",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3672",
+                "id": "3672",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/3672",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div338995",
+        "id": "338995",
+        "treeIdPath": null,
+        "label": "Кипр",
+        "url": null,
+        "sport": null,
+        "region": "Cyprus",
+        "childs": [
+            {
+                "uid": "div960",
+                "id": "960",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/960",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div966",
+                "id": "966",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/966",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div223596",
+        "id": "223596",
+        "treeIdPath": null,
+        "label": "Китай",
+        "url": null,
+        "sport": null,
+        "region": "China PR",
+        "childs": [
+            {
+                "uid": "div684",
+                "id": "684",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/684",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1006",
+                "id": "1006",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1006",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1864",
+                "id": "1864",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/1864",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div1535368",
+        "id": "1535368",
+        "treeIdPath": null,
+        "label": "Китайский Тайбэй",
+        "url": null,
+        "sport": null,
+        "region": "Chinese Taipei",
+        "childs": [
+            {
+                "uid": "div2535",
+                "id": "2535",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/2535",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div312052",
+        "id": "312052",
+        "treeIdPath": null,
+        "label": "Колумбия",
+        "url": null,
+        "sport": null,
+        "region": "Colombia",
+        "childs": [
+            {
+                "uid": "div632",
+                "id": "632",
+                "treeIdPath": null,
+                "label": "Примера A",
+                "url": "/su/stats/popular/5/632",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1011",
+                "id": "1011",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1011",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div603",
+                "id": "603",
+                "treeIdPath": null,
+                "label": "Примера B",
+                "url": "/su/stats/popular/5/603",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div461300",
+        "id": "461300",
+        "treeIdPath": null,
+        "label": "Коста-Рика",
+        "url": null,
+        "sport": null,
+        "region": "Costa Rica",
+        "childs": [
+            {
+                "uid": "div1050",
+                "id": "1050",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/1050",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div520542",
+        "id": "520542",
+        "treeIdPath": null,
+        "label": "Кувейт",
+        "url": null,
+        "sport": null,
+        "region": "Kuwait",
+        "childs": [
+            {
+                "uid": "div1673",
+                "id": "1673",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1673",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1838",
+                "id": "1838",
+                "treeIdPath": null,
+                "label": "Кубок Эмира",
+                "url": "/su/stats/popular/5/1838",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1637",
+                "id": "1637",
+                "treeIdPath": null,
+                "label": "Кубок наследного принца",
+                "url": "/su/stats/popular/5/1637",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div479890",
+        "id": "479890",
+        "treeIdPath": null,
+        "label": "Латвия",
+        "url": null,
+        "sport": null,
+        "region": "Latvia",
+        "childs": [
+            {
+                "uid": "div676",
+                "id": "676",
+                "treeIdPath": null,
+                "label": "Вирслига",
+                "url": "/su/stats/popular/5/676",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div678",
+                "id": "678",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/678",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div433832",
+        "id": "433832",
+        "treeIdPath": null,
+        "label": "Литва",
+        "url": null,
+        "sport": null,
+        "region": "Lithuania",
+        "childs": [
+            {
+                "uid": "div685",
+                "id": "685",
+                "treeIdPath": null,
+                "label": "А лига",
+                "url": "/su/stats/popular/5/685",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1150",
+                "id": "1150",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1150",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div988053",
+        "id": "988053",
+        "treeIdPath": null,
+        "label": "Люксембург",
+        "url": null,
+        "sport": null,
+        "region": "Luxembourg",
+        "childs": [
+            {
+                "uid": "div1693",
+                "id": "1693",
+                "treeIdPath": null,
+                "label": "Национальный дивизион",
+                "url": "/su/stats/popular/5/1693",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1795",
+                "id": "1795",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1795",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div480140",
+        "id": "480140",
+        "treeIdPath": null,
+        "label": "Малайзия",
+        "url": null,
+        "sport": null,
+        "region": "Malaysia",
+        "childs": [
+            {
+                "uid": "div1001",
+                "id": "1001",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/1001",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1584",
+                "id": "1584",
+                "treeIdPath": null,
+                "label": "Кубок футбольной ассоциации",
+                "url": "/su/stats/popular/5/1584",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1112",
+                "id": "1112",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1112",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div481296",
+        "id": "481296",
+        "treeIdPath": null,
+        "label": "Мальта",
+        "url": null,
+        "sport": null,
+        "region": "Malta",
+        "childs": [
+            {
+                "uid": "div1037",
+                "id": "1037",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1037",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div505493",
+        "id": "505493",
+        "treeIdPath": null,
+        "label": "Марокко",
+        "url": null,
+        "sport": null,
+        "region": "Morocco",
+        "childs": [
+            {
+                "uid": "div954",
+                "id": "954",
+                "treeIdPath": null,
+                "label": "Ботола. 1-й дивизион",
+                "url": "/su/stats/popular/5/954",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1144",
+                "id": "1144",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1144",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div222952",
+        "id": "222952",
+        "treeIdPath": null,
+        "label": "Мексика",
+        "url": null,
+        "sport": null,
+        "region": "Mexico",
+        "childs": [
+            {
+                "uid": "div437",
+                "id": "437",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/437",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1510",
+                "id": "1510",
+                "treeIdPath": null,
+                "label": "Лига де Экспансьон",
+                "url": "/su/stats/popular/5/1510",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div3280900",
+        "id": "3280900",
+        "treeIdPath": null,
+        "label": "Нигерия",
+        "url": null,
+        "sport": null,
+        "region": "Nigeria",
+        "childs": [
+            {
+                "uid": "div3137",
+                "id": "3137",
+                "treeIdPath": null,
+                "label": "Профессиональная лига",
+                "url": "/su/stats/popular/5/3137",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div38087",
+        "id": "38087",
+        "treeIdPath": null,
+        "label": "Нидерланды",
+        "url": null,
+        "sport": null,
+        "region": "Netherlands",
+        "childs": [
+            {
+                "uid": "div8",
+                "id": "8",
+                "treeIdPath": null,
+                "label": "Эредивизи",
+                "url": "/su/stats/popular/5/8",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div180",
+                "id": "180",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/180",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div559",
+                "id": "559",
+                "treeIdPath": null,
+                "label": "Эрсте дивизие",
+                "url": "/su/stats/popular/5/559",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div2667993",
+        "id": "2667993",
+        "treeIdPath": null,
+        "label": "Никарагуа",
+        "url": null,
+        "sport": null,
+        "region": "Nicaragua",
+        "childs": [
+            {
+                "uid": "div3424",
+                "id": "3424",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/3424",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div22826",
+        "id": "22826",
+        "treeIdPath": null,
+        "label": "Норвегия",
+        "url": null,
+        "sport": null,
+        "region": "Norway",
+        "childs": [
+            {
+                "uid": "div69",
+                "id": "69",
+                "treeIdPath": null,
+                "label": "Элитсериен",
+                "url": "/su/stats/popular/5/69",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div114",
+                "id": "114",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/114",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div478",
+                "id": "478",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/478",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div349748",
+        "id": "349748",
+        "treeIdPath": null,
+        "label": "ОАЭ",
+        "url": null,
+        "sport": null,
+        "region": "UAE",
+        "childs": [
+            {
+                "uid": "div952",
+                "id": "952",
+                "treeIdPath": null,
+                "label": "Про лига",
+                "url": "/su/stats/popular/5/952",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1538",
+                "id": "1538",
+                "treeIdPath": null,
+                "label": "Кубок президента",
+                "url": "/su/stats/popular/5/1538",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1073",
+                "id": "1073",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/1073",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div349937",
+        "id": "349937",
+        "treeIdPath": null,
+        "label": "Оман",
+        "url": null,
+        "sport": null,
+        "region": "Oman",
+        "childs": [
+            {
+                "uid": "div955",
+                "id": "955",
+                "treeIdPath": null,
+                "label": "Профессиональная лига",
+                "url": "/su/stats/popular/5/955",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1605",
+                "id": "1605",
+                "treeIdPath": null,
+                "label": "Кубок Султана",
+                "url": "/su/stats/popular/5/1605",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div606006",
+        "id": "606006",
+        "treeIdPath": null,
+        "label": "Панама",
+        "url": null,
+        "sport": null,
+        "region": "Panama",
+        "childs": [
+            {
+                "uid": "div1586",
+                "id": "1586",
+                "treeIdPath": null,
+                "label": "LPF",
+                "url": "/su/stats/popular/5/1586",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div339272",
+        "id": "339272",
+        "treeIdPath": null,
+        "label": "Парагвай",
+        "url": null,
+        "sport": null,
+        "region": "Paraguay",
+        "childs": [
+            {
+                "uid": "div962",
+                "id": "962",
+                "treeIdPath": null,
+                "label": "Примера A",
+                "url": "/su/stats/popular/5/962",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div184176",
+        "id": "184176",
+        "treeIdPath": null,
+        "label": "Перу",
+        "url": null,
+        "sport": null,
+        "region": "Peru",
+        "childs": [
+            {
+                "uid": "div524",
+                "id": "524",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/524",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2106",
+                "id": "2106",
+                "treeIdPath": null,
+                "label": "Лига 2",
+                "url": "/su/stats/popular/5/2106",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div47115",
+        "id": "47115",
+        "treeIdPath": null,
+        "label": "Польша",
+        "url": null,
+        "sport": null,
+        "region": "Poland",
+        "childs": [
+            {
+                "uid": "div263",
+                "id": "263",
+                "treeIdPath": null,
+                "label": "Экстракласа",
+                "url": "/su/stats/popular/5/263",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div285",
+                "id": "285",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/285",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1879",
+                "id": "1879",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/1879",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3095",
+                "id": "3095",
+                "treeIdPath": null,
+                "label": "2-я лига",
+                "url": "/su/stats/popular/5/3095",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div21518",
+        "id": "21518",
+        "treeIdPath": null,
+        "label": "Португалия",
+        "url": null,
+        "sport": null,
+        "region": "Portugal",
+        "childs": [
+            {
+                "uid": "div11",
+                "id": "11",
+                "treeIdPath": null,
+                "label": "Примейра-лига",
+                "url": "/su/stats/popular/5/11",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div167",
+                "id": "167",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/167",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div713",
+                "id": "713",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/713",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div672",
+                "id": "672",
+                "treeIdPath": null,
+                "label": "2-я лига",
+                "url": "/su/stats/popular/5/672",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5677",
+                "id": "5677",
+                "treeIdPath": null,
+                "label": "Лига до 23 лет",
+                "url": "/su/stats/popular/5/5677",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div355049",
+        "id": "355049",
+        "treeIdPath": null,
+        "label": "Республика Корея",
+        "url": null,
+        "sport": null,
+        "region": "Korea Republic",
+        "childs": [
+            {
+                "uid": "div595",
+                "id": "595",
+                "treeIdPath": null,
+                "label": "К лига 1",
+                "url": "/su/stats/popular/5/595",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1000",
+                "id": "1000",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1000",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2076",
+                "id": "2076",
+                "treeIdPath": null,
+                "label": "К лига 2",
+                "url": "/su/stats/popular/5/2076",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div223111",
+        "id": "223111",
+        "treeIdPath": null,
+        "label": "Румыния",
+        "url": null,
+        "sport": null,
+        "region": "Romania",
+        "childs": [
+            {
+                "uid": "div605",
+                "id": "605",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/605",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div607",
+                "id": "607",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/607",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1877",
+                "id": "1877",
+                "treeIdPath": null,
+                "label": "Лига 2",
+                "url": "/su/stats/popular/5/1877",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div1850799",
+        "id": "1850799",
+        "treeIdPath": null,
+        "label": "Сальвадор",
+        "url": null,
+        "sport": null,
+        "region": "El Salvador",
+        "childs": [
+            {
+                "uid": "div2764",
+                "id": "2764",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/2764",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div480572",
+        "id": "480572",
+        "treeIdPath": null,
+        "label": "Саудовская Аравия",
+        "url": null,
+        "sport": null,
+        "region": "Saudi Arabia",
+        "childs": [
+            {
+                "uid": "div1072",
+                "id": "1072",
+                "treeIdPath": null,
+                "label": "Про лига",
+                "url": "/su/stats/popular/5/1072",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2124",
+                "id": "2124",
+                "treeIdPath": null,
+                "label": "Кубок чемпионов",
+                "url": "/su/stats/popular/5/2124",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div63043",
+        "id": "63043",
+        "treeIdPath": null,
+        "label": "Северная Ирландия",
+        "url": null,
+        "sport": null,
+        "region": "Northern Ireland",
+        "childs": [
+            {
+                "uid": "div435",
+                "id": "435",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/435",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div446",
+                "id": "446",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/446",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div613",
+                "id": "613",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/613",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div479848",
+        "id": "479848",
+        "treeIdPath": null,
+        "label": "Северная Македония",
+        "url": null,
+        "sport": null,
+        "region": "North Macedonia",
+        "childs": [
+            {
+                "uid": "div999",
+                "id": "999",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/999",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1524",
+                "id": "1524",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1524",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div305509",
+        "id": "305509",
+        "treeIdPath": null,
+        "label": "Сербия",
+        "url": null,
+        "sport": null,
+        "region": "Serbia",
+        "childs": [
+            {
+                "uid": "div369",
+                "id": "369",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/369",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div981",
+                "id": "981",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/981",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div188520",
+        "id": "188520",
+        "treeIdPath": null,
+        "label": "Сингапур",
+        "url": null,
+        "sport": null,
+        "region": "Singapore",
+        "childs": [
+            {
+                "uid": "div592",
+                "id": "592",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/592",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div602",
+                "id": "602",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/602",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div536551",
+        "id": "536551",
+        "treeIdPath": null,
+        "label": "Сирия",
+        "url": null,
+        "sport": null,
+        "region": "Syria",
+        "childs": [
+            {
+                "uid": "div2658",
+                "id": "2658",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/2658",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div354524",
+        "id": "354524",
+        "treeIdPath": null,
+        "label": "Словакия",
+        "url": null,
+        "sport": null,
+        "region": "Slovakia",
+        "childs": [
+            {
+                "uid": "div408",
+                "id": "408",
+                "treeIdPath": null,
+                "label": "Фортуна лига",
+                "url": "/su/stats/popular/5/408",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div196",
+                "id": "196",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/196",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1903",
+                "id": "1903",
+                "treeIdPath": null,
+                "label": "2-я лига",
+                "url": "/su/stats/popular/5/1903",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div353517",
+        "id": "353517",
+        "treeIdPath": null,
+        "label": "Словения",
+        "url": null,
+        "sport": null,
+        "region": "Slovenia",
+        "childs": [
+            {
+                "uid": "div409",
+                "id": "409",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/409",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div420",
+                "id": "420",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/420",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div12053",
+        "id": "12053",
+        "treeIdPath": null,
+        "label": "США",
+        "url": null,
+        "sport": null,
+        "region": "USA",
+        "childs": [
+            {
+                "uid": "div78",
+                "id": "78",
+                "treeIdPath": null,
+                "label": "MLS",
+                "url": "/su/stats/popular/5/78",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div477",
+                "id": "477",
+                "treeIdPath": null,
+                "label": "Открытый кубок",
+                "url": "/su/stats/popular/5/477",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div347917",
+        "id": "347917",
+        "treeIdPath": null,
+        "label": "Таиланд",
+        "url": null,
+        "sport": null,
+        "region": "Thailand",
+        "childs": [
+            {
+                "uid": "div958",
+                "id": "958",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/958",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1020",
+                "id": "1020",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1020",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1021",
+                "id": "1021",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/1021",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2069",
+                "id": "2069",
+                "treeIdPath": null,
+                "label": "Лига 2",
+                "url": "/su/stats/popular/5/2069",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div352780",
+        "id": "352780",
+        "treeIdPath": null,
+        "label": "Тунис",
+        "url": null,
+        "sport": null,
+        "region": "Tunisia",
+        "childs": [
+            {
+                "uid": "div957",
+                "id": "957",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/957",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1015",
+                "id": "1015",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1015",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div45833",
+        "id": "45833",
+        "treeIdPath": null,
+        "label": "Турция",
+        "url": null,
+        "sport": null,
+        "region": "Turkey",
+        "childs": [
+            {
+                "uid": "div10",
+                "id": "10",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/10",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div182",
+                "id": "182",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/182",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div616",
+                "id": "616",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/616",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div450657",
+        "id": "450657",
+        "treeIdPath": null,
+        "label": "Узбекистан",
+        "url": null,
+        "sport": null,
+        "region": "Uzbekistan",
+        "childs": [
+            {
+                "uid": "div997",
+                "id": "997",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/997",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1711",
+                "id": "1711",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1711",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div46008",
+        "id": "46008",
+        "treeIdPath": null,
+        "label": "Украина",
+        "url": null,
+        "sport": null,
+        "region": "Ukraine",
+        "childs": [
+            {
+                "uid": "div1",
+                "id": "1",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div202",
+                "id": "202",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/202",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div912",
+                "id": "912",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/912",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div341139",
+        "id": "341139",
+        "treeIdPath": null,
+        "label": "Уругвай",
+        "url": null,
+        "sport": null,
+        "region": "Uruguay",
+        "childs": [
+            {
+                "uid": "div206",
+                "id": "206",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/206",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5410",
+                "id": "5410",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/5410",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1618",
+                "id": "1618",
+                "treeIdPath": null,
+                "label": "Сегунда",
+                "url": "/su/stats/popular/5/1618",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div305536",
+        "id": "305536",
+        "treeIdPath": null,
+        "label": "Уэльс",
+        "url": null,
+        "sport": null,
+        "region": "Wales",
+        "childs": [
+            {
+                "uid": "div444",
+                "id": "444",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/444",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div467",
+                "id": "467",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/467",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div930",
+                "id": "930",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/930",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div758058",
+        "id": "758058",
+        "treeIdPath": null,
+        "label": "Фарерские острова",
+        "url": null,
+        "sport": null,
+        "region": "Faroe Islands",
+        "childs": [
+            {
+                "uid": "div1089",
+                "id": "1089",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1089",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1090",
+                "id": "1090",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1090",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div754424",
+        "id": "754424",
+        "treeIdPath": null,
+        "label": "Филиппины",
+        "url": null,
+        "sport": null,
+        "region": "Philippines",
+        "childs": [
+            {
+                "uid": "div1721",
+                "id": "1721",
+                "treeIdPath": null,
+                "label": "PFL",
+                "url": "/su/stats/popular/5/1721",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div49325",
+        "id": "49325",
+        "treeIdPath": null,
+        "label": "Финляндия",
+        "url": null,
+        "sport": null,
+        "region": "Finland",
+        "childs": [
+            {
+                "uid": "div37",
+                "id": "37",
+                "treeIdPath": null,
+                "label": "Вейккауслига",
+                "url": "/su/stats/popular/5/37",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div115",
+                "id": "115",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/115",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6968",
+                "id": "6968",
+                "treeIdPath": null,
+                "label": "Юккеслига",
+                "url": "/su/stats/popular/5/6968",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div545",
+                "id": "545",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/545",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div550",
+                "id": "550",
+                "treeIdPath": null,
+                "label": "Юккенен",
+                "url": "/su/stats/popular/5/550",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div353646",
+        "id": "353646",
+        "treeIdPath": null,
+        "label": "Хорватия",
+        "url": null,
+        "sport": null,
+        "region": "Croatia",
+        "childs": [
+            {
+                "uid": "div427",
+                "id": "427",
+                "treeIdPath": null,
+                "label": "HNL",
+                "url": "/su/stats/popular/5/427",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div430",
+                "id": "430",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/430",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1816",
+                "id": "1816",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/1816",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div354557",
+        "id": "354557",
+        "treeIdPath": null,
+        "label": "Черногория",
+        "url": null,
+        "sport": null,
+        "region": "Montenegro",
+        "childs": [
+            {
+                "uid": "div971",
+                "id": "971",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/971",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div992",
+                "id": "992",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/992",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div46795",
+        "id": "46795",
+        "treeIdPath": null,
+        "label": "Чехия",
+        "url": null,
+        "sport": null,
+        "region": "Czech Republic",
+        "childs": [
+            {
+                "uid": "div13",
+                "id": "13",
+                "treeIdPath": null,
+                "label": "1-я лига",
+                "url": "/su/stats/popular/5/13",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div190",
+                "id": "190",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/190",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1885",
+                "id": "1885",
+                "treeIdPath": null,
+                "label": "FNL",
+                "url": "/su/stats/popular/5/1885",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div315072",
+        "id": "315072",
+        "treeIdPath": null,
+        "label": "Чили",
+        "url": null,
+        "sport": null,
+        "region": "Chile",
+        "childs": [
+            {
+                "uid": "div443",
+                "id": "443",
+                "treeIdPath": null,
+                "label": "Примера Дивизион",
+                "url": "/su/stats/popular/5/443",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div934",
+                "id": "934",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/934",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1740",
+                "id": "1740",
+                "treeIdPath": null,
+                "label": "Примера B",
+                "url": "/su/stats/popular/5/1740",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div46327",
+        "id": "46327",
+        "treeIdPath": null,
+        "label": "Швейцария",
+        "url": null,
+        "sport": null,
+        "region": "Switzerland",
+        "childs": [
+            {
+                "uid": "div16",
+                "id": "16",
+                "treeIdPath": null,
+                "label": "Суперлига",
+                "url": "/su/stats/popular/5/16",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div191",
+                "id": "191",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/191",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div486",
+                "id": "486",
+                "treeIdPath": null,
+                "label": "Челлендж лига",
+                "url": "/su/stats/popular/5/486",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div22726",
+        "id": "22726",
+        "treeIdPath": null,
+        "label": "Швеция",
+        "url": null,
+        "sport": null,
+        "region": "Sweden",
+        "childs": [
+            {
+                "uid": "div70",
+                "id": "70",
+                "treeIdPath": null,
+                "label": "Аллсвенскан",
+                "url": "/su/stats/popular/5/70",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div204",
+                "id": "204",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/204",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div470",
+                "id": "470",
+                "treeIdPath": null,
+                "label": "Суперэттан",
+                "url": "/su/stats/popular/5/470",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div22432",
+        "id": "22432",
+        "treeIdPath": null,
+        "label": "Шотландия",
+        "url": null,
+        "sport": null,
+        "region": "Scotland",
+        "childs": [
+            {
+                "uid": "div4",
+                "id": "4",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/4",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div179",
+                "id": "179",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/179",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div166",
+                "id": "166",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/166",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2391",
+                "id": "2391",
+                "treeIdPath": null,
+                "label": "Кубок вызова",
+                "url": "/su/stats/popular/5/2391",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div171",
+                "id": "171",
+                "treeIdPath": null,
+                "label": "Чемпионшип",
+                "url": "/su/stats/popular/5/171",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div946",
+                "id": "946",
+                "treeIdPath": null,
+                "label": "Лига 1",
+                "url": "/su/stats/popular/5/946",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div947",
+                "id": "947",
+                "treeIdPath": null,
+                "label": "Лига 2",
+                "url": "/su/stats/popular/5/947",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div341056",
+        "id": "341056",
+        "treeIdPath": null,
+        "label": "Эквадор",
+        "url": null,
+        "sport": null,
+        "region": "Ecuador",
+        "childs": [
+            {
+                "uid": "div964",
+                "id": "964",
+                "treeIdPath": null,
+                "label": "Серия A",
+                "url": "/su/stats/popular/5/964",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5990",
+                "id": "5990",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/5990",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1999",
+                "id": "1999",
+                "treeIdPath": null,
+                "label": "Серия B",
+                "url": "/su/stats/popular/5/1999",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div69698",
+        "id": "69698",
+        "treeIdPath": null,
+        "label": "Эстония",
+        "url": null,
+        "sport": null,
+        "region": "Estonia",
+        "childs": [
+            {
+                "uid": "div677",
+                "id": "677",
+                "treeIdPath": null,
+                "label": "Премиум лига",
+                "url": "/su/stats/popular/5/677",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div679",
+                "id": "679",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/679",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div574868",
+        "id": "574868",
+        "treeIdPath": null,
+        "label": "ЮАР",
+        "url": null,
+        "sport": null,
+        "region": "South Africa",
+        "childs": [
+            {
+                "uid": "div1060",
+                "id": "1060",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1060",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1075",
+                "id": "1075",
+                "treeIdPath": null,
+                "label": "Кубок",
+                "url": "/su/stats/popular/5/1075",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2370",
+                "id": "2370",
+                "treeIdPath": null,
+                "label": "Кубок 8-и",
+                "url": "/su/stats/popular/5/2370",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2469",
+                "id": "2469",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/2469",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1775",
+                "id": "1775",
+                "treeIdPath": null,
+                "label": "1-й дивизион",
+                "url": "/su/stats/popular/5/1775",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div615148",
+        "id": "615148",
+        "treeIdPath": null,
+        "label": "Ямайка",
+        "url": null,
+        "sport": null,
+        "region": "Jamaica",
+        "childs": [
+            {
+                "uid": "div1500",
+                "id": "1500",
+                "treeIdPath": null,
+                "label": "Премьер-лига",
+                "url": "/su/stats/popular/5/1500",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div47468",
+        "id": "47468",
+        "treeIdPath": null,
+        "label": "Япония",
+        "url": null,
+        "sport": null,
+        "region": "Japan",
+        "childs": [
+            {
+                "uid": "div392",
+                "id": "392",
+                "treeIdPath": null,
+                "label": "J лига. Дивизион 1",
+                "url": "/su/stats/popular/5/392",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1076",
+                "id": "1076",
+                "treeIdPath": null,
+                "label": "J лига. Дивизион 2",
+                "url": "/su/stats/popular/5/1076",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2715",
+                "id": "2715",
+                "treeIdPath": null,
+                "label": "J лига. Дивизион 3",
+                "url": "/su/stats/popular/5/2715",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div7004",
+                "id": "7004",
+                "treeIdPath": null,
+                "label": "J лига. Дивизионы 2 и 3",
+                "url": "/su/stats/popular/5/7004",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div645",
+                "id": "645",
+                "treeIdPath": null,
+                "label": "Кубок Императора",
+                "url": "/su/stats/popular/5/645",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1895",
+                "id": "1895",
+                "treeIdPath": null,
+                "label": "Кубок лиги",
+                "url": "/su/stats/popular/5/1895",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    },
+    {
+        "uid": "div236881",
+        "id": "236881",
+        "treeIdPath": null,
+        "label": "Женщины",
+        "url": null,
+        "sport": null,
+        "region": "Women",
+        "childs": [
+            {
+                "uid": "div-382",
+                "id": "-382",
+                "treeIdPath": null,
+                "label": "Чемпионат мира",
+                "url": "/su/stats/popular/5/-382",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div868",
+                "id": "868",
+                "treeIdPath": null,
+                "label": "Чемпионат Европы",
+                "url": "/su/stats/popular/5/868",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5050",
+                "id": "5050",
+                "treeIdPath": null,
+                "label": "Кубок Америки",
+                "url": "/su/stats/popular/5/5050",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div774",
+                "id": "774",
+                "treeIdPath": null,
+                "label": "Олимпийские игры",
+                "url": "/su/stats/popular/5/774",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div715",
+                "id": "715",
+                "treeIdPath": null,
+                "label": "Лига чемпионов УЕФА",
+                "url": "/su/stats/popular/5/715",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div7002",
+                "id": "7002",
+                "treeIdPath": null,
+                "label": "Кубок Европы УЕФА",
+                "url": "/su/stats/popular/5/7002",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3328",
+                "id": "3328",
+                "treeIdPath": null,
+                "label": "Кубок Либертадорес",
+                "url": "/su/stats/popular/5/3328",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div833",
+                "id": "833",
+                "treeIdPath": null,
+                "label": "Чемпионат мира до 20 лет",
+                "url": "/su/stats/popular/5/833",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6936",
+                "id": "6936",
+                "treeIdPath": null,
+                "label": "Лига наций УЕФА",
+                "url": "/su/stats/popular/5/6936",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div711",
+                "id": "711",
+                "treeIdPath": null,
+                "label": "Чемпионат Европы до 19 лет",
+                "url": "/su/stats/popular/5/711",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5670",
+                "id": "5670",
+                "treeIdPath": null,
+                "label": "Азиатские игры",
+                "url": "/su/stats/popular/5/5670",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div4658",
+                "id": "4658",
+                "treeIdPath": null,
+                "label": "Чемпионат Южной Америки до 20 лет",
+                "url": "/su/stats/popular/5/4658",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2782",
+                "id": "2782",
+                "treeIdPath": null,
+                "label": "Чемпионат CONCACAF",
+                "url": "/su/stats/popular/5/2782",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div6350",
+                "id": "6350",
+                "treeIdPath": null,
+                "label": "Панамериканские игры",
+                "url": "/su/stats/popular/5/6350",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2158",
+                "id": "2158",
+                "treeIdPath": null,
+                "label": "Кубок Африки",
+                "url": "/su/stats/popular/5/2158",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div548",
+                "id": "548",
+                "treeIdPath": null,
+                "label": "Россия. Суперлига",
+                "url": "/su/stats/popular/5/548",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div571",
+                "id": "571",
+                "treeIdPath": null,
+                "label": "Россия. Кубок",
+                "url": "/su/stats/popular/5/571",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div5767",
+                "id": "5767",
+                "treeIdPath": null,
+                "label": "Чемпионат COSAFA",
+                "url": "/su/stats/popular/5/5767",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div990",
+                "id": "990",
+                "treeIdPath": null,
+                "label": "Англия. Суперлига",
+                "url": "/su/stats/popular/5/990",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2935",
+                "id": "2935",
+                "treeIdPath": null,
+                "label": "Англия. Кубок",
+                "url": "/su/stats/popular/5/2935",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3022",
+                "id": "3022",
+                "treeIdPath": null,
+                "label": "Англия. Кубок Суперлиги",
+                "url": "/su/stats/popular/5/3022",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1032",
+                "id": "1032",
+                "treeIdPath": null,
+                "label": "Германия. Бундеслига",
+                "url": "/su/stats/popular/5/1032",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div1054",
+                "id": "1054",
+                "treeIdPath": null,
+                "label": "Германия. Кубок",
+                "url": "/su/stats/popular/5/1054",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2959",
+                "id": "2959",
+                "treeIdPath": null,
+                "label": "Испания. Кубок",
+                "url": "/su/stats/popular/5/2959",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2919",
+                "id": "2919",
+                "treeIdPath": null,
+                "label": "Бельгия. Суперлига",
+                "url": "/su/stats/popular/5/2919",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3263",
+                "id": "3263",
+                "treeIdPath": null,
+                "label": "Бельгия. Кубок",
+                "url": "/su/stats/popular/5/3263",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div4600",
+                "id": "4600",
+                "treeIdPath": null,
+                "label": "Мексика. Примера Дивизион",
+                "url": "/su/stats/popular/5/4600",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2918",
+                "id": "2918",
+                "treeIdPath": null,
+                "label": "Нидерланды. Эредивизи",
+                "url": "/su/stats/popular/5/2918",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2934",
+                "id": "2934",
+                "treeIdPath": null,
+                "label": "Нидерланды. Кубок",
+                "url": "/su/stats/popular/5/2934",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div604",
+                "id": "604",
+                "treeIdPath": null,
+                "label": "Испания. Примера Дивизион",
+                "url": "/su/stats/popular/5/604",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div593",
+                "id": "593",
+                "treeIdPath": null,
+                "label": "Норвегия. Топпсериен",
+                "url": "/su/stats/popular/5/593",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3002",
+                "id": "3002",
+                "treeIdPath": null,
+                "label": "Норвегия. Кубок",
+                "url": "/su/stats/popular/5/3002",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div594",
+                "id": "594",
+                "treeIdPath": null,
+                "label": "Швеция. Аллсвенскан",
+                "url": "/su/stats/popular/5/594",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2943",
+                "id": "2943",
+                "treeIdPath": null,
+                "label": "Швеция. Кубок",
+                "url": "/su/stats/popular/5/2943",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div3342",
+                "id": "3342",
+                "treeIdPath": null,
+                "label": "Япония. Кубок Императрицы",
+                "url": "/su/stats/popular/5/3342",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2954",
+                "id": "2954",
+                "treeIdPath": null,
+                "label": "Япония. Кубок Надэсико лиги. Дивизион 1",
+                "url": "/su/stats/popular/5/2954",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div2878",
+                "id": "2878",
+                "treeIdPath": null,
+                "label": "США. Национальная лига",
+                "url": "/su/stats/popular/5/2878",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div942",
+                "id": "942",
+                "treeIdPath": null,
+                "label": "Австралия. A-лига",
+                "url": "/su/stats/popular/5/942",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            },
+            {
+                "uid": "div4832",
+                "id": "4832",
+                "treeIdPath": null,
+                "label": "Кубок Азии",
+                "url": "/su/stats/popular/5/4832",
+                "sport": null,
+                "region": null,
+                "sportId": "5",
+                "contentType": "HTML"
+            }
+        ],
+        "hasChilds": true
+    }
+]

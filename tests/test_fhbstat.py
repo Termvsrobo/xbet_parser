@@ -395,6 +395,10 @@ def test_user_filters():
             'https://fhbstat.com/hockey_24?1=4&2=04&3=2026&50=1.',
             Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
         ),
+        (
+            'https://fhbstat.com/football_60?1=16&2=02&3=2026',
+            Path(__file__).parent / Path('data') / Path('download_filters.json')
+        ),
     ]
 )
 @pytest.mark.asyncio
@@ -443,3 +447,39 @@ async def test_get_db():
     fhbstat_parser.password = settings.TEST_FHBSTAT_PASSWORD
     response = await fhbstat_parser.get_db()
     assert not response.empty
+
+
+def get_total_db_files():
+    files_dir = Path(__file__).parent.parent / Path('files')
+    return [file.name for file in files_dir.glob('*_total_db.xlsx')]
+
+
+@pytest.mark.parametrize(
+    'filename',
+    # get_total_db_files()
+    (
+        # 'football_total_db_Италия.xlsx',
+        # 'football_total_db_Боливия.xlsx',
+        'football_60_total_db.xlsx',
+    )
+)
+def test_move_names(filename):
+    files_dir = Path(__file__).parent.parent / Path('files')
+    new_files_dir = files_dir / Path('new')
+    new_files_dir.mkdir(exist_ok=True)
+    test_df = pd.read_excel(
+        files_dir / Path(filename),
+        sheet_name='Sheet1',
+        dtype={
+            '6': str,
+            '7': str,
+            '8': str
+        }
+    )
+
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+
+    result_df = fhbstat_parser.move_name_columns(test_df)
+    assert not result_df.empty
+    result_df.to_excel(new_files_dir / Path(f'new_{filename}'))
