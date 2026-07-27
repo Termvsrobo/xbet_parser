@@ -16,8 +16,8 @@ def test_create_excel_template():
 
     now = datetime.now()
 
-    person_info = {'address': u'福建行中书省福宁州傲龙山庄', 'name': u'龙傲天', 'fm': 178, 'date': now}
-    person_info2 = {'address': u'Somewhere over the rainbow', 'name': u'Hello Wizard', 'fm': 156, 'date': now}
+    person_info = {'address': '福建行中书省福宁州傲龙山庄', 'name': '龙傲天', 'fm': 178, 'date': now}
+    person_info2 = {'address': 'Somewhere over the rainbow', 'name': 'Hello Wizard', 'fm': 156, 'date': now}
     rows = [
         ['1', '1', '1', '1', '1', '1', '1', '1',],
         ['1', '1', '1', '1', '1', '1', '1', '1',],
@@ -30,8 +30,8 @@ def test_create_excel_template():
     ]
     person_info['rows'] = rows
     person_info2['rows'] = rows
-    payload0 = {'tpl_name': 'cn', 'sheet_name': u'表',  'ctx': person_info}
-    payload1 = {'tpl_name': 'en', 'sheet_name': u'form', 'ctx': person_info2}
+    payload0 = {'tpl_name': 'cn', 'sheet_name': '表', 'ctx': person_info}
+    payload1 = {'tpl_name': 'en', 'sheet_name': 'form', 'ctx': person_info2}
     payload2 = {'tpl_idx': 2, 'ctx': person_info2}
     payloads = [payload0, payload1, payload2]
     writer.render_book2(payloads=payloads)
@@ -65,9 +65,9 @@ def test_fill_excel_template_from_df(source_filename, template_name):
     writer = BookWriter(fname)
     writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 
-    data = dict()
+    data = {}
     data['rows'] = df.to_dict('records')
-    payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика',  'ctx': data}
+    payload0 = {'tpl_idx': 1, 'sheet_name': 'Статистика', 'ctx': data}
 
     payloads = [payload0]
     writer.render_book2(payloads=payloads)

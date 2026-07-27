@@ -42,7 +42,7 @@ def test_group_rows():
 
         data = np.array(df[df['Double'] is True].index.values)
         ddiff = np.diff(data)
-        subArrays = np.split(data, np.where(ddiff != 1)[0]+1)
+        subArrays = np.split(data, np.where(ddiff != 1)[0] + 1)
 
         df.to_excel(writer, index=False, columns=columns)
         workbook = writer.book

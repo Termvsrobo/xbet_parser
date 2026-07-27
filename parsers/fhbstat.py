@@ -11,20 +11,27 @@ from enum import IntEnum
 from functools import partial
 from itertools import count
 from pathlib import Path
-from typing import Annotated, Dict, List, Literal, Optional, Union
-from urllib.parse import (parse_qs, unquote, urlencode, urljoin, urlparse,
-                          urlunparse)
+from typing import Annotated, Literal
+from urllib.parse import parse_qs, unquote, urlencode, urljoin, urlparse, urlunparse
 
 import httpx
 import numpy as np
 import pandas as pd
 import pycountry as pc
+from aiopath import AsyncPath
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from openpyxl.styles import Border, Side
 from openpyxl.worksheet.cell_range import CellRange
-from pydantic import (BaseModel, Discriminator, Field, PositiveInt, RootModel,
-                      Tag, TypeAdapter)
+from pydantic import (
+    BaseModel,
+    Discriminator,
+    Field,
+    PositiveInt,
+    RootModel,
+    Tag,
+    TypeAdapter,
+)
 from tqdm import tqdm
 from xlsxtpl.writerx import BookWriter
 
@@ -51,9 +58,9 @@ def filter_type_discriminator(v):
 class BaseFilterField(BaseModel):
     filter_value: str
     column: int
-    priority: Optional[PositiveInt] = None
+    priority: PositiveInt | None = None
 
-    def get_value(self, value, filter_value: Optional[str] = None):
+    def get_value(self, value, filter_value: str | None = None):
         return value
 
     def next_value(self, value):
@@ -68,9 +75,9 @@ class BaseFilterField(BaseModel):
 
 class FloatField(BaseFilterField):
     type: Literal[FieldType.FLOAT]
-    filter_value: Optional[str] = '0.1'
+    filter_value: str | None = '0.1'
 
-    def get_value(self, value, filter_value: Optional[str] = None):
+    def get_value(self, value, filter_value: str | None = None):
         _filter_value = filter_value or self.filter_value
         exp = max(Decimal(_filter_value).as_tuple().exponent * -1, 1)
         adjust_value = 10 ** (-1 * (exp + 2))
@@ -89,9 +96,9 @@ class FloatField(BaseFilterField):
 
 class TimeField(BaseFilterField):
     type: Literal[FieldType.TIME]
-    filter_value: Optional[str] = '00:00'
+    filter_value: str | None = '00:00'
 
-    def get_value(self, value, filter_value: Optional[str] = None):
+    def get_value(self, value, filter_value: str | None = None):
         _filter_value = filter_value or self.filter_value
         result = ''
         if ':' not in _filter_value:
@@ -113,12 +120,7 @@ class BoolField(BaseFilterField):
 
 
 TypedField = Annotated[
-    Union[
-        Annotated[BoolField, Tag(FieldType.BOOL)],
-        Annotated[StrField, Tag(FieldType.STR)],
-        Annotated[FloatField, Tag(FieldType.FLOAT)],
-        Annotated[TimeField, Tag(FieldType.TIME)]
-    ],
+    Annotated[BoolField, Tag(FieldType.BOOL)] | Annotated[StrField, Tag(FieldType.STR)] | Annotated[FloatField, Tag(FieldType.FLOAT)] | Annotated[TimeField, Tag(FieldType.TIME)],
     Discriminator(filter_type_discriminator)
 ]
 
@@ -127,11 +129,11 @@ ta = TypeAdapter(TypedField)
 
 class FHBStatFilter(BaseModel):
     filter_id: PositiveInt
-    filters: List[TypedField]
+    filters: list[TypedField]
 
 
 class Filters(RootModel):
-    root: Optional[List[FHBStatFilter]] = Field(default_factory=list)
+    root: list[FHBStatFilter] | None = Field(default_factory=list)
 
 
 class FHBParser(Parser):
@@ -143,24 +145,20 @@ class FHBParser(Parser):
     digits_columns_start: int = 25
     enable_passability: bool
     evaluate_passability: bool
-    templates: Dict
-    desc_dict: Dict = {
-        'м_2_топ': 'ТОП Лиги',
-        'м_3_средн': 'Средние лиги',
-        'м_4_низш': 'Низшие лиги'
-    }
+    templates: dict
+    desc_dict: dict
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._user_agent = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
+        self._user_agent = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'
         self._email = None
         self._password = None
         self._url = 'https://fhbstat.com'
-        self.target_urls: Optional[defaultdict] = defaultdict(str)
+        self.target_urls: defaultdict | None = defaultdict(str)
         self.file_name: str = ''
         self.from_time: str = ''
         self.to_time: str = ''
-        self.user_filters: Optional[Filters] = Filters()
+        self.user_filters: Filters | None = Filters()
         self._min_count_matches: int = 1
         self.enable_passability = False
         self.evaluate_passability = False
@@ -173,13 +171,18 @@ class FHBParser(Parser):
             '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
             '/football_60': ('templates.xlsx', 'Футбол 60', 6),
         }
+        self.desc_dict = {
+            'м_2_топ': 'ТОП Лиги',
+            'м_3_средн': 'Средние лиги',
+            'м_4_низш': 'Низшие лиги'
+        }
 
     @property
     def min_count_matches(self):
         return int(self._min_count_matches)
 
     @property
-    def templates(self) -> Dict:
+    def templates(self) -> dict:
         return self._templates
 
     @min_count_matches.setter
@@ -228,20 +231,20 @@ class FHBParser(Parser):
     def get_filter_id(self):
         result = 1
         if self.user_filters.root:
-            last_id = max(map(lambda x: x.filter_id, self.user_filters.root))
+            last_id = max(x.filter_id for x in self.user_filters.root)
             result = last_id + 1
         return result
 
     def add_user_filter(self, column, filter_value=None, priority=None, filter_id=None):
         exist_filter = next(
-            filter(lambda x: getattr(x, 'filter_id') == filter_id, self.user_filters.root),
+            filter(lambda x: x.filter_id == filter_id, self.user_filters.root),
             None
         )
-        filter_data_dict = dict(
-            column=column,
-            priority=priority,
-            type=self.get_field_type(column)
-        )
+        filter_data_dict = {
+            'column': column,
+            'priority': priority,
+            'type': self.get_field_type(column)
+        }
         if filter_value:
             filter_data_dict['filter_value'] = filter_value
         if not exist_filter:
@@ -299,11 +302,12 @@ class FHBParser(Parser):
 
     async def login(self, client: httpx.AsyncClient):
         self.status = 'Логинимся'
-        cookies_file = Path('cookies.json')
+        cookies_file = AsyncPath('cookies.json')
         cookies = {}
-        if cookies_file.exists():
-            with cookies_file.open() as f:
-                cookies = json.load(f)
+        if await cookies_file.exists():
+            async with cookies_file.open(encoding='utf8', mode='r') as f:
+                json_content = await f.read()
+                cookies = json.loads(json_content)
         response = await client.post(
             'https://fhbstat.com/авторизация',
             data={
@@ -312,7 +316,7 @@ class FHBParser(Parser):
                 'posts[value][пароль]': self.password,
                 'posts[location]': 'https://fhbstat.com/авторизация',
             },
-            cookies=cookies,
+            cookies=cookies if cookies else None,
         )
         assert response.status_code == 200, 'Не удалось авторизоваться на сайте fhbstat.com'
         try:
@@ -324,8 +328,9 @@ class FHBParser(Parser):
                 self.status = json_data['success']['error']
                 return False
             else:
-                with cookies_file.open('w') as f:
-                    json.dump(dict(client.cookies), f)
+                async with cookies_file.open('w', encoding='utf8') as f:
+                    json_content = json.dumps(dict(client.cookies))
+                    await f.write(json_content)
         return True
 
     async def logout(self, client: httpx.AsyncClient):
@@ -403,9 +408,9 @@ class FHBParser(Parser):
                 writer = BookWriter(fname)
                 writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 
-                data = dict()
+                data = {}
                 data['rows'] = df.to_dict('records')
-                payload0 = {'tpl_idx': tpl_id, 'sheet_name': sheet_name,  'ctx': data}
+                payload0 = {'tpl_idx': tpl_id, 'sheet_name': sheet_name, 'ctx': data}
 
                 payloads = [payload0]
                 writer.render_book2(payloads=payloads)
@@ -417,7 +422,7 @@ class FHBParser(Parser):
                 split_column = None
                 link_column = None
                 for i, value in enumerate(sheet.values):
-                    if all(map(lambda x: x is None, value)):
+                    if all(x is None for x in value):
                         continue
                     link_name = 'ссылка'.upper()
                     if link_name in value:
@@ -434,12 +439,12 @@ class FHBParser(Parser):
                     delta = 2
                 columns_by_number = list(
                     filter(
-                        lambda x: sheet.cell(start_row-delta, x).value in self.get_columns_by_target(target_path),
+                        lambda x: sheet.cell(start_row - delta, x).value in self.get_columns_by_target(target_path),
                         range(1, link_column)
                     )
                 )
                 _10 = start_column
-                for i in filter(lambda x: sheet.cell(start_row-delta, x).value in (10,), range(1, link_column)):
+                for i in filter(lambda x: sheet.cell(start_row - delta, x).value in (10,), range(1, link_column)):
                     _10 = i
 
                 max_rows = start_row
@@ -513,7 +518,7 @@ class FHBParser(Parser):
                             ])
                             sum_count_matches = (
                                 f'{sheet.cell(row - len(self.user_filters.root), split_column).coordinate}:'
-                                f'{sheet.cell(row-1, split_column).coordinate}'
+                                f'{sheet.cell(row - 1, split_column).coordinate}'
                             )
                             sheet.cell(row, fn_col).value = (
                                 f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),2)'
@@ -533,7 +538,7 @@ class FHBParser(Parser):
                             ])
                             sum_count_matches = (
                                 f'{sheet.cell(row - len(self.user_filters.root), split_column).coordinate}:'
-                                f'{sheet.cell(row-1, split_column).coordinate}'
+                                f'{sheet.cell(row - 1, split_column).coordinate}'
                             )
                             sheet.cell(row, fn_col).value = (
                                 f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),1)'
@@ -566,29 +571,23 @@ class FHBParser(Parser):
         )
         if first_data_row:
             first_data_index = table_rows.index(first_data_row)
-            names = list(
-                map(
-                    lambda x: x.text,
-                    filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)
-                )
-            )
+            names = [x.text for x in filter(lambda td: td != '\n' and td.text != '', table_rows[first_data_index - 1].contents)]
         return table_rows, first_data_index, names
 
     @classmethod
     def parse_head_table(cls, content):
         table_rows, first_data_index, names = cls.get_head_data(content)
         if first_data_index:
-            data_rows = table_rows[3:4]
-            data_list = list()
+            data_rows = table_rows[3:5]
+            data_list = []
             key_name = 'data-formula'
             for data in data_rows:
-                data_row = dict()
+                data_row = {}
                 for td in data.contents:
-                    if td != '\n':
-                        if key_name in td.attrs:
-                            key = td.attrs.get(key_name)
-                            value = td.text
-                            data_row[key] = float(value) if value else np.nan
+                    if td != '\n' and key_name in td.attrs:
+                        key = td.attrs.get(key_name)
+                        value = td.text
+                        data_row[key] = float(value) if value else np.nan
                 if data_row:
                     data_list.append(data_row)
             df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
@@ -670,29 +669,28 @@ class FHBParser(Parser):
         return head_df
 
     @classmethod
-    def parse_content(cls, content):
+    def parse_body_table(cls, content):
         table_rows, first_data_index, names = cls.get_head_data(content)
         if first_data_index:
             data_rows = table_rows[first_data_index:]
-            data_list = list()
+            data_list = []
             key_name = 'data-td'
             for data in data_rows:
-                data_row = dict()
+                data_row = {}
                 for td in data.contents:
-                    if td != '\n':
-                        if key_name in td.attrs:
-                            key = td.attrs.get(key_name)
-                            value = td.text
-                            if value:
-                                try:
-                                    if value.isnumeric():
-                                        data_row[key] = int(value)
-                                    else:
-                                        data_row[key] = float(value)
-                                except ValueError:
-                                    data_row[key] = value
-                            else:
-                                data_row[key] = np.nan
+                    if td != '\n' and key_name in td.attrs:
+                        key = td.attrs.get(key_name)
+                        value = td.text
+                        if value:
+                            try:
+                                if value.isnumeric():
+                                    data_row[key] = int(value)
+                                else:
+                                    data_row[key] = float(value)
+                            except ValueError:
+                                data_row[key] = value
+                        else:
+                            data_row[key] = np.nan
                 _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
                 try:
                     _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
@@ -765,7 +763,7 @@ class FHBParser(Parser):
         params,
         fragment,
         target_path: str
-    ) -> Dict:
+    ) -> dict:
         page_url = urlunparse((
             scheme, domain, path, params, urlencode(filters_data), fragment
         ))
@@ -786,7 +784,7 @@ class FHBParser(Parser):
         await page.goto(page_url)
         await page.wait_for_load_state()
         page_content = await page.content()
-        df_match = self.parse_content(page_content)
+        df_match = self.parse_body_table(page_content)
         if not df_match.empty:
             df_match = df_match.loc[
                 df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
@@ -796,9 +794,10 @@ class FHBParser(Parser):
         else:
             head_df = self.parse_head_table(page_content)
         await page.close()
+        _digits_columns_start = self.digits_columns_start if target_path != '/football_60' else 20
         columns = list(
             filter(
-                lambda x: int(x) >= self.digits_columns_start,
+                lambda x: int(x) >= _digits_columns_start,
                 head_df.columns[:-1]
             )
         )
@@ -820,12 +819,12 @@ class FHBParser(Parser):
 
         return copy_data_match
 
-    def get_last_page(self, content) -> Optional[int]:
+    def get_last_page(self, content) -> int | None:
         last_page = None
         soup = BeautifulSoup(content, 'lxml')
         page_items = soup.find_all(lambda tag: tag.name == 'a' and 'data-pagination' in tag.attrs)
         if page_items:
-            last_page = max(map(lambda x: int(x.attrs.get('data-pagination')), page_items))
+            last_page = max(int(x.attrs.get('data-pagination')) for x in page_items)
         return last_page
 
     async def get_db(self):
@@ -861,16 +860,16 @@ class FHBParser(Parser):
                             )
                             if response.status_code == 200:
                                 last_page = self.get_last_page(response.content)
-                                _df = self.parse_content(response.content)
+                                _df = self.parse_body_table(response.content)
                                 if not _df.empty:
                                     dfs.append(_df)
                             if last_page:
                                 for page in tqdm(range(2, last_page + 1), position=1, leave=False):
                                     response = await logged_client.get(
                                         _target_url,
-                                        params={**query_params, **{'page': page}}
+                                        params={**query_params, 'page': page}
                                     )
-                                    _df = self.parse_content(response.content)
+                                    _df = self.parse_body_table(response.content)
                                     if not _df.empty:
                                         dfs.append(_df)
                         if dfs:
@@ -892,182 +891,173 @@ class FHBParser(Parser):
                 'User-Agent': self._user_agent
             },
             transport=transport,
-        ) as client:
-            async with self.page_client(client=client) as logged_client:
-                if logged_client is not None:
-                    dfs = []
-                    result_df_list = []
-                    copy_target_urls = self.target_urls.copy()
-                    target_path = None
-                    for target_url in copy_target_urls.values():
-                        self.status = f'Обрабатываем ссылку {target_url}'
-                        _target_url, query_params, target_path = self.get_url_params(target_url)
-                        if 'page' not in query_params:
-                            for page_number in count(1):
-                                if page_number == 1:
-                                    response = await logged_client.get(
-                                        _target_url,
-                                        params=query_params
-                                    )
-                                else:
-                                    response = await logged_client.get(
-                                        _target_url,
-                                        params={'page': page_number, **query_params}
-                                    )
-                                if response.status_code == 200:
-                                    try:
-                                        df = self.parse_content(response.content)
-                                        df = self.filter_df_by_time(df, self.from_time, self.to_time)
-                                    except Exception:
-                                        self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
-                                        self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
-                                        break
-                                    else:
-                                        if not df.empty:
-                                            dfs.append(df)
-                                        else:
-                                            break
-                        else:
-                            response = await logged_client.get(
-                                _target_url,
-                                params=query_params
-                            )
+        ) as client, self.page_client(client=client) as logged_client:
+            if logged_client is not None:
+                dfs = []
+                result_df_list = []
+                copy_target_urls = self.target_urls.copy()
+                target_path = None
+                for target_url in copy_target_urls.values():
+                    self.status = f'Обрабатываем ссылку {target_url}'
+                    _target_url, query_params, target_path = self.get_url_params(target_url)
+                    if 'page' not in query_params:
+                        for page_number in count(1):
+                            if page_number == 1:
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params=query_params
+                                )
+                            else:
+                                response = await logged_client.get(
+                                    _target_url,
+                                    params={'page': page_number, **query_params}
+                                )
                             if response.status_code == 200:
                                 try:
-                                    df = self.parse_content(response.content)
+                                    df = self.parse_body_table(response.content)
                                     df = self.filter_df_by_time(df, self.from_time, self.to_time)
                                 except Exception:
                                     self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
                                     self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
+                                    break
                                 else:
                                     if not df.empty:
                                         dfs.append(df)
-                        future_data = pd.DataFrame()
-                        if dfs:
-                            future_data = pd.concat(dfs)
-                        data_records = future_data.to_dict(orient='records')
-                        self.count_links = len(data_records)
-                        for index, data_match in enumerate(self.tqdm(data_records), 1):
-                            local_match_result_df = []
-                            for user_filter in self.user_filters.root:
-                                filters_data = {}
-                                for _filter in user_filter.filters:
-                                    value_match = data_match.get(str(_filter.column))
-                                    filters_data[str(_filter.column)] = _filter.get_value(value_match)
-                                for kk in self.desc_dict.keys():
-                                    if kk in query_params:
-                                        filters_data[kk] = '1'
-                                scheme, domain, path, params, _, fragment = urlparse(_target_url)
-                                priority_queues = sorted(
-                                    filter(
-                                        lambda x: x.priority is not None,
-                                        user_filter.filters
-                                    ),
-                                    key=lambda x: x.priority
-                                )
-                                if priority_queues:
-                                    _filters_data = filters_data.copy()
-                                    copy_data_match = dict()
-                                    for priority_filter in priority_queues:
-                                        value_match = data_match.get(str(priority_filter.column))
-                                        data_exist = False
-                                        for next_value in priority_filter.next_value(value_match):
-                                            _filters_data[str(priority_filter.column)] = next_value
-                                            copy_data_match = await self._parse_page_by_filter(
-                                                logged_client,
-                                                browser,
-                                                index,
-                                                data_match,
-                                                _filters_data,
-                                                scheme,
-                                                domain,
-                                                path,
-                                                params,
-                                                fragment,
-                                                target_path
-                                            )
-                                            if copy_data_match['Количество матчей'] >= self.min_count_matches:
-                                                local_match_result_df.append(copy_data_match)
-                                                data_exist = True
-                                                break
-                                        if data_exist:
-                                            break
-                                    if not data_exist:
-                                        if copy_data_match.get('Количество матчей'):
+                                    else:
+                                        break
+                    else:
+                        response = await logged_client.get(
+                            _target_url,
+                            params=query_params
+                        )
+                        if response.status_code == 200:
+                            try:
+                                df = self.parse_body_table(response.content)
+                                df = self.filter_df_by_time(df, self.from_time, self.to_time)
+                            except Exception:
+                                self.logger.exception('Ошибка сбора данных. Возможно не оплачен тариф.')
+                                self.status = 'Ошибка сбора данных. Возможно не оплачен тариф.'
+                            else:
+                                if not df.empty:
+                                    dfs.append(df)
+                    future_data = pd.DataFrame()
+                    if dfs:
+                        future_data = pd.concat(dfs)
+                    data_records = future_data.to_dict(orient='records')
+                    self.count_links = len(data_records)
+                    for index, data_match in enumerate(self.tqdm(data_records), 1):
+                        local_match_result_df = []
+                        for user_filter in self.user_filters.root:
+                            filters_data = {}
+                            for _filter in user_filter.filters:
+                                value_match = data_match.get(str(_filter.column))
+                                filters_data[str(_filter.column)] = _filter.get_value(value_match)
+                            for kk in self.desc_dict:
+                                if kk in query_params:
+                                    filters_data[kk] = '1'
+                            scheme, domain, path, params, _, fragment = urlparse(_target_url)
+                            priority_queues = sorted(
+                                filter(
+                                    lambda x: x.priority is not None,
+                                    user_filter.filters
+                                ),
+                                key=lambda x: x.priority
+                            )
+                            if priority_queues:
+                                _filters_data = filters_data.copy()
+                                copy_data_match = {}
+                                for priority_filter in priority_queues:
+                                    value_match = data_match.get(str(priority_filter.column))
+                                    data_exist = False
+                                    for next_value in priority_filter.next_value(value_match):
+                                        _filters_data[str(priority_filter.column)] = next_value
+                                        copy_data_match = await self._parse_page_by_filter(
+                                            logged_client,
+                                            browser,
+                                            index,
+                                            data_match,
+                                            _filters_data,
+                                            scheme,
+                                            domain,
+                                            path,
+                                            params,
+                                            fragment,
+                                            target_path
+                                        )
+                                        if copy_data_match['Количество матчей'] >= self.min_count_matches:
                                             local_match_result_df.append(copy_data_match)
-                                        else:
-                                            local_match_result_df.append(
-                                                {
-                                                    **{str(i): np.nan for i in self.columns},
-                                                    **{
-                                                        'index': index,
-                                                        'Количество матчей': 0,
-                                                        'url': unquote(
-                                                            urlunparse((
-                                                                scheme,
-                                                                domain,
-                                                                path,
-                                                                params,
-                                                                urlencode(filters_data),
-                                                                fragment
-                                                            ))
-                                                        )
-                                                    },
-                                                    **{str(i): data_match.get(str(i), np.nan) for i in range(11)}
-                                                }
-                                            )
-                                else:
-                                    copy_data_match = await self._parse_page_by_filter(
-                                        logged_client,
-                                        browser,
-                                        index,
-                                        data_match,
-                                        filters_data,
-                                        scheme,
-                                        domain,
-                                        path,
-                                        params,
-                                        fragment,
-                                        target_path
-                                    )
-                                    local_match_result_df.append(copy_data_match)
-                            result_df_list += local_match_result_df
+                                            data_exist = True
+                                            break
+                                    if data_exist:
+                                        break
+                                if not data_exist:
+                                    if copy_data_match.get('Количество матчей'):
+                                        local_match_result_df.append(copy_data_match)
+                                    else:
+                                        local_match_result_df.append(
+                                            {
+                                                **{str(i): np.nan for i in self.columns},
+                                                'index': index,
+                                                'Количество матчей': 0,
+                                                'url': unquote(
+                                                    urlunparse((
+                                                        scheme,
+                                                        domain,
+                                                        path,
+                                                        params,
+                                                        urlencode(filters_data),
+                                                        fragment
+                                                    ))
+                                                ),
+                                                **{str(i): data_match.get(str(i), np.nan) for i in range(11)}
+                                            }
+                                        )
+                            else:
+                                copy_data_match = await self._parse_page_by_filter(
+                                    logged_client,
+                                    browser,
+                                    index,
+                                    data_match,
+                                    filters_data,
+                                    scheme,
+                                    domain,
+                                    path,
+                                    params,
+                                    fragment,
+                                    target_path
+                                )
+                                local_match_result_df.append(copy_data_match)
+                        result_df_list += local_match_result_df
+                        result_df_list.append({
+                            **{str(i): np.nan for i in self.columns},
+                            'index': index,
+                            'Количество матчей': '%'
+                        })
+                        result_df_list.append({
+                            **{
+                                str(i): data_match.get(str(i))
+                                for i in self.columns if i >= self.digits_columns_start
+                            },
+                            'index': index,
+                            'Количество матчей': 'кф'
+                        })
+                        result_df_list.append({
+                            **{str(i): np.nan for i in self.columns},
+                            'index': index,
+                            'Количество матчей': 'мо'
+                        })
+                        # Добавляем пустые строки
+                        for _ in range(self.count_empty_rows):
                             result_df_list.append({
                                 **{str(i): np.nan for i in self.columns},
-                                **{
-                                    'index': index,
-                                    'Количество матчей': '%'
-                                }
+                                'index': index
                             })
-                            result_df_list.append({
-                                **{
-                                    str(i): data_match.get(str(i))
-                                    for i in self.columns if i >= self.digits_columns_start
-                                },
-                                **{
-                                    'index': index,
-                                    'Количество матчей': 'кф'
-                                }
-                            })
-                            result_df_list.append({
-                                **{str(i): np.nan for i in self.columns},
-                                **{
-                                    'index': index,
-                                    'Количество матчей': 'мо'
-                                }
-                            })
-                            # Добавляем пустые строки
-                            for _ in range(self.count_empty_rows):
-                                result_df_list.append({
-                                    **{str(i): np.nan for i in self.columns},
-                                    **{'index': index}
-                                })
-                    self.status = 'Генерируем excel файл'
-                    result = await self.async_get_file_response(df_data=result_df_list, target_path=target_path)
-                    return result
+                self.status = 'Генерируем excel файл'
+                result = await self.async_get_file_response(df_data=result_df_list, target_path=target_path)
+                return result
 
     def move_name_columns(self, input_df: pd.DataFrame) -> pd.DataFrame:
-        def handler_column_8(row, config: Dict = None):
+        def handler_column_8(row, config: dict | None = None):
             from_column = config.get('from_column')
             result = row.get(from_column, '')
             rename_leagues = rename_leagues_country.get(row.get('7'), [])
@@ -1075,9 +1065,8 @@ class FHBParser(Parser):
                 result = rename_data.get('new_name', '')
             leagues = leagues_country.get(row.get('7'), [])
             leagues_lower = [league.lower() for league in leagues]
-            if pd.isna(result) or result.lower() not in leagues_lower:
-                if len(leagues) >= 1:
-                    result = leagues[0]  # возможно будет другая логика
+            if (pd.isna(result) or result.lower() not in leagues_lower) and len(leagues) >= 1:
+                result = leagues[0]  # возможно будет другая логика
             return result
 
         russian = gettext.translation("iso3166-1", pc.LOCALES_DIR, languages=["ru"])
@@ -1107,7 +1096,7 @@ class FHBParser(Parser):
             {
                 'from_column': '7',
                 'to_column': 'from_7',
-                'words': [country for country in leagues_country.keys()],
+                'words': [country for country in leagues_country],
                 'index': 'after',
                 'contains': False,
                 'exclude': True,

@@ -1,5 +1,4 @@
 from threading import Event
-from typing import Optional
 
 from fastapi.responses import RedirectResponse
 from nicegui import app, ui
@@ -275,17 +274,13 @@ async def fhbstat_page():
     filters()
     ui.button('Очистить фильтр', on_click=clear_filters)
     with ui.input('Время с').bind_value(fhbstat_parser, 'from_time') as from_time:
-        with ui.menu().props('no-parent-event') as menu:
-            with ui.time().props('format24h').bind_value(from_time):
-                with ui.row().classes('justify-end'):
-                    ui.button('Close', on_click=menu.close).props('flat')
+        with ui.menu().props('no-parent-event') as menu, ui.time().props('format24h').bind_value(from_time), ui.row().classes('justify-end'):
+            ui.button('Close', on_click=menu.close).props('flat')
         with from_time.add_slot('append'):
             ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     with ui.input('Время до').bind_value(fhbstat_parser, 'to_time') as to_time:
-        with ui.menu().props('no-parent-event') as menu:
-            with ui.time().props('format24h').bind_value(to_time):
-                with ui.row().classes('justify-end'):
-                    ui.button('Close', on_click=menu.close).props('flat')
+        with ui.menu().props('no-parent-event') as menu, ui.time().props('format24h').bind_value(to_time), ui.row().classes('justify-end'):
+            ui.button('Close', on_click=menu.close).props('flat')
         with to_time.add_slot('append'):
             ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     link()
@@ -326,7 +321,7 @@ async def table_data():
 
 
 @ui.page('/login')
-def login(redirect_to: str = '/') -> Optional[RedirectResponse]:
+def login(redirect_to: str = '/') -> RedirectResponse | None:
     def try_login() -> None:  # local function to avoid passing username and password as arguments
         if password.value == settings.ADMIN_PASSWORD and username.value == settings.ADMIN_USERNAME:
             app.storage.user.update({'username': username.value, 'authenticated': True})

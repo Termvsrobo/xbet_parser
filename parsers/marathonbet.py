@@ -25,7 +25,7 @@ def get_players_links(page_content):
 
 
 def parse(page_content, page_link):
-    df_data_dict = dict()
+    df_data_dict = {}
     soup = BeautifulSoup(page_content, 'html.parser')
     country_name = None
     league_name = None
@@ -112,7 +112,7 @@ def parse(page_content, page_link):
             ('_2X', f'{name_players[1]} (победа) или ничья'),
         ):
             element = results.find(
-                lambda tag: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
+                lambda tag, value=value: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
             )
             if element:
                 result_dict[key] = element.find_next_sibling(
@@ -144,7 +144,7 @@ def parse(page_content, page_link):
         ):
             for td in table:
                 _td = td.find(
-                    lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                    lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                 )
                 if _td:
                     head_starts_dict[key] = _td.find_next_sibling().span.text
@@ -189,7 +189,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -211,7 +211,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -233,7 +233,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -401,7 +401,7 @@ def parse(page_content, page_link):
                 ('goal_1_time_2X', f'{name_players[1]} (победа) или ничья'),
             ):
                 element = results_1_time.find(
-                    lambda tag: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
+                    lambda tag, value=value: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
                 )
                 if element:
                     times_dict[key] = element.find_next_sibling(
@@ -425,7 +425,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -452,7 +452,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -475,7 +475,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -497,7 +497,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -515,7 +515,7 @@ def parse(page_content, page_link):
                 ('goal_2_time_2X', f'{name_players[1]} (победа) или ничья'),
             ):
                 element = results_2_time.find(
-                    lambda tag: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
+                    lambda tag, value=value: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
                 )
                 if element:
                     times_dict[key] = element.find_next_sibling(
@@ -539,7 +539,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -566,7 +566,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -589,7 +589,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -611,7 +611,7 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -812,7 +812,7 @@ class MarathonbetParser(Parser):
                 self.count_links = len(players_links)
                 self.status = 'Собираем данные по каждому матчу'
                 for player_link in self.tqdm(players_links):
-                    df_data_dict = dict()
+                    df_data_dict = {}
                     attempt = 1
                     while attempt < 3:
                         try:

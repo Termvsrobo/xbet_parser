@@ -8,8 +8,7 @@ import pytest
 
 from base import BrowserManager
 from config import settings
-from parsers.fhbstat import (FHBParser, FHBStatFilter, FieldType, FloatField,
-                             TimeField)
+from parsers.fhbstat import FHBParser, FHBStatFilter, FieldType, FloatField, TimeField
 
 
 def test_page():
@@ -308,7 +307,7 @@ async def test_get_file_response_merge_cells(target, file_name):
 def test_fhbstat_filter():
     filter_instance = FHBStatFilter(
         filter_id=15,
-        filters=[dict(type=FieldType.FLOAT, filter_value='0.1', priority=1, column=22)]
+        filters=[{'type': FieldType.FLOAT, 'filter_value': '0.1', 'priority': 1, 'column': 22}]
     )
     assert filter_instance
     assert filter_instance.filter_id == 15
@@ -372,7 +371,7 @@ def test_user_filters():
             Path(__file__).parent / Path('data') / Path('download_filters.json')
         ),
         (
-            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',  # noqa:E501
+            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',
             Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json')
         ),
         (
@@ -396,8 +395,8 @@ def test_user_filters():
             Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
         ),
         (
-            'https://fhbstat.com/football_60?1=16&2=02&3=2026',
-            Path(__file__).parent / Path('data') / Path('download_filters.json')
+            'https://fhbstat.com/football_60?page=1',
+            Path(__file__).parent / Path('data') / Path('4. П1_(футбол_60_9).json')
         ),
     ]
 )
