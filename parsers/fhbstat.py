@@ -11,7 +11,7 @@ from enum import IntEnum
 from functools import partial
 from itertools import count
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 from urllib.parse import parse_qs, unquote, urlencode, urljoin, urlparse, urlunparse
 
 import httpx
@@ -146,7 +146,11 @@ class FHBParser(Parser):
     enable_passability: bool
     evaluate_passability: bool
     templates: dict
-    desc_dict: dict
+    desc_dict: ClassVar[dict[str, str]] = {
+        'м_2_топ': 'ТОП Лиги',
+        'м_3_средн': 'Средние лиги',
+        'м_4_низш': 'Низшие лиги'
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -170,11 +174,6 @@ class FHBParser(Parser):
             '/football_total': ('templates.xlsx', 'Футбол тотал', 4),
             '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
             '/football_60': ('templates.xlsx', 'Футбол 60', 6),
-        }
-        self.desc_dict = {
-            'м_2_топ': 'ТОП Лиги',
-            'м_3_средн': 'Средние лиги',
-            'м_4_низш': 'Низшие лиги'
         }
 
     @property
