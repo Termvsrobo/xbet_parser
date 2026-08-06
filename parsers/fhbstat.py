@@ -9,7 +9,7 @@ from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from enum import IntEnum
 from functools import partial
-from itertools import count
+from itertools import count, pairwise
 from pathlib import Path
 from typing import Annotated, ClassVar, Literal
 from urllib.parse import parse_qs, unquote, urlencode, urljoin, urlparse, urlunparse
@@ -175,6 +175,8 @@ class FHBParser(Parser):
             '/hockey_total': ('templates.xlsx', 'Хоккей тотал', 5),
             '/football_60': ('templates.xlsx', 'Футбол 60', 6),
         }
+        self.is_loading_data = False
+        self.table_df = pd.DataFrame()
 
     @property
     def min_count_matches(self):
@@ -522,10 +524,15 @@ class FHBParser(Parser):
                             sheet.cell(row, fn_col).value = (
                                 f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),2)'
                             )
-                        elif sheet.cell(row, split_column).value == 'мо':
+                        elif sheet.cell(row, split_column).value in ('мо', '_мо'):
                             sheet.cell(row, fn_col).value = (
                                 f'=ROUNDDOWN(({sheet.cell(row - 2, fn_col).coordinate}/100*'
                                 f'{sheet.cell(row - 1, fn_col).coordinate})-1,2)'
+                            )
+                        elif sheet.cell(row, split_column).value == '_%':
+                            _v = f'{sheet.cell(row - len(self.user_filters.root) - 4, fn_col).coordinate}:{sheet.cell(row - 5, fn_col).coordinate}'
+                            sheet.cell(row, fn_col).value = (
+                                f'=MIN({_v})'
                             )
 
                 for fn_col in columns_by_number:
@@ -542,6 +549,24 @@ class FHBParser(Parser):
                             sheet.cell(row, fn_col).value = (
                                 f'=ROUNDDOWN(SUM({average_columns})/SUM({sum_count_matches}),1)'
                             )
+
+                group_pair_columns = list(
+                    filter(
+                        lambda x: sheet.cell(start_row - delta, x).value in (11, 12),
+                        range(1, link_column)
+                    )
+                )
+                for fn_col_left, fn_col_right in pairwise(group_pair_columns):
+                    for row in range(start_row, max_rows + 1):
+                        if sheet.cell(row, split_column).value == '%':
+                            sheet.merge_cells(
+                                start_column=fn_col_left,
+                                end_column=fn_col_right,
+                                start_row=row + 1,
+                                end_row=row + 1
+                            )
+                            _v = f'{sheet.cell(row, fn_col_left).coordinate}:{sheet.cell(row, fn_col_right).coordinate}'
+                            sheet.cell(row + 1, fn_col_left).value = f'=SUM({_v})'
 
                 writer.save(self.path)
 
@@ -1045,12 +1070,34 @@ class FHBParser(Parser):
                             'index': index,
                             'Количество матчей': 'мо'
                         })
-                        # Добавляем пустые строки
-                        for _ in range(self.count_empty_rows):
-                            result_df_list.append({
-                                **{str(i): np.nan for i in self.columns},
-                                'index': index
-                            })
+                        # # Добавляем пустые строки
+                        # for _ in range(self.count_empty_rows):
+                        #     result_df_list.append({
+                        #         **{str(i): np.nan for i in self.columns},
+                        #         'index': index
+                        #     })
+                        result_df_list.append({
+                            **{str(i): np.nan for i in self.columns},
+                            'index': index
+                        })
+                        result_df_list.append({
+                            **{str(i): np.nan for i in self.columns},
+                            'index': index,
+                            'Количество матчей': '_%'
+                        })
+                        result_df_list.append({
+                            **{
+                                str(i): data_match.get(str(i))
+                                for i in self.columns if i >= self.digits_columns_start
+                            },
+                            'index': index,
+                            'Количество матчей': '_кф'
+                        })
+                        result_df_list.append({
+                            **{str(i): np.nan for i in self.columns},
+                            'index': index,
+                            'Количество матчей': '_мо'
+                        })
                 self.status = 'Генерируем excel файл'
                 result = await self.async_get_file_response(df_data=result_df_list, target_path=target_path)
                 return result
@@ -1131,3 +1178,28 @@ class FHBParser(Parser):
                     new_columns_order.insert(insert_index, data['to_column'])
         df = df.reindex(columns=new_columns_order)
         return df
+
+    def get_table_data(self):
+        from functools import reduce
+        self.is_loading_data = True
+        files = Path('files').glob('football*_total_db.xlsx')
+        df_list = [pd.read_excel(fname, engine='calamine') for fname in files]
+        df = reduce(
+            lambda left, right: pd.merge(
+                left,
+                right,
+                on=[str(col) for col in range(1, 11)],
+                how='outer',
+                sort=['dt'],
+                suffixes=('', '_right')
+            ),
+            df_list
+        )
+        drop_columns = [col for col in df.columns.tolist() if col.endswith('_right')]
+        df = df.drop(columns=drop_columns).head()
+        self.table_df = df
+        self.is_loading_data = False
+        return df
+
+    async def async_get_table_data(self):
+        return await to_thread(self.get_table_data)

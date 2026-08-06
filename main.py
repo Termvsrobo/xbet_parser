@@ -1,6 +1,7 @@
 from threading import Event
 
 from fastapi.responses import RedirectResponse
+from nicegui import Event as UIEvent
 from nicegui import app, ui
 from nicegui_tabulator import tabulator
 
@@ -293,31 +294,49 @@ async def fhbstat_page():
     ui.button('Загрузить фильтры из файла', on_click=upload())
 
 
+data_loaded = UIEvent()
+
+
 @ui.page('/table_data')
 async def table_data():
-    table_config = {
-        'data': [{'id': 1, 'name': 'test1', 'gc1': 15, 'gc2': 32}, {'id': 2, 'name': 'test2', 'gc1': 8, 'gc2': 25}],
-        'columns': [
-            {
-                'title': 'ID',
-                'field': 'id',
-                'hozAlign': 'center',
-                'headerHozAlign': 'center',
-                'columnHeaderVertAlign': 'bottom'
-            },
-            {'title': 'Name', 'field': 'name', 'hozAlign': 'center', 'headerHozAlign': 'center'},
-            {
-                'title': 'Group Columns',
-                'hozAlign': 'center',
-                'headerHozAlign': 'center',
-                'columns': [
-                    {'title': 'GC1', 'field': 'gc1', 'hozAlign': 'center', 'headerHozAlign': 'center'},
-                    {'title': 'GC2', 'field': 'gc2', 'hozAlign': 'center', 'headerHozAlign': 'center'},
-                ]
-            }
-        ]
-    }
-    tabulator(table_config)
+    async def show_data():
+        if not fhbstat_parser.is_loading_data:
+            await fhbstat_parser.async_get_table_data()
+            if not fhbstat_parser.table_df.empty:
+                data_loaded.emit(fhbstat_parser.table_df)
+
+    def _show(df):
+        tabulator.from_pandas(
+            df=df,
+            # options={'pagination': True, 'paginationSize': 5}
+        )
+
+    ui.button('Показать таблицу данных', on_click=show_data)
+    spinner = ui.spinner(size='xl').bind_visibility_from(fhbstat_parser, 'is_loading_data')
+    data_loaded.subscribe(_show)
+    # table_config = {
+    #     'data': [{'id': 1, 'name': 'test1', 'gc1': 15, 'gc2': 32}, {'id': 2, 'name': 'test2', 'gc1': 8, 'gc2': 25}],
+    #     'columns': [
+    #         {
+    #             'title': 'ID',
+    #             'field': 'id',
+    #             'hozAlign': 'center',
+    #             'headerHozAlign': 'center',
+    #             'columnHeaderVertAlign': 'bottom'
+    #         },
+    #         {'title': 'Name', 'field': 'name', 'hozAlign': 'center', 'headerHozAlign': 'center'},
+    #         {
+    #             'title': 'Group Columns',
+    #             'hozAlign': 'center',
+    #             'headerHozAlign': 'center',
+    #             'columns': [
+    #                 {'title': 'GC1', 'field': 'gc1', 'hozAlign': 'center', 'headerHozAlign': 'center'},
+    #                 {'title': 'GC2', 'field': 'gc2', 'hozAlign': 'center', 'headerHozAlign': 'center'},
+    #             ]
+    #         }
+    #     ]
+    # }
+    # tabulator(table_config)
 
 
 @ui.page('/login')

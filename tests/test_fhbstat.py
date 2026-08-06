@@ -237,7 +237,7 @@ async def test_get_file_response_merge_cells(target, file_name):
                     }
                 },
             )
-        for sym in ('%', 'кф', 'мо'):
+        for sym in ('%', 'кф', 'мо', np.nan, '_%', '_кф', '_мо'):
             data.append(
                 {
                     '1': np.nan,
@@ -264,32 +264,32 @@ async def test_get_file_response_merge_cells(target, file_name):
                     }
                 }
             )
-        for _ in range(fhbstat_parser.count_empty_rows):
-            data.append(
-                {
-                    '1': np.nan,
-                    '2': np.nan,
-                    '3': np.nan,
-                    '4': np.nan,
-                    '7': np.nan,
-                    '8': np.nan,
-                    '9': np.nan,
-                    '10': np.nan,
-                    'index': i,
-                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
-                    **{
-                        str(i): np.nan
-                        for i in range(
-                            fhbstat_parser.digits_columns_start,
-                            fhbstat_parser.count_columns
-                        )
-                    },
-                    **{
-                        str(column): np.nan
-                        for column in fhbstat_parser.get_columns_by_target(target)
-                    }
-                }
-            )
+        # for _ in range(fhbstat_parser.count_empty_rows):
+        #     data.append(
+        #         {
+        #             '1': np.nan,
+        #             '2': np.nan,
+        #             '3': np.nan,
+        #             '4': np.nan,
+        #             '7': np.nan,
+        #             '8': np.nan,
+        #             '9': np.nan,
+        #             '10': np.nan,
+        #             'index': i,
+        #             'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+        #             **{
+        #                 str(i): np.nan
+        #                 for i in range(
+        #                     fhbstat_parser.digits_columns_start,
+        #                     fhbstat_parser.count_columns
+        #                 )
+        #             },
+        #             **{
+        #                 str(column): np.nan
+        #                 for column in fhbstat_parser.get_columns_by_target(target)
+        #             }
+        #         }
+        #     )
     fhbstat_parser.start()
     if file_name:
         fhbstat_parser.file_name = file_name
