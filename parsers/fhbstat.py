@@ -8,9 +8,10 @@ from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from enum import IntEnum
-from functools import partial
+from functools import cached_property, partial
 from itertools import count, pairwise
 from pathlib import Path
+from traceback import print_exc
 from typing import Annotated, ClassVar, Literal
 from urllib.parse import parse_qs, unquote, urlencode, urljoin, urlparse, urlunparse
 
@@ -614,6 +615,8 @@ class FHBParser(Parser):
                         data_row[key] = float(value) if value else np.nan
                 if data_row:
                     data_list.append(data_row)
+                else:
+                    print(f'Пустой data_row: {data_row}')
             df = pd.DataFrame.from_records(data_list, columns=names + ['dt'])
             df = df.replace({None: np.nan, '': np.nan})
         else:
@@ -712,6 +715,8 @@ class FHBParser(Parser):
                                 else:
                                     data_row[key] = float(value)
                             except ValueError:
+                                print_exc()
+                                print(f'value: {value}')
                                 data_row[key] = value
                         else:
                             data_row[key] = np.nan
@@ -1179,9 +1184,9 @@ class FHBParser(Parser):
         df = df.reindex(columns=new_columns_order)
         return df
 
-    def get_table_data(self):
+    @cached_property
+    def table_data(self):
         from functools import reduce
-        self.is_loading_data = True
         files = Path('files').glob('football*_total_db.xlsx')
         df_list = [pd.read_excel(fname, engine='calamine') for fname in files]
         df = reduce(
@@ -1196,8 +1201,12 @@ class FHBParser(Parser):
             df_list
         )
         drop_columns = [col for col in df.columns.tolist() if col.endswith('_right')]
-        df = df.drop(columns=drop_columns).head()
-        self.table_df = df
+        df = df.drop(columns=drop_columns)
+        return df
+
+    def get_table_data(self):
+        self.is_loading_data = True
+        df = self.table_data
         self.is_loading_data = False
         return df
 
