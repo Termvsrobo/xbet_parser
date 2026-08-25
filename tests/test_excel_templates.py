@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+import pytz
 from xlsxtpl.writerx import BookWriter
 
 from parsers.fhbstat import FHBParser
@@ -14,7 +15,7 @@ def test_create_excel_template():
     writer = BookWriter(fname)
     writer.jinja_env.globals.update(dir=dir, getattr=getattr)
 
-    now = datetime.now()
+    now = datetime.now(tz=pytz.timezone('Europe/Moscow'))
 
     person_info = {'address': '福建行中书省福宁州傲龙山庄', 'name': '龙傲天', 'fm': 178, 'date': now}
     person_info2 = {'address': 'Somewhere over the rainbow', 'name': 'Hello Wizard', 'fm': 156, 'date': now}

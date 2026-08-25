@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlunparse
 
 import pytest
+import pytz
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 
@@ -32,7 +33,7 @@ async def test_parser():
         assert df_data_dict == {
             "Ссылка": "file:///home/termvsrobo/work/parser_bet/tests/data/test_1.html",
             "Название": "1. Латвия\n2. Сербия",
-            "Дата": datetime.datetime(2025, 9, 7, 16, 0),
+            "Дата": datetime.datetime(2025, 9, 7, 16, 0, tzinfo=pytz.timezone('Europe/Moscow')),
             "1": "10.75",
             "Х": "5.10",
             "2": "1.33",

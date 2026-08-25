@@ -320,7 +320,7 @@ async def load_table(payload: LoadTableRequest):
     return {'data': df.iloc[start_index:end_index, :].to_dict(orient="records"), 'last_page': last_page}
 
 
-@ui.page('/table_data', response_timeout=10)
+@ui.page('/table_data', response_timeout=20, reconnect_timeout=60)
 async def table_data():
     ui.page_title('Таблица данных FHBStat')
     tabulator({

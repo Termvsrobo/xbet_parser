@@ -8,7 +8,7 @@ from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from enum import IntEnum
-from functools import cached_property, partial
+from functools import cache, cached_property, partial, reduce
 from itertools import count, pairwise
 from pathlib import Path
 from traceback import print_exc
@@ -19,6 +19,7 @@ import httpx
 import numpy as np
 import pandas as pd
 import pycountry as pc
+import pytz
 from aiopath import AsyncPath
 from bs4 import BeautifulSoup
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
@@ -143,7 +144,6 @@ class FHBParser(Parser):
     round_precision: str = '0.1'
     datetime_round: str = '00:00'
     count_empty_rows: int = 4
-    digits_columns_start: int = 25
     enable_passability: bool
     evaluate_passability: bool
     templates: dict
@@ -178,6 +178,14 @@ class FHBParser(Parser):
         }
         self.is_loading_data = False
         self.table_df = pd.DataFrame()
+        self.mongo_db_collection_name = 'FHBStatDB'
+
+    @staticmethod
+    @cache
+    def get_digits_columns_start(target_path):
+        if target_path == '/football_60':
+            return 20
+        return 25
 
     @property
     def min_count_matches(self):
@@ -611,7 +619,7 @@ class FHBParser(Parser):
                 for td in data.contents:
                     if td != '\n' and key_name in td.attrs:
                         key = td.attrs.get(key_name)
-                        value = td.text
+                        value = str.strip(td.text)
                         data_row[key] = float(value) if value else np.nan
                 if data_row:
                     data_list.append(data_row)
@@ -707,13 +715,15 @@ class FHBParser(Parser):
                 for td in data.contents:
                     if td != '\n' and key_name in td.attrs:
                         key = td.attrs.get(key_name)
-                        value = td.text
+                        value = str.strip(td.text)
                         if value:
                             try:
                                 if value.isnumeric():
                                     data_row[key] = int(value)
-                                else:
+                                elif int(key) >= 11:
                                     data_row[key] = float(value)
+                                else:
+                                    data_row[key] = value
                             except ValueError:
                                 print_exc()
                                 print(f'value: {value}')
@@ -722,7 +732,7 @@ class FHBParser(Parser):
                             data_row[key] = np.nan
                 _dt_str = f'{data_row.get("3")}-{data_row.get("2")}-{data_row.get("1")} {data_row.get("4")}'
                 try:
-                    _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M')
+                    _dt = datetime.strptime(_dt_str, '%Y-%m-%d %H:%M').replace(tzinfo=pytz.timezone('Europe/Moscow'))
                 except ValueError:
                     continue
                 else:
@@ -753,9 +763,9 @@ class FHBParser(Parser):
                 _df = _df.between_time(from_time, to_time)
                 _df = _df.reset_index()
             elif from_time:
-                _df = df[df['dt'].dt.time >= datetime.strptime(from_time, '%H:%M').time()]
+                _df = df[df['dt'].dt.time >= datetime.strptime(from_time, '%H:%M').astimezone().time()]
             elif to_time:
-                _df = df[df['dt'].dt.time <= datetime.strptime(to_time, '%H:%M').time()]
+                _df = df[df['dt'].dt.time <= datetime.strptime(to_time, '%H:%M').astimezone().time()]
         return _df
 
     @classmethod
@@ -816,14 +826,14 @@ class FHBParser(Parser):
         df_match = self.parse_body_table(page_content)
         if not df_match.empty:
             df_match = df_match.loc[
-                df_match['dt'].dt.tz_localize('Europe/Moscow') <= self.now_msk
+                df_match['dt'] <= self.now_msk
             ]
         if self.evaluate_passability:
             head_df = self.evaluate_coefficients_table(df_match)
         else:
             head_df = self.parse_head_table(page_content)
         await page.close()
-        _digits_columns_start = self.digits_columns_start if target_path != '/football_60' else 20
+        _digits_columns_start = self.get_digits_columns_start(target_path)
         columns = list(
             filter(
                 lambda x: int(x) >= _digits_columns_start,
@@ -1065,7 +1075,7 @@ class FHBParser(Parser):
                         result_df_list.append({
                             **{
                                 str(i): data_match.get(str(i))
-                                for i in self.columns if i >= self.digits_columns_start
+                                for i in self.columns if i >= self.get_digits_columns_start(target_path)
                             },
                             'index': index,
                             'Количество матчей': 'кф'
@@ -1075,12 +1085,6 @@ class FHBParser(Parser):
                             'index': index,
                             'Количество матчей': 'мо'
                         })
-                        # # Добавляем пустые строки
-                        # for _ in range(self.count_empty_rows):
-                        #     result_df_list.append({
-                        #         **{str(i): np.nan for i in self.columns},
-                        #         'index': index
-                        #     })
                         result_df_list.append({
                             **{str(i): np.nan for i in self.columns},
                             'index': index
@@ -1093,7 +1097,7 @@ class FHBParser(Parser):
                         result_df_list.append({
                             **{
                                 str(i): data_match.get(str(i))
-                                for i in self.columns if i >= self.digits_columns_start
+                                for i in self.columns if i >= self.get_digits_columns_start(target_path)
                             },
                             'index': index,
                             'Количество матчей': '_кф'
@@ -1186,23 +1190,34 @@ class FHBParser(Parser):
 
     @cached_property
     def table_data(self):
-        from functools import reduce
-        files = Path('files').glob('football*_total_db.xlsx')
-        df_list = [pd.read_excel(fname, engine='calamine') for fname in files]
-        df = reduce(
-            lambda left, right: pd.merge(
-                left,
-                right,
-                on=[str(col) for col in range(1, 11)],
-                how='outer',
-                sort=['dt'],
-                suffixes=('', '_right')
-            ),
-            df_list
-        )
-        drop_columns = [col for col in df.columns.tolist() if col.endswith('_right')]
-        df = df.drop(columns=drop_columns)
-        return df
+        exist_df = self.read_mongo(self.mongo_db_collection_name, [], settings.MONGO_URL.encoded_string())
+        if exist_df is None or exist_df.empty:
+            files = Path('files').glob('football*_total_db.xlsx')
+            df_list = [pd.read_excel(fname, engine='calamine') for fname in files]
+            df = reduce(
+                lambda left, right: pd.merge(
+                    left,
+                    right,
+                    on=[str(col) for col in range(1, 11)],
+                    how='outer',
+                    sort=['dt'],
+                    suffixes=('', '_right')
+                ),
+                df_list
+            )
+            drop_columns = [col for col in df.columns.tolist() if col.endswith('_right')]
+            df = df.drop(columns=drop_columns)
+            df['dt'].replace({pd.NaT: None}, inplace=True)
+            self.to_mongo(
+                df,
+                self.mongo_db_collection_name,
+                settings.MONGO_URL.encoded_string(),
+                if_exists='append',
+                index=False
+            )
+            exist_df = self.read_mongo(self.mongo_db_collection_name, [], settings.MONGO_URL.encoded_string())
+        exist_df = exist_df.drop(columns=['_id'])
+        return exist_df
 
     def get_table_data(self):
         self.is_loading_data = True

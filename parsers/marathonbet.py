@@ -831,7 +831,7 @@ class MarathonbetParser(Parser):
                             df_data.append(
                                 df_data_dict
                             )
-                        except Exception:
+                        except Error:
                             attempt += 1
                             await asyncio.sleep(5)
                         else:

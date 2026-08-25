@@ -14,7 +14,7 @@ def test_write_excel_header():
         }
     )
     df = df.round(2)
-    path = f'test_{datetime.now().isoformat()}.xlsx'
+    path = f'test_{datetime.now().astimezone().isoformat()}.xlsx'
     with pd.ExcelWriter(path) as writer:
         df.to_excel(writer, index=False)
         workbook = writer.book
@@ -34,7 +34,7 @@ def test_group_rows():
         }
     )
     columns = df.columns.tolist()
-    path = f'test_{datetime.now().isoformat()}.xlsx'
+    path = f'test_{datetime.now().astimezone().isoformat()}.xlsx'
     with pd.ExcelWriter(path) as writer:
         df = df.sort_values(['Name', 'Value'])
         df['Double'] = df['Name'].duplicated()
@@ -65,7 +65,7 @@ def test_merge_header_cells():
             'Rate 2': [4, 1.234234, 6.234, 4, 123.0],
         }
     )
-    path = f'test_{datetime.now().isoformat()}.xlsx'
+    path = f'test_{datetime.now().astimezone().isoformat()}.xlsx'
     with pd.ExcelWriter(path) as writer:
         df.to_excel(writer, index=False, startrow=1)
         workbook = writer.book

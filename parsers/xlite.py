@@ -5,6 +5,7 @@ from datetime import datetime
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
+import pytz
 
 from base import Parser
 
@@ -198,7 +199,7 @@ class XLiteParser(Parser):
                         country_name = league_header_data[0]
                         league_name = ' '.join(league_header_data[1:])
                     name_players = [data_value['O1'], data_value['O2']]
-                    date_game = datetime.fromtimestamp(data_value['S'])
+                    date_game = datetime.fromtimestamp(data_value['S'], tz=pytz.timezone('Europe/Moscow'))
                     page_link_parent = ' '.join([str(data_value['LI']), data_value['LE']])
                     page_link_parent = page_link_parent.replace('.', '').replace(' ', '-').lower()
                     page_link_match = ' '.join([str(page_id), data_value['O1E'], data_value['O2E']])
