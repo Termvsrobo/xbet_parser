@@ -502,11 +502,15 @@ class FHBParser(Parser):
                                     )
                                     _cell.border = _border
                         else:
+                            if len(self.user_filters.root):
+                                merge_cell_end_row = first_row + len(self.user_filters.root) - 1
+                            else:
+                                merge_cell_end_row = first_row
                             sheet.merge_cells(
                                 start_column=col,
                                 end_column=col,
                                 start_row=first_row,
-                                end_row=first_row + len(self.user_filters.root) - 1
+                                end_row=merge_cell_end_row
                             )
                         first_row = end_row + 1
                         end_row = first_row + len(self.user_filters.root) + 3 + self.count_empty_rows - 1
@@ -597,7 +601,10 @@ class FHBParser(Parser):
         first_data_index = None
         names = []
         soup = BeautifulSoup(content, 'lxml')
-        table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
+        if soup.table:
+            table_rows = list(filter(lambda tr: tr != '\n', soup.table.tbody.contents))
+        else:
+            table_rows = []
         first_data_row = next(
             filter(lambda tr: 'data-status' in tr.attrs, table_rows),
             None
@@ -940,7 +947,9 @@ class FHBParser(Parser):
                     self.status = f'Обрабатываем ссылку {target_url}'
                     _target_url, query_params, target_path = self.get_url_params(target_url)
                     if 'page' not in query_params:
-                        for page_number in count(1):
+                        page_counter = count(1)
+                        page_number = next(page_counter)
+                        while page_number <= settings.PAGE_NUMBER_LIMIT:
                             if page_number == 1:
                                 response = await logged_client.get(
                                     _target_url,
@@ -951,6 +960,7 @@ class FHBParser(Parser):
                                     _target_url,
                                     params={'page': page_number, **query_params}
                                 )
+                            page_number = next(page_counter)
                             if response.status_code == 200:
                                 try:
                                     df = self.parse_body_table(response.content)

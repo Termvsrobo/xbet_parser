@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
     PORT: int = 8080
+    PAGE_NUMBER_LIMIT: int = 7000
 
     TEST_FHBSTAT_USERNAME: str | None = None
     TEST_FHBSTAT_PASSWORD: str | None = None
