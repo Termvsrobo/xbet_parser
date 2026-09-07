@@ -324,7 +324,7 @@ async def load_table(payload: LoadTableRequest):
 async def table_data():
     ui.page_title('Таблица данных FHBStat')
     tabulator({
-        'ajaxURL': f'http://localhost:{settings.PORT}/load_table_data',
+        'ajaxURL': f'{settings.DOMAIN}/load_table_data',
         'ajaxConfig': 'POST',
         'paginationMode': 'remote',
         'sortMode': 'remote',
