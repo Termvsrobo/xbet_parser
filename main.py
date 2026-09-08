@@ -3,7 +3,7 @@ from threading import Event
 
 from fastapi.responses import RedirectResponse
 from nicegui import app, ui
-from nicegui_tabulator import tabulator
+from nicegui_tabulator import tabulator, use_theme
 from pydantic import BaseModel
 
 from base import BrowserManager
@@ -299,31 +299,74 @@ class SortItem(BaseModel):
     field: str
     dir: str
 
+
+class FilterItem(BaseModel):
+    field: str
+    type: str
+    value: str
+
+
 class LoadTableRequest(BaseModel):
     page: int = 1
     size: int = 10
     sort: list[SortItem] = []
+    filter: list[FilterItem] = []
 
 
 @app.post('/load_table_data')
 async def load_table(payload: LoadTableRequest):
-    start_index = (payload.page - 1) * payload.size
-    end_index = start_index + payload.size
-    df = await fhbstat_parser.async_get_table_data()
-    if payload.sort:
-        df = df.sort_values(
-            by=[_sort.field for _sort in payload.sort],
-            ascending=[_sort.dir == 'asc' for _sort in payload.sort]
-        )
-    len_df = df.shape[0]
-    last_page = ceil(len_df / payload.size)
-    return {'data': df.iloc[start_index:end_index, :].to_dict(orient="records"), 'last_page': last_page}
+    offset = (payload.page - 1) * payload.size
+    sort = {str(_sort.field): -1 if _sort.dir == 'desc' else 1 for _sort in payload.sort}
+    query = {}
+    for _filter in payload.filter:
+        field_type = fhbstat_parser.get_field_type(int(_filter.field))
+        if _filter.field in ('1', '2', '3'):
+            query[str(_filter.field)] = int(_filter.value)
+        elif field_type is FieldType.FLOAT:
+            query[str(_filter.field)] = float(_filter.value)
+        else:
+            query[str(_filter.field)] = {'$regex': _filter.value, '$options': 'i'}
+    df, count_records = await fhbstat_parser.async_get_table_data(query=query, skip=offset, limit=payload.size, sort=sort)
+    last_page = ceil(count_records / payload.size)
+    return {
+        'data': df.to_dict(orient="records"),
+        'last_page': last_page,
+    }
 
 
 @ui.page('/table_data', response_timeout=20, reconnect_timeout=60)
 async def table_data():
+    async def data_filtered_event(e):
+        filters = await table.run_table_method('getHeaderFilters', timeout=20)
+        for _filter in filters:
+            await table.run_table_method('setHeaderFilterValue', _filter['field'], _filter['value'], timeout=20)
+
+    async def select_theme():
+        use_theme(theme.value or "default", shared=False)
+
     ui.page_title('Таблица данных FHBStat')
-    tabulator({
+    with ui.row():
+        ui.label('Тема:')
+        theme = ui.toggle(
+            [
+                "default",
+                "bootstrap3",
+                "bootstrap4",
+                "bootstrap5",
+                "bulma",
+                "materialize",
+                "midnight",
+                "modern",
+                "semanticui",
+                "simple",
+                "site",
+                "site_dark",
+            ],
+            value="midnight",
+            on_change=select_theme,
+        ).props("no-caps")
+    use_theme('midnight')
+    table = tabulator({
         'ajaxURL': f'{settings.DOMAIN}/load_table_data',
         'ajaxConfig': 'POST',
         'paginationMode': 'remote',
@@ -332,8 +375,11 @@ async def table_data():
         'ajaxContentType': 'json',
         'paginationSize': 25,
         'paginationSizeSelector': True,
-        'columns': [{'title': str(col), 'field': str(col)} for col in fhbstat_parser.columns]
+        'autoColumns': True,
+        'autoColumnsDefinitions': [{'title': str(col), 'field': str(col), 'headerFilter': 'input'} for col in fhbstat_parser.columns],
+        'filterMode': 'remote',
     })
+    table.on_event('pageLoaded', data_filtered_event)
 
 
 @ui.page('/login')
@@ -368,5 +414,6 @@ if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
         show=False,
         port=settings.PORT,
-        storage_secret=settings.STORAGE_SECRET
+        storage_secret=settings.STORAGE_SECRET,
+        reload=settings.DEBUG
     )

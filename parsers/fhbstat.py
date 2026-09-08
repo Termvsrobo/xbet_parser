@@ -8,7 +8,7 @@ from copy import copy
 from datetime import datetime
 from decimal import ROUND_DOWN, Decimal
 from enum import IntEnum
-from functools import cache, cached_property, partial, reduce
+from functools import cache, partial, reduce
 from itertools import count, pairwise
 from pathlib import Path
 from traceback import print_exc
@@ -1198,9 +1198,9 @@ class FHBParser(Parser):
         df = df.reindex(columns=new_columns_order)
         return df
 
-    @cached_property
+    @property
     def table_data(self):
-        exist_df = self.read_mongo(self.mongo_db_collection_name, [], settings.MONGO_URL.encoded_string())
+        exist_df, _ = self.read_mongo(self.mongo_db_collection_name, [], settings.MONGO_URL.encoded_string())
         if exist_df is None or exist_df.empty:
             files = Path('files').glob('football*_total_db.xlsx')
             df_list = [pd.read_excel(fname, engine='calamine') for fname in files]
@@ -1225,15 +1225,22 @@ class FHBParser(Parser):
                 if_exists='append',
                 index=False
             )
-            exist_df = self.read_mongo(self.mongo_db_collection_name, [], settings.MONGO_URL.encoded_string())
+            exist_df, _ = self.read_mongo(self.mongo_db_collection_name, [], settings.MONGO_URL.encoded_string())
         exist_df = exist_df.drop(columns=['_id'])
         return exist_df
 
-    def get_table_data(self):
+    def get_table_data(self, query: dict | None = None, skip: int | None = None, limit: int | None = None, sort: dict[str, int] | None = None):
         self.is_loading_data = True
-        df = self.table_data
+        df, count_records = self.read_mongo(
+            self.mongo_db_collection_name,
+            query or {},
+            settings.MONGO_URL.encoded_string(),
+            skip=skip,
+            limit=limit,
+            sort=sort,
+        )
         self.is_loading_data = False
-        return df
+        return df, count_records
 
-    async def async_get_table_data(self):
-        return await to_thread(self.get_table_data)
+    async def async_get_table_data(self, *args, **kwargs):
+        return await to_thread(self.get_table_data, *args, **kwargs)

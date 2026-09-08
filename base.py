@@ -68,12 +68,15 @@ class Parser(ParserBase):
 
     def read_mongo(
         self,
-        collection: str,
+        collection_name: str,
         query: list[dict[str, Any]],
         db: str | Database,
         index_col: str | list[str] | None = None,
         extra: dict[str, Any] | None = None,
-        chunksize: int | None = None
+        chunksize: int | None = None,
+        skip: int | None = None,
+        limit: int | None = None,
+        sort: dict[str, int] | None = None
     ) -> DataFrame:
         """
         Read MongoDB query into a DataFrame.
@@ -84,7 +87,7 @@ class Parser(ParserBase):
 
         Parameters
         ----------
-        collection : str
+        collection_name : str
             Mongo collection to select for querying
         query : list
             Must be an aggregate query.
@@ -114,9 +117,23 @@ class Parser(ParserBase):
         if extra.get('batchSize') is not None and chunksize is not None:
             raise ValueError("Either chunksize or batchSize must be provided, not both")
 
-        return DataFrame.from_records(
-            db[collection].aggregate(query, **{**params, **extra}),
-            index=index_col)
+        collection = db[collection_name]
+        cursor = collection.find(query, {'_id': 0})
+        if skip:
+            cursor = cursor.skip(skip)
+        if limit is not None:
+            cursor = cursor.limit(limit)
+        if sort:
+            cursor = cursor.sort(sort)
+        records = list(cursor)
+        count_records = cursor.collection.count_documents(query)
+        return (
+            DataFrame.from_records(
+                records,
+                index=index_col
+            ),
+            count_records
+        )
 
     def to_mongo(
         self,
@@ -461,7 +478,7 @@ class Parser(ParserBase):
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
             older_df = pd.DataFrame(columns=columns)
             if not settings.DEBUG:
-                older_df = self.read_mongo('History', [], settings.MONGO_URL.encoded_string())
+                older_df, _ = self.read_mongo('History', [], settings.MONGO_URL.encoded_string())
             self.to_mongo(df, 'History', settings.MONGO_URL.encoded_string(), if_exists='append', index=False)
             self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
             if older_df.empty:
