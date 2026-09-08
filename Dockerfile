@@ -1,36 +1,51 @@
-FROM mcr.microsoft.com/playwright/python:v1.58.0-noble
+# Финальный этап: минимальный runtime
+FROM python:3.12-slim
+
+# Установка системных зависимостей + локали
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        curl \
+        libasound2 \
+        libnss3 \
+        libatk-bridge2.0-0 \
+        libdrm2 \
+        libxkbcommon0 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxrandr2 \
+        libxtst6 \
+        libgtk-3-0 \
+        libpango-1.0-0 \
+        libcairo2 \
+        locales \
+        xvfb \
+        xauth \
+    # Настройка русской локали
+    && sed -i 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen \
+    && locale-gen ru_RU.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Экспорт локали
+ENV LANG=ru_RU.UTF-8
+ENV LANGUAGE=ru_RU:ru
+ENV LC_ALL=ru_RU.UTF-8
+
+# Установка Poetry
+RUN pip install poetry
+
+# Копируем pyproject.toml и poetry.lock для кэширования
+COPY pyproject.toml poetry.lock* ./
+
+# Устанавливаем зависимости (без dev)
+RUN poetry config virtualenvs.create false \
+    && poetry install --without dev --no-interaction --no-ansi --no-root
+
+# Копируем приложение
+COPY . /app
 WORKDIR /app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-COPY **.py .
-COPY poetry.lock .
-COPY pyproject.toml .
-COPY marathonbetparser_url.yaml .
-COPY xliteparser_url.yaml .
-COPY parsers parsers
-COPY excel_templates excel_templates
-COPY .env .env
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y xvfb
-RUN apt-get install -qqy x11-apps
-RUN apt-get install -y libnss3 \
-                       libxss1 \
-                       libasound2t64 \
-                       fonts-noto-color-emoji \
-                       python3-full \
-                       locales \
-                       && sed -i -e 's/# ru_RU.UTF-8 UTF-8/ru_RU.UTF-8 UTF-8/' /etc/locale.gen \
-                       && dpkg-reconfigure --frontend=noninteractive locales
-ENV LANG ru_RU.UTF-8
-ENV LANGUAGE ru_RU:ru
-ENV LC_LANG ru_RU.UTF-8
-ENV LC_ALL ru_RU.UTF-8
-RUN python -m pip install --break-system-packages pipx
-RUN pipx ensurepath --global --prepend
-RUN pipx install --global poetry
-RUN poetry config virtualenvs.create false
-RUN poetry install --without dev --no-interaction --no-ansi --no-root
 
-RUN playwright install chrome
+# Устанавливаем Chrome через переменную окружения Playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-ENTRYPOINT xvfb-run python main.py
+# Запуск через Xvfb
+ENTRYPOINT playwright install chrome && xvfb-run --auto-servernum --server-arg="-screen 0 1920x1080x24" python main.py

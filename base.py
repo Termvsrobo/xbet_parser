@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Event
 from time import time
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -18,9 +19,14 @@ from pymongo.database import Database
 from pymongo.results import InsertManyResult
 
 from config import settings
-from utils import (_get_db_instance, _handle_exists_collection,
-                   _split_in_chunks, _validate_chunksize, get_saved_url,
-                   save_url)
+from utils import (
+    _get_db_instance,
+    _handle_exists_collection,
+    _split_in_chunks,
+    _validate_chunksize,
+    get_saved_url,
+    save_url,
+)
 
 
 class ParserBase(ABC):
@@ -63,11 +69,11 @@ class Parser(ParserBase):
     def read_mongo(
         self,
         collection: str,
-        query: List[Dict[str, Any]],
-        db: Union[str, Database],
-        index_col: Optional[Union[str, List[str]]] = None,
-        extra: Optional[Dict[str, Any]] = None,
-        chunksize: Optional[int] = None
+        query: list[dict[str, Any]],
+        db: str | Database,
+        index_col: str | list[str] | None = None,
+        extra: dict[str, Any] | None = None,
+        chunksize: int | None = None
     ) -> DataFrame:
         """
         Read MongoDB query into a DataFrame.
@@ -105,9 +111,8 @@ class Parser(ParserBase):
         if extra is None:
             extra = {}
 
-        if extra.get('batchSize') is not None:
-            if chunksize is not None:
-                raise ValueError("Either chunksize or batchSize must be provided, not both")
+        if extra.get('batchSize') is not None and chunksize is not None:
+            raise ValueError("Either chunksize or batchSize must be provided, not both")
 
         return DataFrame.from_records(
             db[collection].aggregate(query, **{**params, **extra}),
@@ -117,12 +122,12 @@ class Parser(ParserBase):
         self,
         frame: DataFrame,
         name: str,
-        db: Union[str, Database],
-        if_exists: Optional[str] = "fail",
-        index: Optional[bool] = True,
-        index_label: Optional[Union[str, Sequence[str]]] = None,
-        chunksize: Optional[int] = None,
-    ) -> Union[List[InsertManyResult], InsertManyResult]:
+        db: str | Database,
+        if_exists: str | None = "fail",
+        index: bool | None = True,
+        index_label: str | Sequence[str] | None = None,
+        chunksize: int | None = None,
+    ) -> list[InsertManyResult] | InsertManyResult:
         """
         Write records stored in a DataFrame to a MongoDB collection.
 
@@ -195,8 +200,7 @@ class Parser(ParserBase):
         else:
             _url = get_saved_url(self._url_config_file)
         if _url and not _url.endswith('/'):
-            if _url:
-                _url += '/'
+            _url += '/'
         self._url = _url
         return self._url
 
@@ -262,7 +266,7 @@ class Parser(ParserBase):
     @property
     def count_links(self):
         if self._count_links:
-            return f'Количество ссылок: {str(self._count_links)}'
+            return f'Количество ссылок: {self._count_links!s}'
         else:
             if self.is_running:
                 return 'Количество ссылок: Вычисляем'
@@ -280,7 +284,7 @@ class Parser(ParserBase):
     def count_processed_links(self):
         if self._count_processed_links and self._count_links:
             percent = round(self._count_processed_links / self._count_links * 100, 2)
-            return f'Обработано ссылок: {str(self._count_processed_links)} ({percent} %)'
+            return f'Обработано ссылок: {self._count_processed_links!s} ({percent} %)'
         else:
             if self.is_running:
                 return 'Обработано ссылок: Вычисляем'
@@ -478,7 +482,7 @@ class Parser(ParserBase):
             full_df = full_df.reset_index(drop=True)
             data = np.array(full_df[full_df['Double']].index.values)
             ddiff = np.diff(data)
-            subArrays = np.split(data, np.where(ddiff != 1)[0]+1)
+            subArrays = np.split(data, np.where(ddiff != 1)[0] + 1)
 
             with pd.ExcelWriter(self.path, datetime_format='%d.%m.%y %H:%M') as writer:
                 full_df.to_excel(writer, index=False, startrow=1, columns=columns)

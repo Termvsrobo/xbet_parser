@@ -1,9 +1,10 @@
+from math import ceil
 from threading import Event
-from typing import Optional
 
 from fastapi.responses import RedirectResponse
 from nicegui import app, ui
 from nicegui_tabulator import tabulator
+from pydantic import BaseModel
 
 from base import BrowserManager
 from beta_baza import parse_bet_baza  # noqa:F401
@@ -275,17 +276,13 @@ async def fhbstat_page():
     filters()
     ui.button('Очистить фильтр', on_click=clear_filters)
     with ui.input('Время с').bind_value(fhbstat_parser, 'from_time') as from_time:
-        with ui.menu().props('no-parent-event') as menu:
-            with ui.time().props('format24h').bind_value(from_time):
-                with ui.row().classes('justify-end'):
-                    ui.button('Close', on_click=menu.close).props('flat')
+        with ui.menu().props('no-parent-event') as menu, ui.time().props('format24h').bind_value(from_time), ui.row().classes('justify-end'):
+            ui.button('Close', on_click=menu.close).props('flat')
         with from_time.add_slot('append'):
             ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     with ui.input('Время до').bind_value(fhbstat_parser, 'to_time') as to_time:
-        with ui.menu().props('no-parent-event') as menu:
-            with ui.time().props('format24h').bind_value(to_time):
-                with ui.row().classes('justify-end'):
-                    ui.button('Close', on_click=menu.close).props('flat')
+        with ui.menu().props('no-parent-event') as menu, ui.time().props('format24h').bind_value(to_time), ui.row().classes('justify-end'):
+            ui.button('Close', on_click=menu.close).props('flat')
         with to_time.add_slot('append'):
             ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     link()
@@ -298,35 +295,49 @@ async def fhbstat_page():
     ui.button('Загрузить фильтры из файла', on_click=upload())
 
 
-@ui.page('/table_data')
+class SortItem(BaseModel):
+    field: str
+    dir: str
+
+class LoadTableRequest(BaseModel):
+    page: int = 1
+    size: int = 10
+    sort: list[SortItem] = []
+
+
+@app.post('/load_table_data')
+async def load_table(payload: LoadTableRequest):
+    start_index = (payload.page - 1) * payload.size
+    end_index = start_index + payload.size
+    df = await fhbstat_parser.async_get_table_data()
+    if payload.sort:
+        df = df.sort_values(
+            by=[_sort.field for _sort in payload.sort],
+            ascending=[_sort.dir == 'asc' for _sort in payload.sort]
+        )
+    len_df = df.shape[0]
+    last_page = ceil(len_df / payload.size)
+    return {'data': df.iloc[start_index:end_index, :].to_dict(orient="records"), 'last_page': last_page}
+
+
+@ui.page('/table_data', response_timeout=20, reconnect_timeout=60)
 async def table_data():
-    table_config = {
-        'data': [{'id': 1, 'name': 'test1', 'gc1': 15, 'gc2': 32}, {'id': 2, 'name': 'test2', 'gc1': 8, 'gc2': 25}],
-        'columns': [
-            {
-                'title': 'ID',
-                'field': 'id',
-                'hozAlign': 'center',
-                'headerHozAlign': 'center',
-                'columnHeaderVertAlign': 'bottom'
-            },
-            {'title': 'Name', 'field': 'name', 'hozAlign': 'center', 'headerHozAlign': 'center'},
-            {
-                'title': 'Group Columns',
-                'hozAlign': 'center',
-                'headerHozAlign': 'center',
-                'columns': [
-                    {'title': 'GC1', 'field': 'gc1', 'hozAlign': 'center', 'headerHozAlign': 'center'},
-                    {'title': 'GC2', 'field': 'gc2', 'hozAlign': 'center', 'headerHozAlign': 'center'},
-                ]
-            }
-        ]
-    }
-    tabulator(table_config)
+    ui.page_title('Таблица данных FHBStat')
+    tabulator({
+        'ajaxURL': f'{settings.DOMAIN}/load_table_data',
+        'ajaxConfig': 'POST',
+        'paginationMode': 'remote',
+        'sortMode': 'remote',
+        'pagination': True,
+        'ajaxContentType': 'json',
+        'paginationSize': 25,
+        'paginationSizeSelector': True,
+        'columns': [{'title': str(col), 'field': str(col)} for col in fhbstat_parser.columns]
+    })
 
 
 @ui.page('/login')
-def login(redirect_to: str = '/') -> Optional[RedirectResponse]:
+def login(redirect_to: str = '/') -> RedirectResponse | None:
     def try_login() -> None:  # local function to avoid passing username and password as arguments
         if password.value == settings.ADMIN_PASSWORD and username.value == settings.ADMIN_USERNAME:
             app.storage.user.update({'username': username.value, 'authenticated': True})
@@ -344,7 +355,7 @@ def login(redirect_to: str = '/') -> Optional[RedirectResponse]:
 
 
 @ui.page('/')
-def page():
+def index():
     ui.page_title('Parser bet')
     ui.link('Получить excel', '/parse_page', new_tab=True)
     ui.link('Получить данные Бет-База', '/parse_bet_baza', new_tab=True)

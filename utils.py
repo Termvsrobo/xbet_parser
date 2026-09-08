@@ -1,7 +1,8 @@
 import calendar
 import locale
+from collections.abc import Iterator, Sequence
 from pathlib import Path
-from typing import Any, Iterator, Optional, Sequence, Union
+from typing import Any
 
 import pymongo.errors
 import yaml
@@ -50,7 +51,7 @@ def save_url(fname, url):
             yaml.dump(data, f)
 
 
-def _get_db_instance(db: Union[str, Database]) -> MongoClient:
+def _get_db_instance(db: str | Database) -> MongoClient:
     """
     Retrieve the pymongo.database.Database instance.
 
@@ -81,7 +82,7 @@ def _collection_exists(db: Database, col_name: str) -> bool:
         return False
 
 
-def _handle_exists_collection(name: str, exists: Optional[str], db: Database) -> None:
+def _handle_exists_collection(name: str, exists: str | None, db: Database) -> None:
     """
     Handles the `if_exists` argument of `to_mongo`.
 
@@ -153,7 +154,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        if not app.storage.user.get('authenticated', False):
-            if not request.url.path.startswith('/_nicegui') and request.url.path not in unrestricted_page_routes:
-                return RedirectResponse(f'/login?redirect_to={request.url.path}')
+        if not app.storage.user.get('authenticated', False) and not request.url.path.startswith('/_nicegui') and request.url.path not in unrestricted_page_routes:
+            return RedirectResponse(f'/login?redirect_to={request.url.path}')
         return await call_next(request)

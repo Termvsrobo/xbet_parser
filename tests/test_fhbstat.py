@@ -8,8 +8,7 @@ import pytest
 
 from base import BrowserManager
 from config import settings
-from parsers.fhbstat import (FHBParser, FHBStatFilter, FieldType, FloatField,
-                             TimeField)
+from parsers.fhbstat import FHBParser, FHBStatFilter, FieldType, FloatField, TimeField
 
 
 def test_page():
@@ -238,7 +237,7 @@ async def test_get_file_response_merge_cells(target, file_name):
                     }
                 },
             )
-        for sym in ('%', 'кф', 'мо'):
+        for sym in ('%', 'кф', 'мо', np.nan, '_%', '_кф', '_мо'):
             data.append(
                 {
                     '1': np.nan,
@@ -265,32 +264,32 @@ async def test_get_file_response_merge_cells(target, file_name):
                     }
                 }
             )
-        for _ in range(fhbstat_parser.count_empty_rows):
-            data.append(
-                {
-                    '1': np.nan,
-                    '2': np.nan,
-                    '3': np.nan,
-                    '4': np.nan,
-                    '7': np.nan,
-                    '8': np.nan,
-                    '9': np.nan,
-                    '10': np.nan,
-                    'index': i,
-                    'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
-                    **{
-                        str(i): np.nan
-                        for i in range(
-                            fhbstat_parser.digits_columns_start,
-                            fhbstat_parser.count_columns
-                        )
-                    },
-                    **{
-                        str(column): np.nan
-                        for column in fhbstat_parser.get_columns_by_target(target)
-                    }
-                }
-            )
+        # for _ in range(fhbstat_parser.count_empty_rows):
+        #     data.append(
+        #         {
+        #             '1': np.nan,
+        #             '2': np.nan,
+        #             '3': np.nan,
+        #             '4': np.nan,
+        #             '7': np.nan,
+        #             '8': np.nan,
+        #             '9': np.nan,
+        #             '10': np.nan,
+        #             'index': i,
+        #             'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
+        #             **{
+        #                 str(i): np.nan
+        #                 for i in range(
+        #                     fhbstat_parser.digits_columns_start,
+        #                     fhbstat_parser.count_columns
+        #                 )
+        #             },
+        #             **{
+        #                 str(column): np.nan
+        #                 for column in fhbstat_parser.get_columns_by_target(target)
+        #             }
+        #         }
+        #     )
     fhbstat_parser.start()
     if file_name:
         fhbstat_parser.file_name = file_name
@@ -308,7 +307,7 @@ async def test_get_file_response_merge_cells(target, file_name):
 def test_fhbstat_filter():
     filter_instance = FHBStatFilter(
         filter_id=15,
-        filters=[dict(type=FieldType.FLOAT, filter_value='0.1', priority=1, column=22)]
+        filters=[{'type': FieldType.FLOAT, 'filter_value': '0.1', 'priority': 1, 'column': 22}]
     )
     assert filter_instance
     assert filter_instance.filter_id == 15
@@ -372,7 +371,7 @@ def test_user_filters():
             Path(__file__).parent / Path('data') / Path('download_filters.json')
         ),
         (
-            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',  # noqa:E501
+            'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',
             Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json')
         ),
         (
@@ -394,6 +393,10 @@ def test_user_filters():
         (
             'https://fhbstat.com/hockey_24?1=4&2=04&3=2026&50=1.',
             Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
+        ),
+        (
+            'https://fhbstat.com/football_60?page=1',
+            Path(__file__).parent / Path('data') / Path('4. П1_(футбол_60_9).json')
         ),
     ]
 )
@@ -443,3 +446,39 @@ async def test_get_db():
     fhbstat_parser.password = settings.TEST_FHBSTAT_PASSWORD
     response = await fhbstat_parser.get_db()
     assert not response.empty
+
+
+def get_total_db_files():
+    files_dir = Path(__file__).parent.parent / Path('files')
+    return [file.name for file in files_dir.glob('*_total_db.xlsx')]
+
+
+@pytest.mark.parametrize(
+    'filename',
+    # get_total_db_files()
+    (
+        # 'football_total_db_Италия.xlsx',
+        # 'football_total_db_Боливия.xlsx',
+        'football_60_total_db.xlsx',
+    )
+)
+def test_move_names(filename):
+    files_dir = Path(__file__).parent.parent / Path('files')
+    new_files_dir = files_dir / Path('new')
+    new_files_dir.mkdir(exist_ok=True)
+    test_df = pd.read_excel(
+        files_dir / Path(filename),
+        sheet_name='Sheet1',
+        dtype={
+            '6': str,
+            '7': str,
+            '8': str
+        }
+    )
+
+    is_running = Event()
+    fhbstat_parser = FHBParser(is_running=is_running)
+
+    result_df = fhbstat_parser.move_name_columns(test_df)
+    assert not result_df.empty
+    result_df.to_excel(new_files_dir / Path(f'new_{filename}'))

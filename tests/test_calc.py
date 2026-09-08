@@ -2,6 +2,7 @@ from datetime import datetime
 from io import StringIO
 
 import pandas as pd
+import pytz
 from pandas.testing import assert_frame_equal
 
 
@@ -27,7 +28,7 @@ def test_save_json_date():
         'Название': ['n1', 'n2', 'n3'],
         'Value': [1.29, 2.33, 2.56],
         'Rate': [4, 1.00, 1.01],
-        'Дата': [datetime(2025, 3, 4, 15, 45), datetime(2025, 3, 5, 15, 45), datetime(2025, 3, 6, 15, 45)]
+        'Дата': [datetime(2025, 3, 4, 15, 45, tzinfo=pytz.timezone('Europe/Moscow')), datetime(2025, 3, 5, 15, 45, tzinfo=pytz.timezone('Europe/Moscow')), datetime(2025, 3, 6, 15, 45, tzinfo=pytz.timezone('Europe/Moscow'))]
     })
 
     json_io = StringIO()

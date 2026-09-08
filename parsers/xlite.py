@@ -2,10 +2,10 @@ import asyncio
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import httpx
+import pytz
 
 from base import Parser
 
@@ -14,7 +14,7 @@ class XLiteParser(Parser):
     def parser_log_filter(self, record):
         return __name__ == record['name']
 
-    async def get_all_ids(self, min_offset: Optional[int] = None):
+    async def get_all_ids(self, min_offset: int | None = None):
         result = []
         params = {
             'sports': 1,
@@ -27,7 +27,7 @@ class XLiteParser(Parser):
             params['minOffset'] = min_offset
         async with httpx.AsyncClient(
             headers={
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'  # noqa:E501
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36'
             }
         ) as client:
             scheme, domain, _, _, _, _ = urlparse(self.url)
@@ -44,7 +44,7 @@ class XLiteParser(Parser):
             if 'Value' in data:
                 data_value = data['Value']
                 football_data = next(filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, data_value), None)
-                list_champs = list(map(lambda x: x.get('LI'), filter(lambda x: 'SC' not in x, football_data['L'])))
+                list_champs = [x.get('LI') for x in filter(lambda x: 'SC' not in x, football_data['L'])]
                 added_list_champs = [
                     sc.get('LI')
                     for i in filter(lambda x: 'SC' in x, football_data['L'])
@@ -162,7 +162,7 @@ class XLiteParser(Parser):
                 }
             },
         }
-        df_data_dict = dict()
+        df_data_dict = {}
         async with httpx.AsyncClient() as client:
             if page_id:
                 scheme, domain, _, _, _, _ = urlparse(self.url)
@@ -199,14 +199,14 @@ class XLiteParser(Parser):
                         country_name = league_header_data[0]
                         league_name = ' '.join(league_header_data[1:])
                     name_players = [data_value['O1'], data_value['O2']]
-                    date_game = datetime.fromtimestamp(data_value['S'])
+                    date_game = datetime.fromtimestamp(data_value['S'], tz=pytz.timezone('Europe/Moscow'))
                     page_link_parent = ' '.join([str(data_value['LI']), data_value['LE']])
                     page_link_parent = page_link_parent.replace('.', '').replace(' ', '-').lower()
                     page_link_match = ' '.join([str(page_id), data_value['O1E'], data_value['O2E']])
                     page_link_match = page_link_match.replace('.', '').replace(' ', '-').lower()
                     page_link = urljoin(
                         urlunparse((scheme, domain, 'ru/line/football/', None, None, None)),
-                        urljoin(page_link_parent+'/', page_link_match)
+                        urljoin(page_link_parent + '/', page_link_match)
                     )
                     for ge in data_value['GE']:
                         for e in ge['E']:
@@ -443,7 +443,7 @@ class XLiteParser(Parser):
         self.count_links = len(ids)
         self.status = 'Собираем данные по каждому матчу'
         for page_id in self.tqdm(ids):
-            df_data_dict = dict()
+            df_data_dict = {}
             attempt = 1
             while attempt < 3:
                 try:

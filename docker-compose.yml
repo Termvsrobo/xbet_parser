@@ -15,19 +15,21 @@ services:
   web:
     restart: always
     build: .
+    env_file: ".env"
     ports:
-      - 8080:8080
+      - ${RUN_PORT}:${PORT}
     environment:
       - DISPLAY=:0
       - MONGO_URL=mongodb://mongoadmin:mongoadmin@mongo:27017/mydb?authSource=admin
     # command: sh -c "python main.py"
     healthcheck:
-      test: curl --fail http://localhost:8080/ || exit 1
+      test: curl --fail http://localhost:${PORT}/ || exit 1
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     volumes:
+      - browsers:/opt
       - ./logs:/app/logs
       - ./screenshots:/app/screenshots
       - ./storage:/app/storage
@@ -35,6 +37,11 @@ services:
     depends_on:
       - mongo
       - mongo-backup
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "10"
 
   mongo-express:
     image: mongo-express
@@ -68,6 +75,6 @@ services:
       - DELETE_AFTER=5
 
 volumes:
-  browser:
+  browsers:
   mongodb_data_volume:
     driver: local

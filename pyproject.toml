@@ -23,8 +23,10 @@ dependencies = [
     "pydantic-settings (>=2.11.0,<3.0.0)",
     "pymongo (>=4.15.2,<5.0.0)",
     "xlsxtpl (>=0.3.1,<0.4.0)",
-    "click (==8.*)",
     "nicegui-tabulator (>=0.3.1,<0.4.0)",
+    "pycountry (>=26.2.16,<27.0.0)",
+    "aiopath (>=0.7.7,<0.8.0)",
+    "python-calamine (>=0.8.2,<0.9.0)",
 ]
 
 
@@ -43,6 +45,7 @@ poetry-plugin-dotenv = "^3.0.1"
 gprof2dot = "^2025.4.14"
 profiling-decorator = "^0.0.6"
 pathvalidate = "^3.3.1"
+ruff = "^0.16.0"
 
 
 [tool.flake8]
