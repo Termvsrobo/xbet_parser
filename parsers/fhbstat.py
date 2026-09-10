@@ -1229,7 +1229,13 @@ class FHBParser(Parser):
         exist_df = exist_df.drop(columns=['_id'])
         return exist_df
 
-    def get_table_data(self, query: dict | None = None, skip: int | None = None, limit: int | None = None, sort: dict[str, int] | None = None):
+    def get_table_data(
+        self,
+        query: dict | None = None,
+        skip: int | None = None,
+        limit: int | None = None,
+        sort: dict[str, int] | None = None
+    ):
         self.is_loading_data = True
         df, count_records = self.read_mongo(
             self.mongo_db_collection_name,

@@ -323,7 +323,24 @@ async def load_table(payload: LoadTableRequest):
         if _filter.field in ('1', '2', '3'):
             query[str(_filter.field)] = int(_filter.value)
         elif field_type is FieldType.FLOAT:
-            query[str(_filter.field)] = float(_filter.value)
+            value = _filter.value.replace(',','.')
+            if '.' in value:
+                decimal_part = value.split('.')[1]
+                count = len(decimal_part)
+            else:
+                count = 0
+            if count == 1:
+                query[str(_filter.field)] = {
+                    '$gte': float(value),
+                    '$lte': float(value + '9'),
+                }
+            elif count == 0:
+                query[str(_filter.field)] = {
+                    '$gte': float(value.replace('.', '')),
+                    '$lte': float(value.replace('.', '') + '.99'),
+                }
+            else:
+                query[str(_filter.field)] = float(value)
         else:
             query[str(_filter.field)] = {'$regex': _filter.value, '$options': 'i'}
     df, count_records = await fhbstat_parser.async_get_table_data(query=query, skip=offset, limit=payload.size, sort=sort)
@@ -331,6 +348,7 @@ async def load_table(payload: LoadTableRequest):
     return {
         'data': df.to_dict(orient="records"),
         'last_page': last_page,
+        'current_page': payload.page,
     }
 
 
@@ -340,6 +358,14 @@ async def table_data():
         filters = await table.run_table_method('getHeaderFilters', timeout=20)
         for _filter in filters:
             await table.run_table_method('setHeaderFilterValue', _filter['field'], _filter['value'], timeout=20)
+
+    async def cell_click_event(e):
+        cell = e.args.get('cell', {})
+        column = cell.get('column', {})
+        field = column.get('field', None)
+        value = cell.get('value', None)
+        if value and field:
+            await table.run_table_method('setHeaderFilterValue', field, str(value), timeout=20)
 
     async def select_theme():
         use_theme(theme.value or "default", shared=False)
@@ -380,6 +406,7 @@ async def table_data():
         'filterMode': 'remote',
     })
     table.on_event('pageLoaded', data_filtered_event)
+    table.on_event('cellClick', cell_click_event)
 
 
 @ui.page('/login')

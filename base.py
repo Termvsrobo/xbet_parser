@@ -124,16 +124,18 @@ class Parser(ParserBase):
         if limit is not None:
             cursor = cursor.limit(limit)
         if sort:
+            sort['dt'] = -1
             cursor = cursor.sort(sort)
+        else:
+            cursor = cursor.sort({'dt': -1})
         records = list(cursor)
         count_records = cursor.collection.count_documents(query)
-        return (
-            DataFrame.from_records(
-                records,
-                index=index_col
-            ),
-            count_records
+        df = DataFrame.from_records(
+            records,
+            index=index_col
         )
+        df = df.round(2)
+        return df, count_records
 
     def to_mongo(
         self,
