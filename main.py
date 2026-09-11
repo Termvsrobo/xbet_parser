@@ -323,7 +323,7 @@ async def load_table(payload: LoadTableRequest):
         if _filter.field in ('1', '2', '3'):
             query[str(_filter.field)] = int(_filter.value)
         elif field_type is FieldType.FLOAT:
-            value = _filter.value.replace(',','.')
+            value = _filter.value.replace(',', '.')
             if '.' in value:
                 decimal_part = value.split('.')[1]
                 count = len(decimal_part)
@@ -401,8 +401,87 @@ async def table_data():
         'ajaxContentType': 'json',
         'paginationSize': 25,
         'paginationSizeSelector': True,
-        'autoColumns': True,
-        'autoColumnsDefinitions': [{'title': str(col), 'field': str(col), 'headerFilter': 'input'} for col in fhbstat_parser.columns],
+        'columns': [
+            {
+                'title': 'ДАТА',
+                'columns': [
+                    {'title': 'Чис', 'columns': [{'title': '1', 'field': '1', 'headerFilter': 'input'}]},
+                    {'title': 'Мес', 'columns': [{'title': '2', 'field': '2', 'headerFilter': 'input'}]},
+                    {'title': 'Год', 'columns': [{'title': '3', 'field': '3', 'headerFilter': 'input'}]}
+                ]
+            },
+            {
+                'title': 'ВРЕМЯ',
+                'columns': [
+                    {'title': '', 'columns': [{'title': '4', 'field': '4', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'ДН',
+                'columns': [
+                    {'title': '', 'columns': [{'title': '5', 'field': '5', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'КОНТИНЕНТ',
+                'columns': [
+                    {'title': '', 'columns': [{'title': '6', 'field': '6', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'СТРАНА',
+                'columns': [
+                    {'title': '', 'columns': [{'title': '7', 'field': '7', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'ЛИГА',
+                'columns': [
+                    {'title': '', 'columns': [{'title': '8', 'field': '8', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'НАЗВАНИЕ КОМАНД',
+                'columns': [
+                    {'title': 'Команда 1', 'columns': [{'title': '9', 'field': '9', 'headerFilter': 'input'}]},
+                    {'title': 'Команда 2', 'columns': [{'title': '10', 'field': '10', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'Счет матча',
+                'columns': [
+                    {'title': '', 'columns': [{'title': '11', 'field': '11', 'headerFilter': 'input'}]},
+                    {'title': '', 'columns': [{'title': '12', 'field': '12', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'Счет по таймам',
+                'columns': [
+                    {'title': '1тайм', 'columns': [{'title': '13', 'field': '13', 'headerFilter': 'input'}, {'title': '14', 'field': '14', 'headerFilter': 'input'}]},
+                    {'title': '2тайм', 'columns': [{'title': '15', 'field': '15', 'headerFilter': 'input'}, {'title': '16', 'field': '16', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'Фора итог',
+                'columns': [
+                    {'title': 'К1', 'columns': [{'title': '18', 'field': '18', 'headerFilter': 'input'}]},
+                    {'title': 'К2', 'columns': [{'title': '19', 'field': '19', 'headerFilter': 'input'}]},
+                ]
+            },
+            {
+                'title': 'Фора БК',
+                'columns': [
+                    {'title': 'К1', 'columns': [{'title': '20', 'field': '20', 'headerFilter': 'input'}]},
+                    {'title': 'К2', 'columns': [{'title': '21', 'field': '21', 'headerFilter': 'input'}]},
+                ]
+            },
+            *[{
+                'title': '',
+                'columns': [
+                    {'title': '', 'columns': [{'title': str(col), 'field': str(col), 'headerFilter': 'input'}]},
+                ]
+            } for col in fhbstat_parser.columns[21:]]
+        ],
         'filterMode': 'remote',
     })
     table.on_event('pageLoaded', data_filtered_event)
