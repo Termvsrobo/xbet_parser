@@ -3,7 +3,7 @@ from threading import Event
 
 from fastapi.responses import RedirectResponse
 from nicegui import app, ui
-from nicegui_tabulator import tabulator
+from nicegui_tabulator import tabulator, use_theme
 from pydantic import BaseModel
 
 from base import BrowserManager
@@ -299,31 +299,100 @@ class SortItem(BaseModel):
     field: str
     dir: str
 
+
+class FilterItem(BaseModel):
+    field: str
+    type: str
+    value: str
+
+
 class LoadTableRequest(BaseModel):
     page: int = 1
     size: int = 10
     sort: list[SortItem] = []
+    filter: list[FilterItem] = []
 
 
 @app.post('/load_table_data')
 async def load_table(payload: LoadTableRequest):
-    start_index = (payload.page - 1) * payload.size
-    end_index = start_index + payload.size
-    df = await fhbstat_parser.async_get_table_data()
-    if payload.sort:
-        df = df.sort_values(
-            by=[_sort.field for _sort in payload.sort],
-            ascending=[_sort.dir == 'asc' for _sort in payload.sort]
-        )
-    len_df = df.shape[0]
-    last_page = ceil(len_df / payload.size)
-    return {'data': df.iloc[start_index:end_index, :].to_dict(orient="records"), 'last_page': last_page}
+    offset = (payload.page - 1) * payload.size
+    sort = {str(_sort.field): -1 if _sort.dir == 'desc' else 1 for _sort in payload.sort}
+    query = {}
+    for _filter in payload.filter:
+        field_type = fhbstat_parser.get_field_type(int(_filter.field))
+        if _filter.field in ('1', '2', '3'):
+            query[str(_filter.field)] = int(_filter.value)
+        elif field_type is FieldType.FLOAT:
+            value = _filter.value.replace(',', '.')
+            if '.' in value:
+                decimal_part = value.split('.')[1]
+                count = len(decimal_part)
+            else:
+                count = 0
+            if count == 1:
+                query[str(_filter.field)] = {
+                    '$gte': float(value),
+                    '$lte': float(value + '9'),
+                }
+            elif count == 0:
+                query[str(_filter.field)] = {
+                    '$gte': float(value.replace('.', '')),
+                    '$lte': float(value.replace('.', '') + '.99'),
+                }
+            else:
+                query[str(_filter.field)] = float(value)
+        else:
+            query[str(_filter.field)] = {'$regex': _filter.value, '$options': 'i'}
+    df, count_records = await fhbstat_parser.async_get_table_data(query=query, skip=offset, limit=payload.size, sort=sort)
+    last_page = ceil(count_records / payload.size)
+    return {
+        'data': df.to_dict(orient="records"),
+        'last_page': last_page,
+        'current_page': payload.page,
+    }
 
 
 @ui.page('/table_data', response_timeout=20, reconnect_timeout=60)
 async def table_data():
+    async def data_filtered_event(e):
+        filters = await table.run_table_method('getHeaderFilters', timeout=20)
+        for _filter in filters:
+            await table.run_table_method('setHeaderFilterValue', _filter['field'], _filter['value'], timeout=20)
+
+    async def cell_click_event(e):
+        cell = e.args.get('cell', {})
+        column = cell.get('column', {})
+        field = column.get('field', None)
+        value = cell.get('value', None)
+        if value and field:
+            await table.run_table_method('setHeaderFilterValue', field, str(value), timeout=20)
+
+    async def select_theme():
+        use_theme(theme.value or "default", shared=False)
+
     ui.page_title('Таблица данных FHBStat')
-    tabulator({
+    with ui.row():
+        ui.label('Тема:')
+        theme = ui.toggle(
+            [
+                "default",
+                "bootstrap3",
+                "bootstrap4",
+                "bootstrap5",
+                "bulma",
+                "materialize",
+                "midnight",
+                "modern",
+                "semanticui",
+                "simple",
+                "site",
+                "site_dark",
+            ],
+            value="midnight",
+            on_change=select_theme,
+        ).props("no-caps")
+    use_theme('midnight')
+    table = tabulator({
         'ajaxURL': f'{settings.DOMAIN}/load_table_data',
         'ajaxConfig': 'POST',
         'paginationMode': 'remote',
@@ -332,8 +401,377 @@ async def table_data():
         'ajaxContentType': 'json',
         'paginationSize': 25,
         'paginationSizeSelector': True,
-        'columns': [{'title': str(col), 'field': str(col)} for col in fhbstat_parser.columns]
+        'columns': [
+            {
+                'title': 'ДАТА',
+                'columns': [
+                    {
+                        'title': 'Чис',
+                        'columns': [{'title': '1', 'field': '1', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Мес',
+                        'columns': [{'title': '2', 'field': '2', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Год',
+                        'columns': [{'title': '3', 'field': '3', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ВРЕМЯ',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '4', 'field': '4', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ДН',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '5', 'field': '5', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'КОНТИНЕНТ',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '6', 'field': '6', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'СТРАНА',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '7', 'field': '7', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ЛИГА',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '8', 'field': '8', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'НАЗВАНИЕ КОМАНД',
+                'columns': [
+                    {
+                        'title': 'Команда 1',
+                        'columns': [{'title': '9', 'field': '9', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Команда 2',
+                        'columns': [{'title': '10', 'field': '10', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'Счет матча',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '11', 'field': '11', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': '',
+                        'columns': [{'title': '12', 'field': '12', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'Счет по таймам',
+                'columns': [
+                    {
+                        'title': '1тайм',
+                        'columns': [
+                            {'title': '13', 'field': '13', 'headerFilter': 'input'},
+                            {'title': '14', 'field': '14', 'headerFilter': 'input'}
+                        ]
+                    },
+                    {
+                        'title': '2тайм',
+                        'columns': [
+                            {'title': '15', 'field': '15', 'headerFilter': 'input'},
+                            {'title': '16', 'field': '16', 'headerFilter': 'input'}
+                        ]
+                    }
+                ]
+            },
+            {
+                'title': 'Фора итог',
+                'columns': [
+                    {
+                        'title': 'К1',
+                        'columns': [{'title': '18', 'field': '18', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'К2',
+                        'columns': [{'title': '19', 'field': '19', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'Разн фор',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '22', 'field': '22', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': '',
+                        'columns': [{'title': '23', 'field': '23', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ИСХОД МАТЧА (футбол 24)',
+                'columns': [
+                    {
+                        'title': 'П1',
+                        'columns': [{'title': '25', 'field': '25', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х',
+                        'columns': [{'title': '26', 'field': '26', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2',
+                        'columns': [{'title': '27', 'field': '27', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ИСХОД МАТЧА',
+                'columns': [
+                    {
+                        'title': 'П1',
+                        'columns': [{'title': '32', 'field': '32', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х',
+                        'columns': [{'title': '33', 'field': '33', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2',
+                        'columns': [{'title': '34', 'field': '34', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'Маржа (исход)',
+                'columns': [
+                    {
+                        'title': 'М(и)',
+                        'columns': [{'title': '28', 'field': '28', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Кат',
+                        'columns': [{'title': '29', 'field': '29', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': '% изм коэф',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '30', 'field': '30', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ДВОЙНОЙ ШАНС',
+                'columns': [
+                    {
+                        'title': '1Х',
+                        'columns': [{'title': '35', 'field': '35', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': '12',
+                        'columns': [{'title': '36', 'field': '36', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х2',
+                        'columns': [{'title': '37', 'field': '37', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ФОРА (0)',
+                'columns': [
+                    {
+                        'title': 'К1',
+                        'columns': [{'title': '38', 'field': '38', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'К2',
+                        'columns': [{'title': '39', 'field': '39', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'М (ф)',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '127', 'field': '127', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ОБЕ ЗАБЬЮТ',
+                'columns': [
+                    {
+                        'title': 'ДА',
+                        'columns': [{'title': '113', 'field': '113', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'НЕТ',
+                        'columns': [{'title': '114', 'field': '114', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'М (оз)',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '128', 'field': '128', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ТОТАЛ МАТЧА (2,5)',
+                'columns': [
+                    {
+                        'title': 'Мен',
+                        'columns': [{'title': '92', 'field': '92', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Бол',
+                        'columns': [{'title': '95', 'field': '95', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'М (т)',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '129', 'field': '129', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ИСХОД ПЕРВОГО ТАЙМА',
+                'columns': [
+                    {
+                        'title': 'П1',
+                        'columns': [{'title': '44', 'field': '44', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х',
+                        'columns': [{'title': '45', 'field': '45', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2',
+                        'columns': [{'title': '46', 'field': '46', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'М (1т)',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '130', 'field': '130', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ИСХОД ВТОРОГО ТАЙМА',
+                'columns': [
+                    {
+                        'title': 'П1',
+                        'columns': [{'title': '47', 'field': '47', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х',
+                        'columns': [{'title': '48', 'field': '48', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2',
+                        'columns': [{'title': '49', 'field': '49', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'М (2т)',
+                'columns': [
+                    {
+                        'title': '',
+                        'columns': [{'title': '131', 'field': '131', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+            {
+                'title': 'ИСХОД ПЕРВОГО ТАЙМА И МАТЧА',
+                'columns': [
+                    {
+                        'title': 'П1/П1',
+                        'columns': [{'title': '50', 'field': '50', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х/П1',
+                        'columns': [{'title': '51', 'field': '51', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2/П1',
+                        'columns': [{'title': '52', 'field': '52', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П1/Х',
+                        'columns': [{'title': '53', 'field': '53', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х/Х',
+                        'columns': [{'title': '54', 'field': '54', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2/Х',
+                        'columns': [{'title': '55', 'field': '55', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П1/П2',
+                        'columns': [{'title': '56', 'field': '56', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'Х/П2',
+                        'columns': [{'title': '57', 'field': '57', 'headerFilter': 'input'}]
+                    },
+                    {
+                        'title': 'П2/П2',
+                        'columns': [{'title': '58', 'field': '58', 'headerFilter': 'input'}]
+                    }
+                ]
+            },
+        ],
+        'filterMode': 'remote',
     })
+    table.on_event('pageLoaded', data_filtered_event)
+    table.on_event('cellClick', cell_click_event)
 
 
 @ui.page('/login')
@@ -368,5 +806,6 @@ if __name__ in {"__main__", "__mp_main__"}:
     ui.run(
         show=False,
         port=settings.PORT,
-        storage_secret=settings.STORAGE_SECRET
+        storage_secret=settings.STORAGE_SECRET,
+        reload=settings.DEBUG
     )
