@@ -1,4 +1,3 @@
-
 from pydantic.networks import MongoDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,7 +15,7 @@ class Settings(BaseSettings):
     TEST_FHBSTAT_USERNAME: str | None = None
     TEST_FHBSTAT_PASSWORD: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", extra='allow')
+    model_config = SettingsConfigDict(env_file='.env', extra='allow')
 
 
 settings = Settings()

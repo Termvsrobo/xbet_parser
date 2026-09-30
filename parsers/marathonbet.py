@@ -29,7 +29,9 @@ def parse(page_content, page_link):
     soup = BeautifulSoup(page_content, 'html.parser')
     country_name = None
     league_name = None
-    league_header = soup.find(lambda tag: tag.name == 'h2' and tag.get('class') == ['category-label'])
+    league_header = soup.find(
+        lambda tag: tag.name == 'h2' and tag.get('class') == ['category-label']
+    )
     if league_header:
         league_header_data = [
             child.text
@@ -43,7 +45,9 @@ def parse(page_content, page_link):
         elif len(league_header_data) > 2:
             country_name = league_header_data[0]
             league_name = ' '.join(league_header_data[1:])
-    tables = soup.find_all(lambda tag: tag.name == 'table' and tag.get('class') == ['coupon-row-item'])
+    tables = soup.find_all(
+        lambda tag: tag.name == 'table' and tag.get('class') == ['coupon-row-item']
+    )
     for table in tables:
         name_column = table.find('td', attrs={'class': 'first'})
         players = name_column.find_all('a', attrs={'class': 'member-link'})
@@ -53,50 +57,91 @@ def parse(page_content, page_link):
     name = '\n'.join(players_names)
 
     name_players = name.split('\n')
-    name_players = [name_players[0].replace('1. ', ''), name_players[1].replace('2. ', '')]
+    name_players = [
+        name_players[0].replace('1. ', ''),
+        name_players[1].replace('2. ', ''),
+    ]
     if table.find('div', attrs={'class': 'date-wrapper'}):
         date_game = table.find('div', attrs={'class': 'date-wrapper'}).text
     else:
         date_game = None
     _results = soup.find(
-        lambda tag: tag.name == 'div' and tag.get('class') == ['name-field'] and tag.text.strip() == 'Результат'
+        lambda tag: (
+            tag.name == 'div'
+            and tag.get('class') == ['name-field']
+            and tag.text.strip() == 'Результат'
+        )
     )
     if _results:
-        results = _results.find_parent(lambda tag: tag.name == 'div' and tag.get('class') == ['block-market-wrapper'])
+        results = _results.find_parent(
+            lambda tag: (
+                tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
+            )
+        )
     else:
         results = None
 
     _head_starts = soup.find(
-        lambda tag: tag.name == 'div' and tag.get('class') == ['name-field'] and tag.text.strip() == 'Форы'
+        lambda tag: (
+            tag.name == 'div'
+            and tag.get('class') == ['name-field']
+            and tag.text.strip() == 'Форы'
+        )
     )
     if _head_starts:
         head_starts = _head_starts.find_parent(
-            lambda tag: tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
+            lambda tag: (
+                tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
+            )
         )
     else:
         head_starts = None
 
     _totals = soup.find(
-        lambda tag: tag.name == 'div' and tag.get('class') == ['name-field'] and tag.text.strip() == 'Тоталы'
+        lambda tag: (
+            tag.name == 'div'
+            and tag.get('class') == ['name-field']
+            and tag.text.strip() == 'Тоталы'
+        )
     )
     if _totals:
-        totals = _totals.find_parent(lambda tag: tag.name == 'div' and tag.get('class') == ['block-market-wrapper'])
+        totals = _totals.find_parent(
+            lambda tag: (
+                tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
+            )
+        )
     else:
         totals = None
 
     _goals = soup.find(
-        lambda tag: tag.name == 'div' and tag.get('class') == ['name-field'] and tag.text.strip() == 'Голы'
+        lambda tag: (
+            tag.name == 'div'
+            and tag.get('class') == ['name-field']
+            and tag.text.strip() == 'Голы'
+        )
     )
     if _goals:
-        goals = _goals.find_parent(lambda tag: tag.name == 'div' and tag.get('class') == ['block-market-wrapper'])
+        goals = _goals.find_parent(
+            lambda tag: (
+                tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
+            )
+        )
     else:
         goals = None
 
     _times = soup.find(
-        lambda tag: tag.name == 'div' and tag.get('class') == ['name-field'] and tag.text.strip() == 'Таймы'
+        lambda tag: (
+            tag.name == 'div'
+            and tag.get('class') == ['name-field']
+            and tag.text.strip() == 'Таймы'
+        )
     )
     if _times:
-        times = _times.find_parent(lambda tag: tag.name == 'div' and tag.get('class') == ['block-market-wrapper'])
+        times = _times.find_parent(
+            lambda tag: (
+                tag.name == 'div' and tag.get('class') == ['block-market-wrapper']
+            )
+        )
     else:
         times = None
 
@@ -112,18 +157,27 @@ def parse(page_content, page_link):
             ('_2X', f'{name_players[1]} (победа) или ничья'),
         ):
             element = results.find(
-                lambda tag, value=value: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
+                lambda tag, value=value: (
+                    tag.name == 'div'
+                    and tag.get('class') == ['result-left']
+                    and tag.text.strip() == value
+                )
             )
             if element:
                 result_dict[key] = element.find_next_sibling(
-                    lambda tag: tag.name == 'div' and tag.get('class') == ['result-right']
+                    lambda tag: (
+                        tag.name == 'div' and tag.get('class') == ['result-right']
+                    )
                 ).span.text
 
     # Форы
     head_starts_dict = defaultdict(lambda: None)
     if head_starts:
         head_starts_visible_div = head_starts.find(
-            lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper']
+            lambda tag: (
+                tag.name == 'div'
+                and tag.get('class') == ['market-inline-block-table-wrapper']
+            )
         )
         head_starts_table = head_starts_visible_div.find('table', class_='td-border')
         table_data = [t.find_all('td') for t in head_starts_table.tbody.find_all('tr')]
@@ -144,7 +198,11 @@ def parse(page_content, page_link):
         ):
             for td in table:
                 _td = td.find(
-                    lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                    lambda tag, coeff=coeff: (
+                        tag.name == 'div'
+                        and tag.get('class') == ['coeff-value']
+                        and coeff in tag.text
+                    )
                 )
                 if _td:
                     head_starts_dict[key] = _td.find_next_sibling().span.text
@@ -154,19 +212,27 @@ def parse(page_content, page_link):
     totals_dict = defaultdict(lambda: None)
     if totals:
         totals_visible_div = totals.find_all(
-            lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper']
+            lambda tag: (
+                tag.name == 'div'
+                and tag.get('class') == ['market-inline-block-table-wrapper']
+            )
         )
         totals_table_div = next(
-            filter(lambda x: 'Тотал голов' in x.text, totals_visible_div),
-            None
+            filter(lambda x: 'Тотал голов' in x.text, totals_visible_div), None
         )
         it_1_totals_table_div = next(
-            filter(lambda x: f'Тотал голов ({name_players[0]})' in x.text, totals_visible_div),
-            None
+            filter(
+                lambda x: f'Тотал голов ({name_players[0]})' in x.text,
+                totals_visible_div,
+            ),
+            None,
         )
         it_2_totals_table_div = next(
-            filter(lambda x: f'Тотал голов ({name_players[1]})' in x.text, totals_visible_div),
-            None
+            filter(
+                lambda x: f'Тотал голов ({name_players[1]})' in x.text,
+                totals_visible_div,
+            ),
+            None,
         )
 
         if totals_table_div:
@@ -189,7 +255,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -197,7 +267,9 @@ def parse(page_content, page_link):
 
         if it_1_totals_table_div:
             it_1_totals_table = it_1_totals_table_div.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in it_1_totals_table.tbody.find_all('tr')]
+            table_data = [
+                t.find_all('td') for t in it_1_totals_table.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -211,7 +283,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -219,7 +295,9 @@ def parse(page_content, page_link):
 
         if it_2_totals_table_div:
             it_2_totals_table = it_2_totals_table_div.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in it_2_totals_table.tbody.find_all('tr')]
+            table_data = [
+                t.find_all('td') for t in it_2_totals_table.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -233,7 +311,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         totals_dict[key] = _td.find_next_sibling().span.text
@@ -242,25 +324,38 @@ def parse(page_content, page_link):
     # Голы
     goals_dict = defaultdict(lambda: None)
     if goals:
-        yes_column_exist = bool(goals.find(
-            lambda tag: tag.name == 'th' and tag.get('class') == ['width25'] and tag.span.text == 'Да'
-        ))
-        no_column_exist = bool(goals.find(
-            lambda tag: tag.name == 'th' and tag.get('class') == ['width25'] and tag.span.text == 'Нет'
-        ))
+        yes_column_exist = bool(
+            goals.find(
+                lambda tag: (
+                    tag.name == 'th'
+                    and tag.get('class') == ['width25']
+                    and tag.span.text == 'Да'
+                )
+            )
+        )
+        no_column_exist = bool(
+            goals.find(
+                lambda tag: (
+                    tag.name == 'th'
+                    and tag.get('class') == ['width25']
+                    and tag.span.text == 'Нет'
+                )
+            )
+        )
         _all_win = goals.find(lambda tag: tag.text == 'Обе команды забьют')
         if _all_win:
             ALL_win = _all_win.parent
             if ALL_win:
                 ALL_win_yes_no = ALL_win.parent.find_all(
-                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                        ['price', 'height-column-with-price']
+                    lambda tag: (
+                        tag.name == 'td'
+                        and sorted(tag.get('class'))
+                        == sorted(['price', 'height-column-with-price'])
                     )
                 )
                 if yes_column_exist and no_column_exist:
                     goals_dict['ALL_win_yes'], goals_dict['ALL_win_no'] = [
-                        all_win_yes_no.span.text
-                        for all_win_yes_no in ALL_win_yes_no
+                        all_win_yes_no.span.text for all_win_yes_no in ALL_win_yes_no
                     ]
                 elif yes_column_exist:
                     goals_dict['ALL_win_yes'] = ALL_win_yes_no[0].span.text
@@ -272,8 +367,10 @@ def parse(page_content, page_link):
             ALL_times = _all_times.parent
             if ALL_times:
                 ALL_times_yes_no = ALL_times.parent.find_all(
-                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                        ['price', 'height-column-with-price']
+                    lambda tag: (
+                        tag.name == 'td'
+                        and sorted(tag.get('class'))
+                        == sorted(['price', 'height-column-with-price'])
                     )
                 )
                 if yes_column_exist and no_column_exist:
@@ -286,108 +383,135 @@ def parse(page_content, page_link):
                 elif no_column_exist:
                     goals_dict['ALL_times_no'] = ALL_win_yes_no[0].span.text
 
-        _goals_it1_1_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 1-й тайм')
+        _goals_it1_1_time = goals.find(
+            lambda tag: tag.text == f'{name_players[0]} забьет, 1-й тайм'
+        )
         if _goals_it1_1_time:
             _it1_1_time = _goals_it1_1_time.parent
             if _it1_1_time:
                 _it1_1_time_data = _it1_1_time.parent.find_all(
-                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                        ['price', 'height-column-with-price']
+                    lambda tag: (
+                        tag.name == 'td'
+                        and sorted(tag.get('class'))
+                        == sorted(['price', 'height-column-with-price'])
                     )
                 )
                 goals_dict['IT1_bol_05_1_time'], goals_dict['IT1_men_05_1_time'] = [
-                    _t.span.text
-                    for _t in _it1_1_time_data
+                    _t.span.text for _t in _it1_1_time_data
                 ]
 
-        _goals_it1_2_time = goals.find(lambda tag: tag.text == f'{name_players[0]} забьет, 2-й тайм')
+        _goals_it1_2_time = goals.find(
+            lambda tag: tag.text == f'{name_players[0]} забьет, 2-й тайм'
+        )
         if _goals_it1_2_time:
             _it1_2_time = _goals_it1_2_time.parent
             if _it1_2_time:
                 _it1_2_time_data = _it1_2_time.parent.find_all(
-                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                        ['price', 'height-column-with-price']
+                    lambda tag: (
+                        tag.name == 'td'
+                        and sorted(tag.get('class'))
+                        == sorted(['price', 'height-column-with-price'])
                     )
                 )
                 goals_dict['IT1_bol_05_2_time'], goals_dict['IT1_men_05_2_time'] = [
-                    _t.span.text
-                    for _t in _it1_2_time_data
+                    _t.span.text for _t in _it1_2_time_data
                 ]
 
-        _goals_it2_1_time = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет, 1-й тайм')
+        _goals_it2_1_time = goals.find(
+            lambda tag: tag.text == f'{name_players[1]} забьет, 1-й тайм'
+        )
         if _goals_it2_1_time:
             _it2_1_time = _goals_it2_1_time.parent
             if _it2_1_time:
                 _it2_1_time_data = _it2_1_time.parent.find_all(
-                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                        ['price', 'height-column-with-price']
+                    lambda tag: (
+                        tag.name == 'td'
+                        and sorted(tag.get('class'))
+                        == sorted(['price', 'height-column-with-price'])
                     )
                 )
                 goals_dict['IT2_bol_05_1_time'], goals_dict['IT2_men_05_1_time'] = [
-                    _t.span.text
-                    for _t in _it2_1_time_data
+                    _t.span.text for _t in _it2_1_time_data
                 ]
 
-        _goals_it2_2_time = goals.find(lambda tag: tag.text == f'{name_players[1]} забьет, 2-й тайм')
+        _goals_it2_2_time = goals.find(
+            lambda tag: tag.text == f'{name_players[1]} забьет, 2-й тайм'
+        )
         if _goals_it2_2_time:
             _it2_2_time = _goals_it2_2_time.parent
             if _it2_2_time:
                 _it2_2_time_data = _it2_2_time.parent.find_all(
-                    lambda tag: tag.name == 'td' and sorted(tag.get('class')) == sorted(
-                        ['price', 'height-column-with-price']
+                    lambda tag: (
+                        tag.name == 'td'
+                        and sorted(tag.get('class'))
+                        == sorted(['price', 'height-column-with-price'])
                     )
                 )
                 goals_dict['IT2_bol_05_2_time'], goals_dict['IT2_men_05_2_time'] = [
-                    _t.span.text
-                    for _t in _it2_2_time_data
+                    _t.span.text for _t in _it2_2_time_data
                 ]
 
     # Таймы
     times_dict = defaultdict(lambda: None)
     if times:
         times_elements = times.find_all(
-            lambda tag: tag.name == 'div' and tag.get('class') == ['market-inline-block-table-wrapper']
+            lambda tag: (
+                tag.name == 'div'
+                and tag.get('class') == ['market-inline-block-table-wrapper']
+            )
         )
 
         results_1_time = next(
-            filter(lambda x: 'Результат, 1-й тайм' in x.text, times_elements),
-            None
+            filter(lambda x: 'Результат, 1-й тайм' in x.text, times_elements), None
         )
         win_head_start_1_time = next(
-            filter(lambda x: 'Победа с учетом форы, 1-й тайм' in x.text, times_elements),
-            None
+            filter(
+                lambda x: 'Победа с учетом форы, 1-й тайм' in x.text, times_elements
+            ),
+            None,
         )
         goals_1_time = next(
-            filter(lambda x: 'Тотал голов, 1-й тайм' in x.text, times_elements),
-            None
+            filter(lambda x: 'Тотал голов, 1-й тайм' in x.text, times_elements), None
         )
         goals_it1_1_time = next(
-            filter(lambda x: f'Тотал голов ({name_players[0]}), 1-й тайм' in x.text, times_elements),
-            None
+            filter(
+                lambda x: f'Тотал голов ({name_players[0]}), 1-й тайм' in x.text,
+                times_elements,
+            ),
+            None,
         )
         goals_it2_1_time = next(
-            filter(lambda x: f'Тотал голов ({name_players[1]}), 1-й тайм' in x.text, times_elements),
-            None
+            filter(
+                lambda x: f'Тотал голов ({name_players[1]}), 1-й тайм' in x.text,
+                times_elements,
+            ),
+            None,
         )
         results_2_time = next(
-            filter(lambda x: 'Результат, 2-й тайм' in x.text, times_elements),
-            None
+            filter(lambda x: 'Результат, 2-й тайм' in x.text, times_elements), None
         )
         win_head_start_2_time = next(
-            filter(lambda x: 'Победа с учетом форы, 2-й тайм' in x.text, times_elements),
-            None
+            filter(
+                lambda x: 'Победа с учетом форы, 2-й тайм' in x.text, times_elements
+            ),
+            None,
         )
         goals_2_time = next(
-            filter(lambda x: 'Тотал голов, 2-й тайм' in x.text, times_elements),
-            None
+            filter(lambda x: 'Тотал голов, 2-й тайм' in x.text, times_elements), None
         )
         goals_it1_2_time = next(
-            filter(lambda x: f'Тотал голов ({name_players[0]}), 2-й тайм' in x.text, times_elements),
-            None
+            filter(
+                lambda x: f'Тотал голов ({name_players[0]}), 2-й тайм' in x.text,
+                times_elements,
+            ),
+            None,
         )
         goals_it2_2_time = next(
-            filter(lambda x: f'Тотал голов ({name_players[1]}), 2-й тайм' in x.text, times_elements),
-            None
+            filter(
+                lambda x: f'Тотал голов ({name_players[1]}), 2-й тайм' in x.text,
+                times_elements,
+            ),
+            None,
         )
 
         # --
@@ -397,21 +521,34 @@ def parse(page_content, page_link):
                 ('goal_1_time_X', 'Ничья'),
                 ('goal_1_time_P2', f'{name_players[1]} (победа)'),
                 ('goal_1_time_1X', f'{name_players[0]} (победа) или ничья'),
-                ('goal_1_time_12', f'{name_players[0]} (победа) или {name_players[1]} (победа)'),
+                (
+                    'goal_1_time_12',
+                    f'{name_players[0]} (победа) или {name_players[1]} (победа)',
+                ),
                 ('goal_1_time_2X', f'{name_players[1]} (победа) или ничья'),
             ):
                 element = results_1_time.find(
-                    lambda tag, value=value: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
+                    lambda tag, value=value: (
+                        tag.name == 'div'
+                        and tag.get('class') == ['result-left']
+                        and tag.text.strip() == value
+                    )
                 )
                 if element:
                     times_dict[key] = element.find_next_sibling(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['result-right']
+                        lambda tag: (
+                            tag.name == 'div' and tag.get('class') == ['result-right']
+                        )
                     ).span.text
 
         # --
         if win_head_start_1_time:
-            head_starts_table_1_time = win_head_start_1_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in head_starts_table_1_time.tbody.find_all('tr')]
+            head_starts_table_1_time = win_head_start_1_time.find(
+                'table', class_='td-border'
+            )
+            table_data = [
+                t.find_all('td') for t in head_starts_table_1_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -425,7 +562,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -434,7 +575,9 @@ def parse(page_content, page_link):
         # --
         if goals_1_time:
             totals_table_1_time = goals_1_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in totals_table_1_time.tbody.find_all('tr')]
+            table_data = [
+                t.find_all('td') for t in totals_table_1_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -452,7 +595,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -460,8 +607,12 @@ def parse(page_content, page_link):
 
         # --
         if goals_it1_1_time:
-            it_1_totals_table_1_time = goals_it1_1_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in it_1_totals_table_1_time.tbody.find_all('tr')]
+            it_1_totals_table_1_time = goals_it1_1_time.find(
+                'table', class_='td-border'
+            )
+            table_data = [
+                t.find_all('td') for t in it_1_totals_table_1_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -475,15 +626,23 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
                         break
 
         if goals_it2_1_time:
-            it_2_totals_table_1_time = goals_it2_1_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in it_2_totals_table_1_time.tbody.find_all('tr')]
+            it_2_totals_table_1_time = goals_it2_1_time.find(
+                'table', class_='td-border'
+            )
+            table_data = [
+                t.find_all('td') for t in it_2_totals_table_1_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -497,7 +656,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -511,21 +674,34 @@ def parse(page_content, page_link):
                 ('goal_2_time_X', 'Ничья'),
                 ('goal_2_time_P2', f'{name_players[1]} (победа)'),
                 ('goal_2_time_1X', f'{name_players[0]} (победа) или ничья'),
-                ('goal_2_time_12', f'{name_players[0]} (победа) или {name_players[1]} (победа)'),
+                (
+                    'goal_2_time_12',
+                    f'{name_players[0]} (победа) или {name_players[1]} (победа)',
+                ),
                 ('goal_2_time_2X', f'{name_players[1]} (победа) или ничья'),
             ):
                 element = results_2_time.find(
-                    lambda tag, value=value: tag.name == 'div' and tag.get('class') == ['result-left'] and tag.text.strip() == value
+                    lambda tag, value=value: (
+                        tag.name == 'div'
+                        and tag.get('class') == ['result-left']
+                        and tag.text.strip() == value
+                    )
                 )
                 if element:
                     times_dict[key] = element.find_next_sibling(
-                        lambda tag: tag.name == 'div' and tag.get('class') == ['result-right']
+                        lambda tag: (
+                            tag.name == 'div' and tag.get('class') == ['result-right']
+                        )
                     ).span.text
 
         # --
         if win_head_start_2_time:
-            head_starts_table_2_time = win_head_start_2_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in head_starts_table_2_time.tbody.find_all('tr')]
+            head_starts_table_2_time = win_head_start_2_time.find(
+                'table', class_='td-border'
+            )
+            table_data = [
+                t.find_all('td') for t in head_starts_table_2_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -539,7 +715,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -548,7 +728,9 @@ def parse(page_content, page_link):
         # --
         if goals_2_time:
             totals_table_2_time = goals_2_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in totals_table_2_time.tbody.find_all('tr')]
+            table_data = [
+                t.find_all('td') for t in totals_table_2_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -566,15 +748,23 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
                         break
 
         if goals_it1_2_time:
-            it_1_totals_table_2_time = goals_it1_2_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in it_1_totals_table_2_time.tbody.find_all('tr')]
+            it_1_totals_table_2_time = goals_it1_2_time.find(
+                'table', class_='td-border'
+            )
+            table_data = [
+                t.find_all('td') for t in it_1_totals_table_2_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -585,19 +775,26 @@ def parse(page_content, page_link):
                 ('IT1_bol_05_2_time', right_table_data, '(0.5)'),
                 ('IT1_bol_10_2_time', right_table_data, '(1.0)'),
                 ('IT1_bol_15_2_time', right_table_data, '(1.5)'),
-
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
                         break
 
         if goals_it2_2_time:
-            it_2_totals_table_2_time = goals_it2_2_time.find('table', class_='td-border')
-            table_data = [t.find_all('td') for t in it_2_totals_table_2_time.tbody.find_all('tr')]
+            it_2_totals_table_2_time = goals_it2_2_time.find(
+                'table', class_='td-border'
+            )
+            table_data = [
+                t.find_all('td') for t in it_2_totals_table_2_time.tbody.find_all('tr')
+            ]
             left_table_data = [t[0] for t in table_data if t]
             right_table_data = [t[1] for t in table_data if t]
             for key, table, coeff in (
@@ -611,7 +808,11 @@ def parse(page_content, page_link):
             ):
                 for td in table:
                     _td = td.find(
-                        lambda tag, coeff=coeff: tag.name == 'div' and tag.get('class') == ['coeff-value'] and coeff in tag.text
+                        lambda tag, coeff=coeff: (
+                            tag.name == 'div'
+                            and tag.get('class') == ['coeff-value']
+                            and coeff in tag.text
+                        )
                     )
                     if _td:
                         times_dict[key] = _td.find_next_sibling().span.text
@@ -774,19 +975,22 @@ class MarathonbetParser(Parser):
         except Error as exc:
             self.logger.exception(exc.message)
             page = browser.pages[-1]
-            return PlainTextResponse('Во время обработки произошла ошибка. Попробуйте позже.')
+            return PlainTextResponse(
+                'Во время обработки произошла ошибка. Попробуйте позже.'
+            )
         else:
             if urlparse(page.url).path != '/su/':
                 await page.goto('su')
                 await page.wait_for_load_state()
             try:
                 await page.wait_for_selector(
-                    '//table[@class="coupon-row-item"]',
-                    timeout=180000
+                    '//table[@class="coupon-row-item"]', timeout=180000
                 )
             except TimeoutError as exc:
                 self.logger.exception(exc.message)
-                return PlainTextResponse('Вышло время ожидания страницы. Попробуйте позже.')
+                return PlainTextResponse(
+                    'Вышло время ожидания страницы. Попробуйте позже.'
+                )
             else:
                 msg = f'Собираем список матчей по футболу за {self.radio_period}'
                 self.status = msg
@@ -820,17 +1024,13 @@ class MarathonbetParser(Parser):
                             await player_page.goto(player_link)
                             await player_page.wait_for_load_state()
                             await player_page.wait_for_selector(
-                                '//div[@class="block-market-wrapper"]',
-                                timeout=180000
+                                '//div[@class="block-market-wrapper"]', timeout=180000
                             )
                             df_data_dict = parse(
-                                await player_page.content(),
-                                self.url + player_link[1:]
+                                await player_page.content(), self.url + player_link[1:]
                             )
                             await player_page.close()
-                            df_data.append(
-                                df_data_dict
-                            )
+                            df_data.append(df_data_dict)
                         except Error:
                             attempt += 1
                             await asyncio.sleep(5)

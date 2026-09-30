@@ -47,7 +47,10 @@ def download(url):
         if not is_running.is_set():
             ui.download.from_url(url)
         else:
-            ui.notify('В данный момент уже запущен процесс парсинга. Дождитесь его окончания, чтобы запустить новый')
+            ui.notify(
+                'В данный момент уже запущен процесс парсинга. Дождитесь его окончания, чтобы запустить новый'
+            )
+
     return wrapper
 
 
@@ -58,11 +61,17 @@ async def parse_page():
     ui.label('Выберите период')
     ui.radio(
         ['Всё время', '24 часа', 'Сегодня', '12 часов', '6 часов', '2 часа', '1 час'],
-        value='24 часа'
+        value='24 часа',
     ).props('inline').bind_value(marathonbet_parser, 'radio_period')
-    ui.label('Количество ссылок: Вычисляем').bind_text(marathonbet_parser, 'count_links')
-    ui.label('Обработано ссылок: Вычисляем').bind_text(marathonbet_parser, 'count_processed_links')
-    ui.label('Прошло секунд: Вычисляем').bind_text_from(marathonbet_parser, 'elapsed_time')
+    ui.label('Количество ссылок: Вычисляем').bind_text(
+        marathonbet_parser, 'count_links'
+    )
+    ui.label('Обработано ссылок: Вычисляем').bind_text(
+        marathonbet_parser, 'count_processed_links'
+    )
+    ui.label('Прошло секунд: Вычисляем').bind_text_from(
+        marathonbet_parser, 'elapsed_time'
+    )
     ui.label('Осталось секунд: Вычисляем').bind_text_from(marathonbet_parser, 'eta')
     ui.label('Статус: Вычисляем').bind_text_from(marathonbet_parser, 'status')
     ui.button('Скачать excel', on_click=download('/parse'))
@@ -80,12 +89,14 @@ async def xlite_page():
             'Ближайшие 12 часов',
             'Ближайшие 6 часов',
             'Ближайшие 2 часа',
-            'Ближайший час'
+            'Ближайший час',
         ],
-        value='Ближайшие 24 часа'
+        value='Ближайшие 24 часа',
     ).props('inline').bind_value(xlite_parser, 'radio_period')
     ui.label('Количество ссылок: Вычисляем').bind_text(xlite_parser, 'count_links')
-    ui.label('Обработано ссылок: Вычисляем').bind_text(xlite_parser, 'count_processed_links')
+    ui.label('Обработано ссылок: Вычисляем').bind_text(
+        xlite_parser, 'count_processed_links'
+    )
     ui.label('Прошло секунд: Вычисляем').bind_text_from(xlite_parser, 'elapsed_time')
     ui.label('Осталось секунд: Вычисляем').bind_text_from(xlite_parser, 'eta')
     ui.label('Статус: Вычисляем').bind_text_from(xlite_parser, 'status')
@@ -117,11 +128,12 @@ async def fhbstat_page():
     def upload():
         def wrapper():
             if not is_running.is_set():
-                ui.upload(
-                    on_upload=handle_upload
-                )
+                ui.upload(on_upload=handle_upload)
             else:
-                ui.notify('Запущен процесс парсинга. Дождитесь окончания и загрузите новыве фильтры!')
+                ui.notify(
+                    'Запущен процесс парсинга. Дождитесь окончания и загрузите новыве фильтры!'
+                )
+
         return wrapper
 
     def add_rounded_select(element):
@@ -130,29 +142,38 @@ async def fhbstat_page():
             ui.select(
                 list(
                     filter(
-                        lambda x: x not in fhbstat_parser.get_used_columns_by_filter(filter_id),
-                        fhbstat_parser.columns
+                        lambda x: (
+                            x
+                            not in fhbstat_parser.get_used_columns_by_filter(filter_id)
+                        ),
+                        fhbstat_parser.columns,
                     )
                 ),
-                on_change=add_rounded_field
+                on_change=add_rounded_field,
             )
         else:
-            ui.select(
-                fhbstat_parser.columns,
-                on_change=add_rounded_field
-            )
+            ui.select(fhbstat_parser.columns, on_change=add_rounded_field)
 
     def set_field(number_field, is_priority=False):
         def change_rounded_field(element):
             filter_id = int(element.sender.parent_slot.parent.props['filter_id'])
             if element.value:
                 if not is_priority:
-                    fhbstat_parser.add_user_filter(filter_id=filter_id, column=number_field, filter_value=element.value)
+                    fhbstat_parser.add_user_filter(
+                        filter_id=filter_id,
+                        column=number_field,
+                        filter_value=element.value,
+                    )
                 else:
-                    fhbstat_parser.add_user_filter(filter_id=filter_id, column=number_field, priority=element.value)
+                    fhbstat_parser.add_user_filter(
+                        filter_id=filter_id, column=number_field, priority=element.value
+                    )
             else:
                 if not is_priority:
-                    fhbstat_parser.remove_user_filter(filter_id=filter_id, column=number_field)
+                    fhbstat_parser.remove_user_filter(
+                        filter_id=filter_id, column=number_field
+                    )
+
         return change_rounded_field
 
     def add_rounded_field(element):
@@ -185,14 +206,18 @@ async def fhbstat_page():
         if fhbstat_parser.target_urls:
             for key, value in fhbstat_parser.target_urls.items():
                 with ui.row():
-                    ui.input('Ссылка:', value=value, on_change=add_target_url).props(f'link_id={int(key)}')
+                    ui.input('Ссылка:', value=value, on_change=add_target_url).props(
+                        f'link_id={int(key)}'
+                    )
                     ui.label(fhbstat_parser.get_link_description(value))
         else:
             for i in range(1):
                 with ui.row():
                     ui.input('Ссылка:', on_change=add_target_url).props(f'link_id={i}')
                     ui.label('')
-        passability = ui.checkbox('Считать проходимость самим').bind_value(fhbstat_parser, 'evaluate_passability')
+        passability = ui.checkbox('Считать проходимость самим').bind_value(
+            fhbstat_parser, 'evaluate_passability'
+        )
         if fhbstat_parser.enable_passability:
             passability.enable()
         else:
@@ -208,43 +233,53 @@ async def fhbstat_page():
                         for _filter in user_filter.filters:
                             _labels = list(
                                 filter(
-                                    lambda x: x not in fhbstat_parser.get_used_columns_by_filter(user_filter.filter_id),
-                                    fhbstat_parser.columns
+                                    lambda x: (
+                                        x
+                                        not in fhbstat_parser.get_used_columns_by_filter(
+                                            user_filter.filter_id
+                                        )
+                                    ),
+                                    fhbstat_parser.columns,
                                 )
                             )
                             if int(_filter.column) not in _labels:
                                 _labels.append(int(_filter.column))
                             select_field = ui.select(
-                                sorted(
-                                    _labels
-                                ),
+                                sorted(_labels),
                                 value=_filter.column,
-                                on_change=add_rounded_field
+                                on_change=add_rounded_field,
                             )
                             select_field.props(f'old_column={_filter.column}')
                             field_type = fhbstat_parser.get_field_type(_filter.column)
                             if field_type is FieldType.BOOL:
-                                ui.checkbox(value=True, on_change=set_field(_filter.column)).props('disabled')
+                                ui.checkbox(
+                                    value=True, on_change=set_field(_filter.column)
+                                ).props('disabled')
                             elif field_type is FieldType.FLOAT:
                                 ui.input(
                                     label=_filter.column,
                                     value=_filter.filter_value,
-                                    on_change=set_field(_filter.column)
+                                    on_change=set_field(_filter.column),
                                 )
                                 ui.select(
                                     [None] + list(range(1, 11)),
                                     label='Приоритет',
                                     value=_filter.priority,
-                                    on_change=set_field(_filter.column, is_priority=True)
+                                    on_change=set_field(
+                                        _filter.column, is_priority=True
+                                    ),
                                 )
                             elif field_type is FieldType.TIME:
                                 ui.input(
                                     label=_filter.column,
                                     value=_filter.filter_value,
-                                    on_change=set_field(_filter.column)
+                                    on_change=set_field(_filter.column),
                                 )
                             else:
-                                ui.input(label=_filter.column, on_change=set_field(_filter.column))
+                                ui.input(
+                                    label=_filter.column,
+                                    on_change=set_field(_filter.column),
+                                )
                         ui.button('Добавить', on_click=add_rounded_select)
                     ui.separator()
         else:
@@ -253,8 +288,7 @@ async def fhbstat_page():
                 ui.label('Выберите поля')
                 with ui.row().props(f'filter_id={next_filter_id}'):
                     select_field = ui.select(
-                        fhbstat_parser.columns,
-                        on_change=add_rounded_field
+                        fhbstat_parser.columns, on_change=add_rounded_field
                     )
                     select_field.props('old_column=""')
         add_button = ui.button('Добавить фильтр', on_click=add_filter_card)
@@ -267,26 +301,40 @@ async def fhbstat_page():
 
     with ui.row():
         ui.input('Email').bind_value(fhbstat_parser, 'email')
-        ui.input('Пароль', password=True, password_toggle_button=True).bind_value(fhbstat_parser, 'password')
-        ui.number('Минимальное количество матчей', min=1, precision=0, step=1).bind_value(
-            fhbstat_parser, 'min_count_matches'
+        ui.input('Пароль', password=True, password_toggle_button=True).bind_value(
+            fhbstat_parser, 'password'
         )
+        ui.number(
+            'Минимальное количество матчей', min=1, precision=0, step=1
+        ).bind_value(fhbstat_parser, 'min_count_matches')
     with ui.row():
-        ui.input('Название файла (без расширения)').bind_value(fhbstat_parser, 'file_name')
+        ui.input('Название файла (без расширения)').bind_value(
+            fhbstat_parser, 'file_name'
+        )
     filters()
     ui.button('Очистить фильтр', on_click=clear_filters)
     with ui.input('Время с').bind_value(fhbstat_parser, 'from_time') as from_time:
-        with ui.menu().props('no-parent-event') as menu, ui.time().props('format24h').bind_value(from_time), ui.row().classes('justify-end'):
+        with (
+            ui.menu().props('no-parent-event') as menu,
+            ui.time().props('format24h').bind_value(from_time),
+            ui.row().classes('justify-end'),
+        ):
             ui.button('Close', on_click=menu.close).props('flat')
         with from_time.add_slot('append'):
             ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     with ui.input('Время до').bind_value(fhbstat_parser, 'to_time') as to_time:
-        with ui.menu().props('no-parent-event') as menu, ui.time().props('format24h').bind_value(to_time), ui.row().classes('justify-end'):
+        with (
+            ui.menu().props('no-parent-event') as menu,
+            ui.time().props('format24h').bind_value(to_time),
+            ui.row().classes('justify-end'),
+        ):
             ui.button('Close', on_click=menu.close).props('flat')
         with to_time.add_slot('append'):
             ui.icon('access_time').on('click', menu.open).classes('cursor-pointer')
     link()
-    ui.label('Обработано ссылок: Вычисляем').bind_text(fhbstat_parser, 'count_processed_links')
+    ui.label('Обработано ссылок: Вычисляем').bind_text(
+        fhbstat_parser, 'count_processed_links'
+    )
     ui.label('Прошло секунд: Вычисляем').bind_text_from(fhbstat_parser, 'elapsed_time')
     ui.label('Осталось секунд: Вычисляем').bind_text_from(fhbstat_parser, 'eta')
     ui.label('Статус: Вычисляем').bind_text_from(fhbstat_parser, 'status')
@@ -316,11 +364,14 @@ class LoadTableRequest(BaseModel):
 @app.post('/load_table_data')
 async def load_table(payload: LoadTableRequest):
     offset = (payload.page - 1) * payload.size
-    sort = {str(_sort.field): -1 if _sort.dir == 'desc' else 1 for _sort in payload.sort}
+    sort = {
+        str(_sort.field): -1 if _sort.dir == 'desc' else 1 for _sort in payload.sort
+    }
     query = {}
     for _filter in payload.filter:
-        field_type = fhbstat_parser.get_field_type(int(_filter.field))
-        if _filter.field in ('1', '2', '3'):
+        _field = _filter.field.split('_')[0]
+        field_type = fhbstat_parser.get_field_type(int(_field))
+        if _field in ('1', '2', '3'):
             query[str(_filter.field)] = int(_filter.value)
         elif field_type is FieldType.FLOAT:
             value = _filter.value.replace(',', '.')
@@ -330,34 +381,50 @@ async def load_table(payload: LoadTableRequest):
             else:
                 count = 0
             if count == 1:
-                query[str(_filter.field)] = {
-                    '$gte': float(value),
-                    '$lte': float(value + '9'),
-                }
+                if value.startswith('-'):
+                    query[str(_filter.field)] = {
+                        '$gte': float(value + '9'),
+                        '$lte': float(value),
+                    }
+                else:
+                    query[str(_filter.field)] = {
+                        '$gte': float(value),
+                        '$lte': float(value + '9'),
+                    }
             elif count == 0:
-                query[str(_filter.field)] = {
-                    '$gte': float(value.replace('.', '')),
-                    '$lte': float(value.replace('.', '') + '.99'),
-                }
+                if value.startswith('-'):
+                    query[str(_filter.field)] = {
+                        '$gte': float(value.replace('.', '') + '.99'),
+                        '$lte': float(value.replace('.', '')),
+                    }
+                else:
+                    query[str(_filter.field)] = {
+                        '$gte': float(value.replace('.', '')),
+                        '$lte': float(value.replace('.', '') + '.99'),
+                    }
             else:
                 query[str(_filter.field)] = float(value)
         else:
             query[str(_filter.field)] = {'$regex': _filter.value, '$options': 'i'}
-    df, count_records = await fhbstat_parser.async_get_table_data(query=query, skip=offset, limit=payload.size, sort=sort)
+    df, count_records = await fhbstat_parser.async_get_table_data(
+        query=query, skip=offset, limit=payload.size, sort=sort
+    )
     last_page = ceil(count_records / payload.size)
     return {
-        'data': df.to_dict(orient="records"),
+        'data': df.to_dict(orient='records'),
         'last_page': last_page,
         'current_page': payload.page,
     }
 
 
-@ui.page('/table_data', response_timeout=20, reconnect_timeout=60)
+@ui.page('/table_data', response_timeout=60, reconnect_timeout=120)
 async def table_data():
     async def data_filtered_event(e):
-        filters = await table.run_table_method('getHeaderFilters', timeout=20)
+        filters = await table.run_table_method('getHeaderFilters', timeout=30)
         for _filter in filters:
-            await table.run_table_method('setHeaderFilterValue', _filter['field'], _filter['value'], timeout=20)
+            await table.run_table_method(
+                'setHeaderFilterValue', _filter['field'], _filter['value'], timeout=30
+            )
 
     async def cell_click_event(e):
         cell = e.args.get('cell', {})
@@ -365,419 +432,1772 @@ async def table_data():
         field = column.get('field', None)
         value = cell.get('value', None)
         if value and field:
-            await table.run_table_method('setHeaderFilterValue', field, str(value), timeout=20)
+            await table.run_table_method(
+                'setHeaderFilterValue', field, str(value), timeout=30
+            )
 
     async def select_theme():
-        use_theme(theme.value or "default", shared=False)
+        use_theme(theme.value or 'default', shared=False)
+
+    async def replace_data():
+        await table.run_table_method('replaceData', timeout=30)
 
     ui.page_title('Таблица данных FHBStat')
     with ui.row():
         ui.label('Тема:')
         theme = ui.toggle(
             [
-                "default",
-                "bootstrap3",
-                "bootstrap4",
-                "bootstrap5",
-                "bulma",
-                "materialize",
-                "midnight",
-                "modern",
-                "semanticui",
-                "simple",
-                "site",
-                "site_dark",
+                'default',
+                'bootstrap3',
+                'bootstrap4',
+                'bootstrap5',
+                'bulma',
+                'materialize',
+                'midnight',
+                'modern',
+                'semanticui',
+                'simple',
+                'site',
+                'site_dark',
             ],
-            value="midnight",
+            value='midnight',
             on_change=select_theme,
-        ).props("no-caps")
+        ).props('no-caps')
     use_theme('midnight')
-    table = tabulator({
-        'ajaxURL': f'{settings.DOMAIN}/load_table_data',
-        'ajaxConfig': 'POST',
-        'paginationMode': 'remote',
-        'sortMode': 'remote',
-        'pagination': True,
-        'ajaxContentType': 'json',
-        'paginationSize': 25,
-        'paginationSizeSelector': True,
-        'columns': [
-            {
-                'title': 'ДАТА',
-                'columns': [
-                    {
-                        'title': 'Чис',
-                        'columns': [{'title': '1', 'field': '1', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Мес',
-                        'columns': [{'title': '2', 'field': '2', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Год',
-                        'columns': [{'title': '3', 'field': '3', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ВРЕМЯ',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '4', 'field': '4', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ДН',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '5', 'field': '5', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'КОНТИНЕНТ',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '6', 'field': '6', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'СТРАНА',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '7', 'field': '7', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ЛИГА',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '8', 'field': '8', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'НАЗВАНИЕ КОМАНД',
-                'columns': [
-                    {
-                        'title': 'Команда 1',
-                        'columns': [{'title': '9', 'field': '9', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Команда 2',
-                        'columns': [{'title': '10', 'field': '10', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'Счет матча',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '11', 'field': '11', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': '',
-                        'columns': [{'title': '12', 'field': '12', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'Счет по таймам',
-                'columns': [
-                    {
-                        'title': '1тайм',
-                        'columns': [
-                            {'title': '13', 'field': '13', 'headerFilter': 'input'},
-                            {'title': '14', 'field': '14', 'headerFilter': 'input'}
-                        ]
-                    },
-                    {
-                        'title': '2тайм',
-                        'columns': [
-                            {'title': '15', 'field': '15', 'headerFilter': 'input'},
-                            {'title': '16', 'field': '16', 'headerFilter': 'input'}
-                        ]
-                    }
-                ]
-            },
-            {
-                'title': 'Фора итог',
-                'columns': [
-                    {
-                        'title': 'К1',
-                        'columns': [{'title': '18', 'field': '18', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'К2',
-                        'columns': [{'title': '19', 'field': '19', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'Разн фор',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '22', 'field': '22', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': '',
-                        'columns': [{'title': '23', 'field': '23', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ИСХОД МАТЧА (футбол 24)',
-                'columns': [
-                    {
-                        'title': 'П1',
-                        'columns': [{'title': '25', 'field': '25', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х',
-                        'columns': [{'title': '26', 'field': '26', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2',
-                        'columns': [{'title': '27', 'field': '27', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ИСХОД МАТЧА',
-                'columns': [
-                    {
-                        'title': 'П1',
-                        'columns': [{'title': '32', 'field': '32', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х',
-                        'columns': [{'title': '33', 'field': '33', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2',
-                        'columns': [{'title': '34', 'field': '34', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'Маржа (исход)',
-                'columns': [
-                    {
-                        'title': 'М(и)',
-                        'columns': [{'title': '28', 'field': '28', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Кат',
-                        'columns': [{'title': '29', 'field': '29', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': '% изм коэф',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '30', 'field': '30', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ДВОЙНОЙ ШАНС',
-                'columns': [
-                    {
-                        'title': '1Х',
-                        'columns': [{'title': '35', 'field': '35', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': '12',
-                        'columns': [{'title': '36', 'field': '36', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х2',
-                        'columns': [{'title': '37', 'field': '37', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ФОРА (0)',
-                'columns': [
-                    {
-                        'title': 'К1',
-                        'columns': [{'title': '38', 'field': '38', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'К2',
-                        'columns': [{'title': '39', 'field': '39', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'М (ф)',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '127', 'field': '127', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ОБЕ ЗАБЬЮТ',
-                'columns': [
-                    {
-                        'title': 'ДА',
-                        'columns': [{'title': '113', 'field': '113', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'НЕТ',
-                        'columns': [{'title': '114', 'field': '114', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'М (оз)',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '128', 'field': '128', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ТОТАЛ МАТЧА (2,5)',
-                'columns': [
-                    {
-                        'title': 'Мен',
-                        'columns': [{'title': '92', 'field': '92', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Бол',
-                        'columns': [{'title': '95', 'field': '95', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'М (т)',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '129', 'field': '129', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ИСХОД ПЕРВОГО ТАЙМА',
-                'columns': [
-                    {
-                        'title': 'П1',
-                        'columns': [{'title': '44', 'field': '44', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х',
-                        'columns': [{'title': '45', 'field': '45', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2',
-                        'columns': [{'title': '46', 'field': '46', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'М (1т)',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '130', 'field': '130', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ИСХОД ВТОРОГО ТАЙМА',
-                'columns': [
-                    {
-                        'title': 'П1',
-                        'columns': [{'title': '47', 'field': '47', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х',
-                        'columns': [{'title': '48', 'field': '48', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2',
-                        'columns': [{'title': '49', 'field': '49', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'М (2т)',
-                'columns': [
-                    {
-                        'title': '',
-                        'columns': [{'title': '131', 'field': '131', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-            {
-                'title': 'ИСХОД ПЕРВОГО ТАЙМА И МАТЧА',
-                'columns': [
-                    {
-                        'title': 'П1/П1',
-                        'columns': [{'title': '50', 'field': '50', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х/П1',
-                        'columns': [{'title': '51', 'field': '51', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2/П1',
-                        'columns': [{'title': '52', 'field': '52', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П1/Х',
-                        'columns': [{'title': '53', 'field': '53', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х/Х',
-                        'columns': [{'title': '54', 'field': '54', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2/Х',
-                        'columns': [{'title': '55', 'field': '55', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П1/П2',
-                        'columns': [{'title': '56', 'field': '56', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'Х/П2',
-                        'columns': [{'title': '57', 'field': '57', 'headerFilter': 'input'}]
-                    },
-                    {
-                        'title': 'П2/П2',
-                        'columns': [{'title': '58', 'field': '58', 'headerFilter': 'input'}]
-                    }
-                ]
-            },
-        ],
-        'filterMode': 'remote',
-    })
+    with ui.row():
+        ui.checkbox('Чемпионаты')
+        ui.checkbox('Кубки')
+        ui.checkbox('Клубы')
+        ui.checkbox('Сборные')
+        ui.checkbox('Топ лиги')
+        ui.checkbox('Средние лиги')
+        ui.checkbox('Низшие лиги')
+    ui.button('Поиск', on_click=replace_data)
+    table = tabulator(
+        {
+            'ajaxURL': f'{settings.DOMAIN}/load_table_data',
+            'ajaxConfig': 'POST',
+            'ajaxParams': {'м_6_чемп': True, 'м_5_кубок': True},
+            'paginationMode': 'remote',
+            'sortMode': 'remote',
+            'pagination': True,
+            'ajaxContentType': 'json',
+            'paginationSize': 25,
+            'paginationSizeSelector': True,
+            'columnDefaults': {'headerHozAlign': 'center', 'hozAlign': 'center', 'headerFilterLiveFilter': False},
+            'columns': [
+                {
+                    'title': 'Общие колонки',
+                    'columns': [
+                        {
+                            'title': 'ДАТА',
+                            'columns': [
+                                {
+                                    'title': 'Чис',
+                                    'columns': [
+                                        {
+                                            'title': '1',
+                                            'field': '1',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Мес',
+                                    'columns': [
+                                        {
+                                            'title': '2',
+                                            'field': '2',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Год',
+                                    'columns': [
+                                        {
+                                            'title': '3',
+                                            'field': '3',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ВРЕМЯ',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '4',
+                                            'field': '4',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ДН',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '5',
+                                            'field': '5',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'КОНТИНЕНТ',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '6',
+                                            'field': '6',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'СТРАНА',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '7',
+                                            'field': '7',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ЛИГА',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '8',
+                                            'field': '8',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'НАЗВАНИЕ КОМАНД',
+                            'columns': [
+                                {
+                                    'title': 'Команда 1',
+                                    'columns': [
+                                        {
+                                            'title': '9',
+                                            'field': '9',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Команда 2',
+                                    'columns': [
+                                        {
+                                            'title': '10',
+                                            'field': '10',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Счет матча',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '11',
+                                            'field': '11',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '12',
+                                            'field': '12',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Счет по таймам',
+                            'columns': [
+                                {
+                                    'title': '1тайм',
+                                    'columns': [
+                                        {
+                                            'title': '13',
+                                            'field': '13',
+                                            'headerFilter': 'input',
+                                        },
+                                        {
+                                            'title': '14',
+                                            'field': '14',
+                                            'headerFilter': 'input',
+                                        },
+                                    ],
+                                },
+                                {
+                                    'title': '2тайм',
+                                    'columns': [
+                                        {
+                                            'title': '15',
+                                            'field': '15',
+                                            'headerFilter': 'input',
+                                        },
+                                        {
+                                            'title': '16',
+                                            'field': '16',
+                                            'headerFilter': 'input',
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    'title': 'Футбол 24',
+                    'columns': [
+                        {
+                            'title': 'Фора итог',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '18',
+                                            'field': '18',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '19',
+                                            'field': '19',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Разн фор',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '22',
+                                            'field': '22',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '23',
+                                            'field': '23',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД МАТЧА (футбол 24)',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '25',
+                                            'field': '25',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '26',
+                                            'field': '26',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '27',
+                                            'field': '27',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД МАТЧА',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '32',
+                                            'field': '32',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '33',
+                                            'field': '33',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '34',
+                                            'field': '34',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Маржа (исход)',
+                            'columns': [
+                                {
+                                    'title': 'М(и)',
+                                    'columns': [
+                                        {
+                                            'title': '28',
+                                            'field': '28',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Кат',
+                                    'columns': [
+                                        {
+                                            'title': '29',
+                                            'field': '29',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': '% изм коэф',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '30',
+                                            'field': '30',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ДВОЙНОЙ ШАНС',
+                            'columns': [
+                                {
+                                    'title': '1Х',
+                                    'columns': [
+                                        {
+                                            'title': '35',
+                                            'field': '35',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': '12',
+                                    'columns': [
+                                        {
+                                            'title': '36',
+                                            'field': '36',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х2',
+                                    'columns': [
+                                        {
+                                            'title': '37',
+                                            'field': '37',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ФОРА (0)',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '38',
+                                            'field': '38',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '39',
+                                            'field': '39',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (ф)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '127',
+                                            'field': '127',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ОБЕ ЗАБЬЮТ',
+                            'columns': [
+                                {
+                                    'title': 'ДА',
+                                    'columns': [
+                                        {
+                                            'title': '113',
+                                            'field': '113',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'НЕТ',
+                                    'columns': [
+                                        {
+                                            'title': '114',
+                                            'field': '114',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (оз)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '128',
+                                            'field': '128',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ТОТАЛ МАТЧА (2,5)',
+                            'columns': [
+                                {
+                                    'title': 'Мен',
+                                    'columns': [
+                                        {
+                                            'title': '92',
+                                            'field': '92',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Бол',
+                                    'columns': [
+                                        {
+                                            'title': '95',
+                                            'field': '95',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (т)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '129',
+                                            'field': '129',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД ПЕРВОГО ТАЙМА',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '44',
+                                            'field': '44',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '45',
+                                            'field': '45',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '46',
+                                            'field': '46',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (1т)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '130',
+                                            'field': '130',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД ВТОРОГО ТАЙМА',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '47',
+                                            'field': '47',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '48',
+                                            'field': '48',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '49',
+                                            'field': '49',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (2т)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '131',
+                                            'field': '131',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД ПЕРВОГО ТАЙМА И МАТЧА',
+                            'columns': [
+                                {
+                                    'title': 'П1/П1',
+                                    'columns': [
+                                        {
+                                            'title': '50',
+                                            'field': '50',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х/П1',
+                                    'columns': [
+                                        {
+                                            'title': '51',
+                                            'field': '51',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2/П1',
+                                    'columns': [
+                                        {
+                                            'title': '52',
+                                            'field': '52',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П1/Х',
+                                    'columns': [
+                                        {
+                                            'title': '53',
+                                            'field': '53',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х/Х',
+                                    'columns': [
+                                        {
+                                            'title': '54',
+                                            'field': '54',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2/Х',
+                                    'columns': [
+                                        {
+                                            'title': '55',
+                                            'field': '55',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П1/П2',
+                                    'columns': [
+                                        {
+                                            'title': '56',
+                                            'field': '56',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х/П2',
+                                    'columns': [
+                                        {
+                                            'title': '57',
+                                            'field': '57',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2/П2',
+                                    'columns': [
+                                        {
+                                            'title': '58',
+                                            'field': '58',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    'title': 'Футбол Тотал',
+                    'columns': [
+                        {
+                            'title': 'ИСХОД МАТЧА',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '32_т',
+                                            'field': '32_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '33_т',
+                                            'field': '33_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '34_т',
+                                            'field': '34_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Маржа (исход)',
+                            'columns': [
+                                {
+                                    'title': 'М(и)',
+                                    'columns': [
+                                        {
+                                            'title': '28_т',
+                                            'field': '28_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Кат',
+                                    'columns': [
+                                        {
+                                            'title': '29_т',
+                                            'field': '29_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': '% изм коэф',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '30_т',
+                                            'field': '30_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ФОРА (0)',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '38_т',
+                                            'field': '38_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '39_т',
+                                            'field': '39_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (ф)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '127_т',
+                                            'field': '127_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИТОГОВЫЙ ТОТАЛ НА МАТЧ',
+                            'columns': [
+                                {
+                                    'title': 'ТМ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '91',
+                                            'field': '91',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТМ 2,5',
+                                    'columns': [
+                                        {
+                                            'title': '92',
+                                            'field': '92',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТМ 3,5',
+                                    'columns': [
+                                        {
+                                            'title': '93',
+                                            'field': '93',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '94',
+                                            'field': '94',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 2,5',
+                                    'columns': [
+                                        {
+                                            'title': '95',
+                                            'field': '95',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 3,5',
+                                    'columns': [
+                                        {
+                                            'title': '96',
+                                            'field': '96',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (т 2.5)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '129_т',
+                                            'field': '129_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИТОГОВЫЙ ТОТАЛ НА ПЕРВЫЙ ТАЙМ',
+                            'columns': [
+                                {
+                                    'title': 'ТМ 0,5',
+                                    'columns': [
+                                        {
+                                            'title': '97',
+                                            'field': '97',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТМ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '98',
+                                            'field': '98',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 0,5',
+                                    'columns': [
+                                        {
+                                            'title': '99',
+                                            'field': '99',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '100',
+                                            'field': '100',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИТОГОВЫЙ ТОТАЛ НА ВТОРОЙ ТАЙМ',
+                            'columns': [
+                                {
+                                    'title': 'ТМ 0,5',
+                                    'columns': [
+                                        {
+                                            'title': '101',
+                                            'field': '101',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТМ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '102',
+                                            'field': '102',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 0,5',
+                                    'columns': [
+                                        {
+                                            'title': '103',
+                                            'field': '103',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '104',
+                                            'field': '104',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИТОГОВЫЙ ТОТАЛ ПЕРВОЙ КОМАНДЫ',
+                            'columns': [
+                                {
+                                    'title': 'ТМ 1,0',
+                                    'columns': [
+                                        {
+                                            'title': '105',
+                                            'field': '105',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТМ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '106',
+                                            'field': '106',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,0',
+                                    'columns': [
+                                        {
+                                            'title': '107',
+                                            'field': '107',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '108',
+                                            'field': '108',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИТОГОВЫЙ ТОТАЛ ВТОРОЙ КОМАНДЫ',
+                            'columns': [
+                                {
+                                    'title': 'ТМ 1,0',
+                                    'columns': [
+                                        {
+                                            'title': '109',
+                                            'field': '109',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТМ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '110',
+                                            'field': '110',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,0',
+                                    'columns': [
+                                        {
+                                            'title': '111',
+                                            'field': '111',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'ТБ 1,5',
+                                    'columns': [
+                                        {
+                                            'title': '112',
+                                            'field': '112',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (оз)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '128_т',
+                                            'field': '128_т',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ОБЕ КОМАНДЫ ЗАБЬЮТ',
+                            'columns': [
+                                {
+                                    'title': 'ДА',
+                                    'columns': [
+                                        {
+                                            'title': '113',
+                                            'field': '113',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'НЕТ',
+                                    'columns': [
+                                        {
+                                            'title': '114',
+                                            'field': '114',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': '1т',
+                                    'columns': [
+                                        {
+                                            'title': '115',
+                                            'field': '115',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': '2т',
+                                    'columns': [
+                                        {
+                                            'title': '116',
+                                            'field': '116',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'КОМАНДА ЗАБЬЕТ',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '117',
+                                            'field': '117',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '118',
+                                            'field': '118',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Ком. заб. в 1 тайме',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '119',
+                                            'field': '119',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '120',
+                                            'field': '120',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Ком. заб. во 2 тайме',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '121',
+                                            'field': '121',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '122',
+                                            'field': '122',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    'title': 'Футбол Исход',
+                    'columns': [
+                        {
+                            'title': 'ИСХОД МАТЧА (хоккей 24)',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '25_и',
+                                            'field': '25_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '26_и',
+                                            'field': '26_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '27_и',
+                                            'field': '27_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД МАТЧА (осн. время)',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '32_и',
+                                            'field': '32_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '33_и',
+                                            'field': '33_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '34_и',
+                                            'field': '34_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'Маржа (исход)',
+                            'columns': [
+                                {
+                                    'title': 'М(и)',
+                                    'columns': [
+                                        {
+                                            'title': '28_и',
+                                            'field': '28_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Кат',
+                                    'columns': [
+                                        {
+                                            'title': '29_и',
+                                            'field': '29_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': '% изм коэф',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '30_и',
+                                            'field': '30_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ДВОЙНОЙ ШАНС',
+                            'columns': [
+                                {
+                                    'title': '1Х',
+                                    'columns': [
+                                        {
+                                            'title': '35_и',
+                                            'field': '35_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': '12',
+                                    'columns': [
+                                        {
+                                            'title': '36_и',
+                                            'field': '36_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х2',
+                                    'columns': [
+                                        {
+                                            'title': '37_и',
+                                            'field': '37_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'ФОРА (0)',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '38_и',
+                                            'field': '38_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '39_и',
+                                            'field': '39_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (ф)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '127_и',
+                                            'field': '127_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ОБЕ ЗАБЬЮТ',
+                            'columns': [
+                                {
+                                    'title': 'ДА',
+                                    'columns': [
+                                        {
+                                            'title': '113_и',
+                                            'field': '113_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'НЕТ',
+                                    'columns': [
+                                        {
+                                            'title': '114_и',
+                                            'field': '114_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (оз)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '128_и',
+                                            'field': '128_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ТОТАЛ МАТЧА (2,5)',
+                            'columns': [
+                                {
+                                    'title': 'Мен',
+                                    'columns': [
+                                        {
+                                            'title': '92_и',
+                                            'field': '92_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Бол',
+                                    'columns': [
+                                        {
+                                            'title': '95_и',
+                                            'field': '95_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (т)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '129_и',
+                                            'field': '129_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД ПЕРВОГО ТАЙМА',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '44_и',
+                                            'field': '44_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '45_и',
+                                            'field': '45_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '46_и',
+                                            'field': '46_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (1т)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '130_и',
+                                            'field': '130_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД ВТОРОГО ТАЙМА',
+                            'columns': [
+                                {
+                                    'title': 'П1',
+                                    'columns': [
+                                        {
+                                            'title': '47_и',
+                                            'field': '47_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х',
+                                    'columns': [
+                                        {
+                                            'title': '48_и',
+                                            'field': '48_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2',
+                                    'columns': [
+                                        {
+                                            'title': '49_и',
+                                            'field': '49_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            'title': 'М (2т)',
+                            'columns': [
+                                {
+                                    'title': '',
+                                    'columns': [
+                                        {
+                                            'title': '131_и',
+                                            'field': '131_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                }
+                            ],
+                        },
+                        {
+                            'title': 'ИСХОД ПЕРВОГО ТАЙМА И МАТЧА',
+                            'columns': [
+                                {
+                                    'title': 'П1/П1',
+                                    'columns': [
+                                        {
+                                            'title': '50_и',
+                                            'field': '50_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х/П1',
+                                    'columns': [
+                                        {
+                                            'title': '51_и',
+                                            'field': '51_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2/П1',
+                                    'columns': [
+                                        {
+                                            'title': '52_и',
+                                            'field': '52_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П1/Х',
+                                    'columns': [
+                                        {
+                                            'title': '53_и',
+                                            'field': '53_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х/Х',
+                                    'columns': [
+                                        {
+                                            'title': '54_и',
+                                            'field': '54_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2/Х',
+                                    'columns': [
+                                        {
+                                            'title': '55_и',
+                                            'field': '55_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П1/П2',
+                                    'columns': [
+                                        {
+                                            'title': '56_и',
+                                            'field': '56_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'Х/П2',
+                                    'columns': [
+                                        {
+                                            'title': '57_и',
+                                            'field': '57_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'П2/П2',
+                                    'columns': [
+                                        {
+                                            'title': '58_и',
+                                            'field': '58_и',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+            'filterMode': 'remote',
+        }
+    )
     table.on_event('pageLoaded', data_filtered_event)
     table.on_event('cellClick', cell_click_event)
 
 
 @ui.page('/login')
 def login(redirect_to: str = '/') -> RedirectResponse | None:
-    def try_login() -> None:  # local function to avoid passing username and password as arguments
-        if password.value == settings.ADMIN_PASSWORD and username.value == settings.ADMIN_USERNAME:
+    def try_login() -> (
+        None
+    ):  # local function to avoid passing username and password as arguments
+        if (
+            password.value == settings.ADMIN_PASSWORD
+            and username.value == settings.ADMIN_USERNAME
+        ):
             app.storage.user.update({'username': username.value, 'authenticated': True})
             ui.navigate.to(redirect_to)  # go back to where the user wanted to go
         else:
@@ -787,7 +2207,9 @@ def login(redirect_to: str = '/') -> RedirectResponse | None:
         return RedirectResponse('/')
     with ui.card().classes('absolute-center'):
         username = ui.input('Username').on('keydown.enter', try_login)
-        password = ui.input('Password', password=True, password_toggle_button=True).on('keydown.enter', try_login)
+        password = ui.input('Password', password=True, password_toggle_button=True).on(
+            'keydown.enter', try_login
+        )
         ui.button('Log in', on_click=try_login)
     return None
 
@@ -802,10 +2224,10 @@ def index():
     ui.link('Табличные данные', '/table_data', new_tab=True)
 
 
-if __name__ in {"__main__", "__mp_main__"}:
+if __name__ in {'__main__', '__mp_main__'}:
     ui.run(
         show=False,
         port=settings.PORT,
         storage_secret=settings.STORAGE_SECRET,
-        reload=settings.DEBUG
+        reload=settings.DEBUG,
     )

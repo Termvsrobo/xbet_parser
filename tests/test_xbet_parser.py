@@ -30,13 +30,13 @@ async def test_parser_json():
     [
         (
             'https://1xlite-93399.world/ru/line/football/119237-england-league-cup/277966587-newcastle-united-bradford-city',
-            '277966587'
+            '277966587',
         ),
         (
             'https://1xlite-93399.world/ru/line/football/119237-england-league-cup/xxxxxxxxx-newcastle-united-bradford-city',
-            None
+            None,
         ),
-    ]
+    ],
 )
 def test_get_page_id(url, result):
     page_id = XLiteParser.get_page_id(url)

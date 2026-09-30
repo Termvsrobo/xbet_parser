@@ -30,7 +30,6 @@ from utils import (
 
 
 class ParserBase(ABC):
-
     @abstractmethod
     def start(self):
         raise NotImplementedError()
@@ -76,7 +75,7 @@ class Parser(ParserBase):
         chunksize: int | None = None,
         skip: int | None = None,
         limit: int | None = None,
-        sort: dict[str, int] | None = None
+        sort: dict[str, int] | None = None,
     ) -> DataFrame:
         """
         Read MongoDB query into a DataFrame.
@@ -115,7 +114,7 @@ class Parser(ParserBase):
             extra = {}
 
         if extra.get('batchSize') is not None and chunksize is not None:
-            raise ValueError("Either chunksize or batchSize must be provided, not both")
+            raise ValueError('Either chunksize or batchSize must be provided, not both')
 
         collection = db[collection_name]
         cursor = collection.find(query, {'_id': 0})
@@ -130,10 +129,7 @@ class Parser(ParserBase):
             cursor = cursor.sort({'dt': -1})
         records = list(cursor)
         count_records = cursor.collection.count_documents(query)
-        df = DataFrame.from_records(
-            records,
-            index=index_col
-        )
+        df = DataFrame.from_records(records, index=index_col)
         df = df.round(2)
         return df, count_records
 
@@ -142,7 +138,7 @@ class Parser(ParserBase):
         frame: DataFrame,
         name: str,
         db: str | Database,
-        if_exists: str | None = "fail",
+        if_exists: str | None = 'fail',
         index: bool | None = True,
         index_label: str | Sequence[str] | None = None,
         chunksize: int | None = None,
@@ -468,7 +464,7 @@ class Parser(ParserBase):
                 '_2_ИТМ2(1.5)',
                 '_2_ИТБ2(0.5)',
                 '_2_ИТБ2(1.0)',
-                '_2_ИТБ2(1.5)'
+                '_2_ИТБ2(1.5)',
             ]
             df = df.reindex(columns=columns)
             value_columns_start = columns.index('1')
@@ -480,8 +476,16 @@ class Parser(ParserBase):
             df['Дата слепка, МСК'] = df['Дата слепка, МСК'].dt.tz_localize(None)
             older_df = pd.DataFrame(columns=columns)
             if not settings.DEBUG:
-                older_df, _ = self.read_mongo('History', [], settings.MONGO_URL.encoded_string())
-            self.to_mongo(df, 'History', settings.MONGO_URL.encoded_string(), if_exists='append', index=False)
+                older_df, _ = self.read_mongo(
+                    'History', [], settings.MONGO_URL.encoded_string()
+                )
+            self.to_mongo(
+                df,
+                'History',
+                settings.MONGO_URL.encoded_string(),
+                if_exists='append',
+                index=False,
+            )
             self.path = f'files/{self.name}_{self.now_msk.isoformat()}.xlsx'
             if older_df.empty:
                 full_df = df
@@ -495,7 +499,7 @@ class Parser(ParserBase):
                     'Команда 1',
                     'Команда 2',
                 ],
-                ascending=[False, True, True]
+                ascending=[False, True, True],
             )
             full_df['Double'] = full_df[['Команда 1', 'Команда 2', 'Дата']].duplicated()
             full_df = full_df.reset_index(drop=True)
@@ -523,53 +527,64 @@ class Parser(ParserBase):
                     left=Side(style='thin'),
                     right=Side(style='thin'),
                     top=Side(style='thin'),
-                    bottom=Side(style='thin')
+                    bottom=Side(style='thin'),
                 )
 
                 sheet.merge_cells(
                     start_row=1,
                     end_row=1,
                     start_column=match_index_start,
-                    end_column=match_index_end
+                    end_column=match_index_end,
                 )
                 sheet.cell(1, match_index_start).value = 'Матч'
-                sheet.cell(1, match_index_start).alignment = Alignment(horizontal='center')
+                sheet.cell(1, match_index_start).alignment = Alignment(
+                    horizontal='center'
+                )
                 sheet.cell(1, match_index_start).border = thin_border
 
                 sheet.merge_cells(
                     start_row=1,
                     end_row=1,
                     start_column=first_time_index_start,
-                    end_column=first_time_index_end
+                    end_column=first_time_index_end,
                 )
                 sheet.cell(1, first_time_index_start).value = '1 тайм'
-                sheet.cell(1, first_time_index_start).alignment = Alignment(horizontal='center')
+                sheet.cell(1, first_time_index_start).alignment = Alignment(
+                    horizontal='center'
+                )
                 sheet.cell(1, first_time_index_start).border = thin_border
 
                 sheet.merge_cells(
                     start_row=1,
                     end_row=1,
                     start_column=second_time_index_start,
-                    end_column=second_time_index_end
+                    end_column=second_time_index_end,
                 )
                 sheet.cell(1, second_time_index_start).value = '2 тайм'
-                sheet.cell(1, second_time_index_start).alignment = Alignment(horizontal='center')
+                sheet.cell(1, second_time_index_start).alignment = Alignment(
+                    horizontal='center'
+                )
                 sheet.cell(1, second_time_index_start).border = thin_border
 
                 for i in range(first_time_index_start, first_time_index_end + 2):
-                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_1_', '')
+                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace(
+                        '_1_', ''
+                    )
 
                 for i in range(second_time_index_start, second_time_index_end + 2):
-                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace('_2_', '')
+                    sheet.cell(2, i - 1).value = sheet.cell(2, i - 1).value.replace(
+                        '_2_', ''
+                    )
 
                 for subArray in subArrays:
                     if subArray.size > 0:
-                        sheet.row_dimensions.group(subArray[0] + 3, subArray[-1] + 3, hidden=True)
+                        sheet.row_dimensions.group(
+                            subArray[0] + 3, subArray[-1] + 3, hidden=True
+                        )
 
                 workbook.save(self.path)
             result = FileResponse(
-                self.path,
-                filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
+                self.path, filename=f'{self.name}_{self.now_msk.isoformat()}.xlsx'
             )
         else:
             result = PlainTextResponse('Не собрали данных')
@@ -603,17 +618,11 @@ class BrowserManager:
                 headless=False,
                 args=[
                     '--start-maximized',
-                    '--disable-blink-features=AutomationControlled'
+                    '--disable-blink-features=AutomationControlled',
                 ],
                 base_url=self.parser.url,
-                screen={
-                    "width": 1920,
-                    "height": 1080
-                },
-                viewport={
-                    "width": 1920,
-                    "height": 1080
-                }
+                screen={'width': 1920, 'height': 1080},
+                viewport={'width': 1920, 'height': 1080},
             )
             self._is_running.set()
             return browser

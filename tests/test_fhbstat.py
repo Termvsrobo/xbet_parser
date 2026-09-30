@@ -37,7 +37,7 @@ def test_page():
         ('2.990', '0.', '2.'),
         ('2.450', '0.', '2.'),
         ('3.990', '0.', '3.'),
-    ]
+    ],
 )
 def test_round(value, round_to, result):
     float_field = FloatField(type=FieldType.FLOAT, filter_value=round_to, column=22)
@@ -53,7 +53,7 @@ def test_round(value, round_to, result):
         ('23:45', '00:00', '23:45'),
         ('23:45', '00:', '23:'),
         ('23:45', '00', '23'),
-    ]
+    ],
 )
 def test_round_datetime(value, round_to, result):
     time_field = TimeField(type=FieldType.TIME, filter_value=round_to, column=4)
@@ -70,7 +70,7 @@ def test_round_datetime(value, round_to, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football?1=19&2=12&3=2025',
                 },
             ],
             '/football',
@@ -82,11 +82,11 @@ def test_round_datetime(value, round_to, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football_24?1=19&2=12&3=2025',
                 },
             ],
             '/football_24',
-            'test1'
+            'test1',
         ),
         (
             [
@@ -94,11 +94,11 @@ def test_round_datetime(value, round_to, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football_total?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football_total?1=19&2=12&3=2025',
                 },
             ],
             '/football_total',
-            'test2'
+            'test2',
         ),
         (
             [
@@ -106,7 +106,7 @@ def test_round_datetime(value, round_to, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football?1=19&2=12&3=2025',
                 },
             ],
             '/hockey',
@@ -118,11 +118,11 @@ def test_round_datetime(value, round_to, result):
                     '1': 25,
                     '2': 234,
                     'index': 1,
-                    'url': 'https://fhbstat.com/football_total?1=19&2=12&3=2025'
+                    'url': 'https://fhbstat.com/football_total?1=19&2=12&3=2025',
                 },
             ],
             '/hockey_total',
-            'test2'
+            'test2',
         ),
         (
             [
@@ -137,7 +137,7 @@ def test_round_datetime(value, round_to, result):
                     '10': 'zxcvzxcv',
                     'index': 1,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
-                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)},
                 },
                 {
                     '1': 19,
@@ -150,7 +150,7 @@ def test_round_datetime(value, round_to, result):
                     '10': 'zxcvzxcv',
                     'index': 1,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
-                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)},
                 },
                 {
                     '1': 19,
@@ -163,14 +163,13 @@ def test_round_datetime(value, round_to, result):
                     '10': 'zxcvzxcv',
                     'index': 1,
                     'url': 'https://fhbstat.com/hockey_24?1=19&2=12&3=2025',
-                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)}
+                    **{str(i): random.uniform(0.2, 10.0) for i in range(30, 67)},
                 },
-
             ],
             '/hockey_24',
-            'test1'
+            'test1',
         ),
-    ]
+    ],
 )
 def test_get_file_response(data, target, file_name):
     is_running = Event()
@@ -178,10 +177,7 @@ def test_get_file_response(data, target, file_name):
     fhbstat_parser.start()
     if file_name:
         fhbstat_parser.file_name = file_name
-    response = fhbstat_parser.get_file_response(
-        data,
-        target
-    )
+    response = fhbstat_parser.get_file_response(data, target)
     fhbstat_parser.stop()
     assert response
     assert Path(response.path).exists()
@@ -199,7 +195,7 @@ def test_get_file_response(data, target, file_name):
         ('/hockey', 'test4'),
         ('/football_total', 'test5'),
         ('/hockey_total', 'test6'),
-    ]
+    ],
 )
 @pytest.mark.asyncio
 async def test_get_file_response_merge_cells(target, file_name):
@@ -228,13 +224,13 @@ async def test_get_file_response_merge_cells(target, file_name):
                         str(i): random.uniform(0.2, 10.0)
                         for i in range(
                             fhbstat_parser.digits_columns_start,
-                            fhbstat_parser.count_columns
+                            fhbstat_parser.count_columns,
                         )
                     },
                     **{
                         str(column): random.uniform(0.2, 10.0)
                         for column in fhbstat_parser.get_columns_by_target(target)
-                    }
+                    },
                 },
             )
         for sym in ('%', 'кф', 'мо', np.nan, '_%', '_кф', '_мо'):
@@ -255,13 +251,13 @@ async def test_get_file_response_merge_cells(target, file_name):
                         str(i): np.nan
                         for i in range(
                             fhbstat_parser.digits_columns_start,
-                            fhbstat_parser.count_columns
+                            fhbstat_parser.count_columns,
                         )
                     },
                     **{
                         str(column): np.nan
                         for column in fhbstat_parser.get_columns_by_target(target)
-                    }
+                    },
                 }
             )
         # for _ in range(fhbstat_parser.count_empty_rows):
@@ -293,10 +289,7 @@ async def test_get_file_response_merge_cells(target, file_name):
     fhbstat_parser.start()
     if file_name:
         fhbstat_parser.file_name = file_name
-    response = await fhbstat_parser.async_get_file_response(
-        data,
-        target
-    )
+    response = await fhbstat_parser.async_get_file_response(data, target)
     fhbstat_parser.stop()
     assert response
     assert Path(response.path).exists()
@@ -307,7 +300,14 @@ async def test_get_file_response_merge_cells(target, file_name):
 def test_fhbstat_filter():
     filter_instance = FHBStatFilter(
         filter_id=15,
-        filters=[{'type': FieldType.FLOAT, 'filter_value': '0.1', 'priority': 1, 'column': 22}]
+        filters=[
+            {
+                'type': FieldType.FLOAT,
+                'filter_value': '0.1',
+                'priority': 1,
+                'column': 22,
+            }
+        ],
     )
     assert filter_instance
     assert filter_instance.filter_id == 15
@@ -331,7 +331,7 @@ def test_add_user_filters():
         filter_value='0.01',
         priority=1,
         column=22,
-        filter_id=fhbstat_parser.user_filters.root[0].filter_id
+        filter_id=fhbstat_parser.user_filters.root[0].filter_id,
     )
     assert fhbstat_parser.user_filters.root[0].filters[0].filter_value == '0.01'
 
@@ -340,7 +340,9 @@ def test_change_priority_filters():
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
     fhbstat_parser.add_user_filter(filter_value='0.01', priority=1, column=22)
-    fhbstat_parser.add_user_filter(priority=5, column=22, filter_id=fhbstat_parser.user_filters.root[0].filter_id)
+    fhbstat_parser.add_user_filter(
+        priority=5, column=22, filter_id=fhbstat_parser.user_filters.root[0].filter_id
+    )
     assert fhbstat_parser.user_filters.root[0].filters[0].filter_value == '0.01'
     assert fhbstat_parser.user_filters.root[0].filters[0].priority == 5
 
@@ -348,16 +350,22 @@ def test_change_priority_filters():
 def test_wrong_user_filters():
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
-    fhbstat_parser.add_user_filter(filter_id=15, filter_value='0.1', priority=1, column=22)
+    fhbstat_parser.add_user_filter(
+        filter_id=15, filter_value='0.1', priority=1, column=22
+    )
     with pytest.raises(ValueError):
-        fhbstat_parser.add_user_filter(filter_id=15, filter_value=15, priority=-11, column=22)
+        fhbstat_parser.add_user_filter(
+            filter_id=15, filter_value=15, priority=-11, column=22
+        )
         assert fhbstat_parser.user_filters.root[0].filters[0].filter_value == '0.01'
 
 
 def test_user_filters():
     is_running = Event()
     fhbstat_parser = FHBParser(is_running=is_running)
-    fhbstat_parser.add_user_filter(filter_id=15, filter_value='0.1', priority=1, column=22)
+    fhbstat_parser.add_user_filter(
+        filter_id=15, filter_value='0.1', priority=1, column=22
+    )
     for _filter in fhbstat_parser.user_filters.root:
         for sub_filter in _filter.filters:
             sub_filter.get_value(15)
@@ -368,37 +376,47 @@ def test_user_filters():
     [
         (
             'https://fhbstat.com/football?1=16&2=02&3=2026',
-            Path(__file__).parent / Path('data') / Path('download_filters.json')
+            Path(__file__).parent / Path('data') / Path('download_filters.json'),
         ),
         (
             'https://fhbstat.com/football_total?%D0%BC_9_%D0%BC%D1%83%D0%BD%D0%BA%D1%83%D0%B1=1&1=17&2=02&3=2026&F1_76=2&F1_77=1&F1_78=1',
-            Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json')
+            Path(__file__).parent / Path('data') / Path('ИТ1 (клубные) .json'),
         ),
         (
             'https://fhbstat.com/football?%D0%BC_6_%D1%87%D0%B5%D0%BC%D0%BF=1&1=18&2=02&3=2026',
-            Path(__file__).parent / Path('data') / Path('П1 (футбол)  новый парсер.json')
+            Path(__file__).parent
+            / Path('data')
+            / Path('П1 (футбол)  новый парсер.json'),
         ),
         (
             'https://fhbstat.com/football?%D0%BC_6_%D1%87%D0%B5%D0%BC%D0%BF=1&1=21&2=02&3=2026',
-            Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
+            Path(__file__).parent
+            / Path('data')
+            / Path('П1 (футбол) новые пробивки.json'),
         ),
         (
             '',
-            Path(__file__).parent / Path('data') / Path('П1 (футбол) новые пробивки.json')
+            Path(__file__).parent
+            / Path('data')
+            / Path('П1 (футбол) новые пробивки.json'),
         ),
         (
             'https://fhbstat.com/hockey_24?1=3&2=04&3=2026&50=1.',
-            Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
+            Path(__file__).parent
+            / Path('data')
+            / Path('П1_(хоккей_чемпионат_урезанные).json'),
         ),
         (
             'https://fhbstat.com/hockey_24?1=4&2=04&3=2026&50=1.',
-            Path(__file__).parent / Path('data') / Path('П1_(хоккей_чемпионат_урезанные).json')
+            Path(__file__).parent
+            / Path('data')
+            / Path('П1_(хоккей_чемпионат_урезанные).json'),
         ),
         (
             'https://fhbstat.com/football_60?page=1',
-            Path(__file__).parent / Path('data') / Path('4. П1_(футбол_60_9).json')
+            Path(__file__).parent / Path('data') / Path('4. П1_(футбол_60_9).json'),
         ),
-    ]
+    ],
 )
 @pytest.mark.asyncio
 async def test_fhbstat_parser(url, filter_path):
@@ -430,11 +448,16 @@ def test_sr_page():
     assert not head_df.empty
     assert not new_head_df.empty
 
-    columns = list(filter(
-        lambda col: col not in ('index', 'dt', 'Количество матчей', 'Дата слепка, МСК', 'url')
-        and int(col) >= FHBParser.digits_columns_start,
-        df.columns.tolist()
-    ))
+    columns = list(
+        filter(
+            lambda col: (
+                col
+                not in ('index', 'dt', 'Количество матчей', 'Дата слепка, МСК', 'url')
+                and int(col) >= FHBParser.digits_columns_start
+            ),
+            df.columns.tolist(),
+        )
+    )
     pd.testing.assert_frame_equal(head_df.loc[:, columns], new_head_df.loc[:, columns])
 
 
@@ -460,7 +483,7 @@ def get_total_db_files():
         # 'football_total_db_Италия.xlsx',
         # 'football_total_db_Боливия.xlsx',
         'football_60_total_db.xlsx',
-    )
+    ),
 )
 def test_move_names(filename):
     files_dir = Path(__file__).parent.parent / Path('files')
@@ -469,11 +492,7 @@ def test_move_names(filename):
     test_df = pd.read_excel(
         files_dir / Path(filename),
         sheet_name='Sheet1',
-        dtype={
-            '6': str,
-            '7': str,
-            '8': str
-        }
+        dtype={'6': str, '7': str, '8': str},
     )
 
     is_running = Event()

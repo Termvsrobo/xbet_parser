@@ -21,7 +21,7 @@ class XLiteParser(Parser):
             'country': 1,
             'virtualSports': True,
             'gr': 285,
-            'groupChamps': True
+            'groupChamps': True,
         }
         if min_offset:
             params['minOffset'] = min_offset
@@ -31,20 +31,30 @@ class XLiteParser(Parser):
             }
         ) as client:
             scheme, domain, _, _, _, _ = urlparse(self.url)
-            url = urlunparse((
-                scheme,
-                domain,
-                '/service-api/LineFeed/GetSportsShortZip',
-                None,
-                None,
-                None
-            ))
+            url = urlunparse(
+                (
+                    scheme,
+                    domain,
+                    '/service-api/LineFeed/GetSportsShortZip',
+                    None,
+                    None,
+                    None,
+                )
+            )
             response = await client.get(url, params=params)
             data = response.json()
             if 'Value' in data:
                 data_value = data['Value']
-                football_data = next(filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, data_value), None)
-                list_champs = [x.get('LI') for x in filter(lambda x: 'SC' not in x, football_data['L'])]
+                football_data = next(
+                    filter(
+                        lambda x: x.get('N', '') == 'Футбол' and 'L' in x, data_value
+                    ),
+                    None,
+                )
+                list_champs = [
+                    x.get('LI')
+                    for x in filter(lambda x: 'SC' not in x, football_data['L'])
+                ]
                 added_list_champs = [
                     sc.get('LI')
                     for i in filter(lambda x: 'SC' in x, football_data['L'])
@@ -56,21 +66,21 @@ class XLiteParser(Parser):
                     'country': 1,
                     'virtualSports': True,
                     'gr': 285,
-                    'groupChamps': True
+                    'groupChamps': True,
                 }
                 if min_offset:
                     params['minOffset'] = min_offset
-                list_champs_response = await client.get(
-                    url,
-                    params=params
-                )
+                list_champs_response = await client.get(url, params=params)
                 if list_champs_response.status_code == 200:
                     list_champs_data = list_champs_response.json()
                     if 'Value' in list_champs_data:
                         list_champs_data = list_champs_data['Value']
                         _list_champs_data = next(
-                            filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, list_champs_data),
-                            None
+                            filter(
+                                lambda x: x.get('N', '') == 'Футбол' and 'L' in x,
+                                list_champs_data,
+                            ),
+                            None,
                         )
                         for l_list in _list_champs_data.get('L', []):
                             for g_list in l_list.get('G', []):
@@ -85,17 +95,17 @@ class XLiteParser(Parser):
                     }
                     if min_offset:
                         params['minOffset'] = min_offset
-                    champ_response = await client.get(
-                        url,
-                        params=params
-                    )
+                    champ_response = await client.get(url, params=params)
                     if champ_response.status_code == 200:
                         champ_data = champ_response.json()
                         if 'Value' in champ_data:
                             champ_value = champ_data['Value']
                             _champ_data = next(
-                                filter(lambda x: x.get('N', '') == 'Футбол' and 'L' in x, champ_value),
-                                None
+                                filter(
+                                    lambda x: x.get('N', '') == 'Футбол' and 'L' in x,
+                                    champ_value,
+                                ),
+                                None,
                             )
                             for l_list in _champ_data.get('L', []):
                                 for g_list in l_list.get('G', []):
@@ -120,8 +130,18 @@ class XLiteParser(Parser):
             },
             2: {
                 3: {
-                    7: {'F1': {'default': [-1.5, -1.0, 0, +1.0, +1.5], 'times': [-1.0, 0, +1.0]}},
-                    8: {'F2': {'default': [-1.5, -1.0, 0, +1.0, +1.5], 'times': [-1.0, 0, +1.0]}},
+                    7: {
+                        'F1': {
+                            'default': [-1.5, -1.0, 0, +1.0, +1.5],
+                            'times': [-1.0, 0, +1.0],
+                        }
+                    },
+                    8: {
+                        'F2': {
+                            'default': [-1.5, -1.0, 0, +1.0, +1.5],
+                            'times': [-1.0, 0, +1.0],
+                        }
+                    },
                 }
             },
             8: {
@@ -133,14 +153,34 @@ class XLiteParser(Parser):
             },
             15: {
                 5: {
-                    11: {'IT1_bol': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
-                    12: {'IT1_men': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
+                    11: {
+                        'IT1_bol': {
+                            'default': [1.0, 1.5, 2.0],
+                            'times': [0.5, 1.0, 1.5],
+                        }
+                    },
+                    12: {
+                        'IT1_men': {
+                            'default': [1.0, 1.5, 2.0],
+                            'times': [0.5, 1.0, 1.5],
+                        }
+                    },
                 }
             },
             17: {
                 4: {
-                    9: {'TB': {'default': [1.5, 2.0, 2.5, 3.0, 3.5], 'times': [0.5, 1.0, 1.5, 2.0, 2.5]}},
-                    10: {'TM': {'default': [1.5, 2.0, 2.5, 3.0, 3.5], 'times': [0.5, 1.0, 1.5, 2.0, 2.5]}},
+                    9: {
+                        'TB': {
+                            'default': [1.5, 2.0, 2.5, 3.0, 3.5],
+                            'times': [0.5, 1.0, 1.5, 2.0, 2.5],
+                        }
+                    },
+                    10: {
+                        'TM': {
+                            'default': [1.5, 2.0, 2.5, 3.0, 3.5],
+                            'times': [0.5, 1.0, 1.5, 2.0, 2.5],
+                        }
+                    },
                 }
             },
             19: {
@@ -157,8 +197,18 @@ class XLiteParser(Parser):
             },
             62: {
                 6: {
-                    13: {'IT2_bol': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
-                    14: {'IT2_men': {'default': [1.0, 1.5, 2.0], 'times': [0.5, 1.0, 1.5]}},
+                    13: {
+                        'IT2_bol': {
+                            'default': [1.0, 1.5, 2.0],
+                            'times': [0.5, 1.0, 1.5],
+                        }
+                    },
+                    14: {
+                        'IT2_men': {
+                            'default': [1.0, 1.5, 2.0],
+                            'times': [0.5, 1.0, 1.5],
+                        }
+                    },
                 }
             },
         }
@@ -166,14 +216,16 @@ class XLiteParser(Parser):
         async with httpx.AsyncClient() as client:
             if page_id:
                 scheme, domain, _, _, _, _ = urlparse(self.url)
-                url = urlunparse((
-                    scheme,
-                    domain,
-                    '/service-api/LineFeed/GetGameZip',
-                    None,
-                    None,
-                    None
-                ))
+                url = urlunparse(
+                    (
+                        scheme,
+                        domain,
+                        '/service-api/LineFeed/GetGameZip',
+                        None,
+                        None,
+                        None,
+                    )
+                )
                 response = await client.get(
                     url,
                     params={
@@ -185,8 +237,8 @@ class XLiteParser(Parser):
                         'topGroups': '',
                         'country': 1,
                         'marketType': 1,
-                        'isNewBuilder': True
-                    }
+                        'isNewBuilder': True,
+                    },
                 )
                 data = response.json()
                 data_value = data['Value']
@@ -199,30 +251,51 @@ class XLiteParser(Parser):
                         country_name = league_header_data[0]
                         league_name = ' '.join(league_header_data[1:])
                     name_players = [data_value['O1'], data_value['O2']]
-                    date_game = datetime.fromtimestamp(data_value['S'], tz=pytz.timezone('Europe/Moscow'))
-                    page_link_parent = ' '.join([str(data_value['LI']), data_value['LE']])
-                    page_link_parent = page_link_parent.replace('.', '').replace(' ', '-').lower()
-                    page_link_match = ' '.join([str(page_id), data_value['O1E'], data_value['O2E']])
-                    page_link_match = page_link_match.replace('.', '').replace(' ', '-').lower()
+                    date_game = datetime.fromtimestamp(
+                        data_value['S'], tz=pytz.timezone('Europe/Moscow')
+                    )
+                    page_link_parent = ' '.join(
+                        [str(data_value['LI']), data_value['LE']]
+                    )
+                    page_link_parent = (
+                        page_link_parent.replace('.', '').replace(' ', '-').lower()
+                    )
+                    page_link_match = ' '.join(
+                        [str(page_id), data_value['O1E'], data_value['O2E']]
+                    )
+                    page_link_match = (
+                        page_link_match.replace('.', '').replace(' ', '-').lower()
+                    )
                     page_link = urljoin(
-                        urlunparse((scheme, domain, 'ru/line/football/', None, None, None)),
-                        urljoin(page_link_parent + '/', page_link_match)
+                        urlunparse(
+                            (scheme, domain, 'ru/line/football/', None, None, None)
+                        ),
+                        urljoin(page_link_parent + '/', page_link_match),
                     )
                     for ge in data_value['GE']:
                         for e in ge['E']:
                             for row in e:
-                                key = keys.get(row['G'], {}).get(row['GS'], {}).get(row['T'])
+                                key = (
+                                    keys.get(row['G'], {})
+                                    .get(row['GS'], {})
+                                    .get(row['T'])
+                                )
                                 if isinstance(key, str):
                                     result_dict[key] = row['C']
                                 elif isinstance(key, dict):
                                     for _k, _v in key.items():
                                         for _p in _v['default']:
                                             if row.get('P', 0) == _p:
-                                                result_dict[f'{_k}_{str(_p).replace('.', '')}'] = row['C']
+                                                result_dict[
+                                                    f'{_k}_{str(_p).replace(".", "")}'
+                                                ] = row['C']
 
                     first_time_page_id = next(
-                        filter(lambda x: x['PN'] == '1-й тайм' and not x['TG'], data_value.get('SG', [])),
-                        None
+                        filter(
+                            lambda x: x['PN'] == '1-й тайм' and not x['TG'],
+                            data_value.get('SG', []),
+                        ),
+                        None,
                     )
                     if first_time_page_id:
                         first_time_page_id = first_time_page_id['CI']
@@ -237,8 +310,8 @@ class XLiteParser(Parser):
                                 'topGroups': '',
                                 'country': 1,
                                 'marketType': 1,
-                                'isNewBuilder': True
-                            }
+                                'isNewBuilder': True,
+                            },
                         )
                         first_time_data = first_time_response.json()
                         first_time_data_value = first_time_data['Value']
@@ -246,19 +319,26 @@ class XLiteParser(Parser):
                             for ge in first_time_data_value['GE']:
                                 for e in ge['E']:
                                     for row in e:
-                                        key = keys.get(row['G'], {}).get(row['GS'], {}).get(row['T'])
+                                        key = (
+                                            keys.get(row['G'], {})
+                                            .get(row['GS'], {})
+                                            .get(row['T'])
+                                        )
                                         if isinstance(key, str):
                                             result_dict['1_time_' + key] = row['C']
                                         elif isinstance(key, dict):
                                             for _k, _v in key.items():
                                                 for _p in _v['times']:
                                                     if row.get('P', 0) == _p:
-                                                        sub_key = f'1_time_{_k}_{str(_p).replace('.', '')}'
+                                                        sub_key = f'1_time_{_k}_{str(_p).replace(".", "")}'
                                                         result_dict[sub_key] = row['C']
 
                     second_time_page_id = next(
-                        filter(lambda x: x['PN'] == '2-й тайм' and not x['TG'], data_value.get('SG', [])),
-                        None
+                        filter(
+                            lambda x: x['PN'] == '2-й тайм' and not x['TG'],
+                            data_value.get('SG', []),
+                        ),
+                        None,
                     )
                     if second_time_page_id:
                         second_time_page_id = second_time_page_id['CI']
@@ -273,8 +353,8 @@ class XLiteParser(Parser):
                                 'topGroups': '',
                                 'country': 1,
                                 'marketType': 1,
-                                'isNewBuilder': True
-                            }
+                                'isNewBuilder': True,
+                            },
                         )
                         second_time_data = second_time_response.json()
                         second_time_data_value = second_time_data['Value']
@@ -282,14 +362,18 @@ class XLiteParser(Parser):
                             for ge in second_time_data_value['GE']:
                                 for e in ge['E']:
                                     for row in e:
-                                        key = keys.get(row['G'], {}).get(row['GS'], {}).get(row['T'])
+                                        key = (
+                                            keys.get(row['G'], {})
+                                            .get(row['GS'], {})
+                                            .get(row['T'])
+                                        )
                                         if isinstance(key, str):
                                             result_dict['2_time_' + key] = row['C']
                                         elif isinstance(key, dict):
                                             for _k, _v in key.items():
                                                 for _p in _v['times']:
                                                     if row.get('P', 0) == _p:
-                                                        sub_key = f'2_time_{_k}_{str(_p).replace('.', '')}'
+                                                        sub_key = f'2_time_{_k}_{str(_p).replace(".", "")}'
                                                         result_dict[sub_key] = row['C']
 
             df_data_dict['Ссылка'] = page_link
@@ -447,12 +531,8 @@ class XLiteParser(Parser):
             attempt = 1
             while attempt < 3:
                 try:
-                    df_data_dict = await self._parse(
-                        page_id
-                    )
-                    df_data.append(
-                        df_data_dict
-                    )
+                    df_data_dict = await self._parse(page_id)
+                    df_data.append(df_data_dict)
                 except Exception:
                     attempt += 1
                     self.logger.exception('Ошибка')

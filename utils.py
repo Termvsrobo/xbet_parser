@@ -69,7 +69,7 @@ def _get_db_instance(db: str | Database) -> MongoClient:
         db_name = parse_uri(db).get('database')
         if db_name is None:
             # TODO: Improve validation message
-            raise ValueError("Invalid db: Could not extract database from uri: %s", db)
+            raise ValueError('Invalid db: Could not extract database from uri: %s', db)
         db = MongoClient(db)[db_name]
     return db
 
@@ -95,17 +95,17 @@ def _handle_exists_collection(name: str, exists: str | None, db: Database) -> No
             - append: Documents are appended to existing collection
     """
 
-    if exists == "fail":
+    if exists == 'fail':
         if _collection_exists(db, name):
             raise ValueError(f"Collection '{name}' already exists.")
         return
 
-    if exists == "replace":
+    if exists == 'replace':
         if _collection_exists(db, name):
             db[name].drop()
         return
 
-    if exists == "append":
+    if exists == 'append':
         return
 
     raise ValueError(f"'{exists}' is not valid for if_exists")
@@ -126,7 +126,7 @@ def _split_in_chunks(lst: Sequence[Any], chunksize: int) -> Iterator[Sequence[An
     A generator with the chunks
     """
     for i in range(0, len(lst), chunksize):
-        yield lst[i:i + chunksize]
+        yield lst[i : i + chunksize]
 
 
 def _validate_chunksize(chunksize: int) -> None:
@@ -139,9 +139,9 @@ def _validate_chunksize(chunksize: int) -> None:
     The chunksize to validate.
     """
     if not isinstance(chunksize, int):
-        raise TypeError("Invalid chunksize: Must be an int")
+        raise TypeError('Invalid chunksize: Must be an int')
     if not chunksize > 0:
-        raise ValueError("Invalid chunksize: Must be > 0")
+        raise ValueError('Invalid chunksize: Must be > 0')
 
 
 unrestricted_page_routes = {'/login'}
@@ -154,6 +154,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        if not app.storage.user.get('authenticated', False) and not request.url.path.startswith('/_nicegui') and request.url.path not in unrestricted_page_routes:
+        if (
+            not app.storage.user.get('authenticated', False)
+            and not request.url.path.startswith('/_nicegui')
+            and request.url.path not in unrestricted_page_routes
+        ):
             return RedirectResponse(f'/login?redirect_to={request.url.path}')
         return await call_next(request)

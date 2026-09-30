@@ -12,9 +12,15 @@ from utils import parse_date_str
         (
             '06 сен 01:00',
             datetime(
-                datetime.now(tz=pytz.timezone('Europe/Moscow')).year, 9, 6, 1, 0, 0, 0,
-                tzinfo=pytz.timezone('Europe/Moscow')
-            )
+                datetime.now(tz=pytz.timezone('Europe/Moscow')).year,
+                9,
+                6,
+                1,
+                0,
+                0,
+                0,
+                tzinfo=pytz.timezone('Europe/Moscow'),
+            ),
         ),
         (
             '1:00',
@@ -26,10 +32,10 @@ from utils import parse_date_str
                 0,
                 0,
                 0,
-                tzinfo=pytz.timezone('Europe/Moscow')
-            )
+                tzinfo=pytz.timezone('Europe/Moscow'),
+            ),
         ),
-    ]
+    ],
 )
 def test_parse_russian_date(date, result):
     parsed_date = parse_date_str(date)

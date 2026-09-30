@@ -52,3 +52,5 @@ ruff = "^0.16.0"
 [tool.flake8]
 max_line_length = 120
 
+[tool.ruff.format]
+quote-style = "single"
