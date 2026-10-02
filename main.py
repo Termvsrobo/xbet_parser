@@ -472,6 +472,8 @@ async def table_data():
         ui.checkbox('Топ лиги')
         ui.checkbox('Средние лиги')
         ui.checkbox('Низшие лиги')
+    with ui.row():
+        ui.number('Отклонение', placeholder='0.01', step=0.01, value=0.01, prefix='±')
     ui.button('Поиск', on_click=replace_data)
     table = tabulator(
         {
@@ -484,7 +486,7 @@ async def table_data():
             'ajaxContentType': 'json',
             'paginationSize': 25,
             'paginationSizeSelector': True,
-            'columnDefaults': {'headerHozAlign': 'center', 'hozAlign': 'center', 'headerFilterLiveFilter': False},
+            'columnDefaults': {'headerHozAlign': 'center', 'hozAlign': 'center'},
             'columns': [
                 {
                     'title': 'Общие колонки',
@@ -715,6 +717,31 @@ async def table_data():
                             ],
                         },
                         {
+                            'title': 'Фора БК',
+                            'columns': [
+                                {
+                                    'title': 'К1',
+                                    'columns': [
+                                        {
+                                            'title': '20',
+                                            'field': '20',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                                {
+                                    'title': 'К2',
+                                    'columns': [
+                                        {
+                                            'title': '21',
+                                            'field': '21',
+                                            'headerFilter': 'input',
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                        {
                             'title': 'Разн фор',
                             'columns': [
                                 {
@@ -931,8 +958,8 @@ async def table_data():
                                     'title': 'ДА',
                                     'columns': [
                                         {
-                                            'title': '113',
-                                            'field': '113',
+                                            'title': '40',
+                                            'field': '40',
                                             'headerFilter': 'input',
                                         }
                                     ],
@@ -941,8 +968,8 @@ async def table_data():
                                     'title': 'НЕТ',
                                     'columns': [
                                         {
-                                            'title': '114',
-                                            'field': '114',
+                                            'title': '41',
+                                            'field': '41',
                                             'headerFilter': 'input',
                                         }
                                     ],
@@ -971,8 +998,8 @@ async def table_data():
                                     'title': 'Мен',
                                     'columns': [
                                         {
-                                            'title': '92',
-                                            'field': '92',
+                                            'title': '42',
+                                            'field': '42',
                                             'headerFilter': 'input',
                                         }
                                     ],
@@ -981,8 +1008,8 @@ async def table_data():
                                     'title': 'Бол',
                                     'columns': [
                                         {
-                                            'title': '95',
-                                            'field': '95',
+                                            'title': '43',
+                                            'field': '43',
                                             'headerFilter': 'input',
                                         }
                                     ],
